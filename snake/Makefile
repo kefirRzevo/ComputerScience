@@ -1,18 +1,27 @@
 CXX = g++
 CXXFLAGS = -Wall -g -O1
 
-GAME = snake
-OBJCTS = main.o model.o view.o controller.o
+TARGET = snake
+OBJDIR = obj/
 
-all: $(GAME)
+all: $(TARGET)
 
-$(GAME): $(OBJCTS)
-	$(CXX) -o $(GAME) $(OBJCTS)
+$(TARGET): $(OBJDIR)main.o $(OBJDIR)view.o
+	$(CXX) -o $(TARGET) $^
+
+$(OBJDIR)main.o: main.cpp
+	$(CXX) -c -o $@ $<
+
+$(OBJDIR)view.o: view/view.cpp
+	$(CXX) -c -o $@ $<
+
+obj:
+	mkdir $(OBJDIR)
 
 clean:
-	$(RM) $(OBJCTS) $(GAME) .depends
-
-depend:
-	$(CXX) -MM $(OBJCTS:.o := .cc) > .depends
+	$(RM) $(OBJDIR)* $(TARGET) depends
 
 -include .depends
+
+depend:
+	$(CXX) -MM main.cpp view/view.cpp > depends

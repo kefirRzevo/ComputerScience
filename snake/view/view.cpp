@@ -1,4 +1,4 @@
-#include "guiview.hpp"
+#include "view.hpp"
 
 void GuiView::draw()
 {

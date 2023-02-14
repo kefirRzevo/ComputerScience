@@ -1,13 +1,11 @@
 #include <iostream>
 
 #include "view/view.hpp"
-#include "view/guiview.hpp"
-#include "view/textview.hpp"
 
 int main(int argc, char* argv[])
 {
     if(argc != 2)
-        return 0;
+        return -1;
 
     View* gameView = nullptr;
     if(!strcmp(argv[1], "0"))
