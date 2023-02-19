@@ -1,26 +1,19 @@
 #include <iostream>
 
-#include "view/view.hpp"
+#include "include/view.hpp"
 
 int main(int argc, char* argv[])
 {
-    if(argc != 2)
-        return -1;
+        View* view = nullptr;
+        if(argc > 1)
+                view = View::Get(argv[1]);
+        else
+                view =View::Get();
 
-    View* gameView = nullptr;
-    if(!strcmp(argv[1], "0"))
-    {
-        gameView = new GuiView();
-    }
-    else if(!strcmp(argv[1], "1"))
-    {
-        gameView = new TextView();
-    }
-    else
-    {
-        return 1;
-    }
-    gameView->draw();
+        while(1)
+        {
+                view->Draw();
+        }
     
-    return 0;
+        return 0;
 }
