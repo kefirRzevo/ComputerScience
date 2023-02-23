@@ -4,28 +4,41 @@
 #include <cstdlib>
 #include <unistd.h>
 
-#include "vector.hpp"
+#include "model.hpp"
+
+using pair = std::pair<int, int>;
 
 class View
 {
-    private:
-        iVec size;
+    protected:
+        pair windowSize;
+        bool status;
 
     public:
-        View()
-            {};
+        View() = default;
 
         virtual ~View()
-            {
-                std::cout << "lala";
-		        delete View::Get();
-	        };
+            {}
 
-	    static  View* Get(const std::string& mode = "text");
+	    static View* Get(const std::string& mode = "text");
+
+        pair GetWindowSize() const
+            {
+                return windowSize;
+            }
+
+        bool GetStatus() const
+            {
+                return status;
+            }
 
         virtual void  Draw() const = 0;
-        virtual iVec  GetWinSize() const = 0;
-        virtual void  UpdateWinSize() = 0;
+        virtual void  Redraw() const = 0;
+
+        friend void SigHandler(int signum);
+
+    private:
+        virtual void UpdateWindowSize() = 0;
 };
 
 
@@ -36,59 +49,58 @@ class GuiView: public View
             {};
 
         ~GuiView()
-            {};
+            {}
 
         void Draw() const override
             {
                 std::cout << "Not implemented" << std::endl;
             }
-
-        iVec GetWinSize() const override
+    
+        void Redraw() const override
             {
                 std::cout << "Not implemented" << std::endl;
-                return iVec();
             }
 
-        void  UpdateWinSize() override
+    private:
+        void UpdateWindowSize() override
             {
-
+                std::cout << "Not implemented" << std::endl;
             }
 };
 
 class TextView: public View
 {
-    private:
-
-        unsigned int width;
-        unsigned int height;
-
     public:
-
         TextView();
 
         ~TextView()
             {
+                signal(SIGWINCH, SIG_DFL);
+                signal(SIGINT, SIG_DFL);
                 CarretOn();
             }
 
         void Draw() const override
             {
-                Cls();
-                AddProperties(RED, BLUE);
-                HLine(1, width, 1, '=');
-                HLine(1, width-1, height, '=');
+                pair size = GetWindowSize();
+                int width = size.first;
+                int height = size.second;
+                //std::cout << width << " " << height << std::endl;
+                AddProperties(RED, WHITE);
+                HLine(1, 1, width, '=');
+                HLine(1, height, width, '=');
                 VLine(1, 1, height, '#');
                 VLine(width, 1, height, '#');
                 String(10, 1, "Hello world!");
-                std::cin.get();
+
+                fflush(stdout);
             }
 
-        iVec GetWinSize() const override
+        virtual void  Redraw() const override
             {
-                return iVec(width, height);
+                Clear();
+                Draw();
             }
-
-        void UpdateWinSize() override;
 
         enum Color
             {
@@ -103,24 +115,25 @@ class TextView: public View
             };
 
     private:
-    
+        void UpdateWindowSize() override;
+
+        void AddProperties(enum TextView::Color fg, enum TextView::Color bg) const;
+
         void DeleteProperties()
             {
                 printf("\e[0m");
             }
 
-        void AddProperties(enum TextView::Color fg, enum TextView::Color bg) const;
-
-        void HLine(int x1, int x2, int y, const char sym) const
+        void HLine(int x0, int y0, int len, const char sym) const
             {
-                for(int x = x1; x <= x2; x++)
-                    Symbol(x, y, sym);
+                for(int i = x0; i < x0 + len; i++)
+                    Symbol(i, y0, sym);
             }
 
-        void VLine(int x, int y1, int y2, const char sym) const
+        void VLine(int x0, int y0, int len, const char sym) const
             {
-                for(int y = y1; y <=y2; y++)
-                    Symbol(x, y, sym);
+                for(int i = y0; i < y0 + len; i++)
+                    Symbol(x0, i, sym);
             }
 
         void Symbol(int x, int y, const char sym) const
@@ -135,10 +148,9 @@ class TextView: public View
                 printf("%s", string.c_str());
             }
 
-        void Cls() const
+        void Clear() const
             {
                 printf("\e[2J");
-                fflush(stdout);
             }
 
         void CarretOff() const

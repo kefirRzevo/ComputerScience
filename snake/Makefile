@@ -1,28 +1,55 @@
-CXX = g++
-CXXFLAGS = -Wall -g -O1 -std=c++11
+CC  = gcc
+CXX = g++ -std=c++11
+
+CXXFLAGS = -std=c++11 -I inc -Wall -Wextra
+DBGFLAGS = -fsanitize=address -ggdb3
 
 TARGET = snake
+SRCDIR = src/
 OBJDIR = obj/
-SRCS = main.cpp src/view.cpp
+INCDIR = include/
 
-all: $(TARGET) obj
+SOURCES = main.cpp $(wildcard $(SRCDIR)*.cpp)
+OBJECTS = $(foreach SRC, $(SOURCES), $(basename $(OBJDIR)$(notdir $(SRC))).o)
+DEPENDS = $(patsubst %.o, %.d, $(OBJECTS))
 
-$(TARGET): $(OBJDIR)main.o $(OBJDIR)view.o
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $^
+# .PHONY means these rules get executed even if
+# files of those names exist.
 
-$(OBJDIR)main.o: main.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+all: build #dirs
 
-$(OBJDIR)view.o: src/view.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+build: $(TARGET)
 
-obj:
-	mkdir $(OBJDIR)
+.PHONY: clean dirs
+
+dirs:
+	@ mkdir -p $(OBJDIR)
+	@ mkdir -p $(SRCDIR)
+	@ mkdir -p $(INCDIR)
 
 clean:
-	$(RM) $(OBJDIR)* $(TARGET) depends
+	$(RM) $(OBJECTS) $(DEPENDS) $(TARGET)
 
--include .depends
+$(TARGET): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
-depend:
-	$(CXX) -MM main.cpp src/view.cpp > depends
+-include $(DEPENDS)
+
+$(OBJDIR)main.o: main.cpp
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+$(OBJDIR)%.o: $(SRCDIR)%.cpp
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+
+#define BuildRule =
+#$(OBJDIR)$(basename $(notdir $(1))).o: $(1)
+#	echo $@
+#	$(CXX) $< -c -o $@ $(CXXFLAGS)
+#endef
+
+#-include depends
+
+#$(eval $(call BuildRule,main))
+
+#$(foreach SRC, $(SOURCES), $(eval $(call BuildRule, $(SRC))))
