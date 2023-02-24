@@ -11,11 +11,13 @@ int main(int argc, char* argv[])
         else
                 view = View::Get();
 
-        view->Draw();
+        Model model({50, 50});
+        view->SetModel(&model);
+
         while(1)
         {
-                view->Redraw();
-                usleep(100000);
+                view->Draw();
+                usleep(500000);
                 if(!view->GetStatus())
                         break;
         }

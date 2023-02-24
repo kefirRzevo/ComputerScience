@@ -4,8 +4,9 @@
 #include <vector>
 #include <list>
 
-using pair        = std::pair<int, int>;
-using Coordinate  = pair;
+using size        = std::pair<size_t, size_t>;
+using sizes       = std::vector<size_t>;
+using Coordinate  = std::pair<int, int>;
 using Coordinates = std::list<Coordinate>;
 
 class Rabbit
@@ -35,14 +36,14 @@ class Rabbit
         ~Rabbit()
             {};
 
-        Coordinate GetCoordinate() const
+        Coordinate& GetCoordinate()
             {
                 return coordinate;
             }
 
-        void SetCoordinate(const Coordinate& coord)
+        const Coordinate& SeeCoordinate() const
             {
-                coordinate = coord;
+                return coordinate;
             }
 };
 
@@ -58,39 +59,36 @@ class Snake
 
         Snake(const Snake& snake) = default;
 
+        Snake& operator=(const Snake& snake)
+            {
+                coordinates = snake.coordinates;
+                direction = snake.direction;
+                return *this;
+            }
+
         Snake() = default;
 
         ~Snake()
             {};
 
-        Coordinates GetCoordinates() const
+        Coordinates& GetCoordinates()
             {
                 return coordinates;
             }
 
-        Coordinate GetDirection() const
+        Coordinate& GetDirection()
             {
                 return direction;
             }
 
-        void SetCoordinates(const Coordinates& coords)
+        const Coordinates& SeeCoordinates() const
             {
-                coordinates = coords;
+                return coordinates;
             }
 
-        void SetDirection(const Coordinate& dir)
+        const Coordinate& SeeDirection() const
             {
-                direction = dir;
-            }
-
-        void PushSection(const Coordinate& coord)
-            {
-                coordinates.push_front(coord);
-            }
-
-        void PopSection()
-            {
-                coordinates.pop_back();
+                return direction;
             }
 };
 
@@ -102,35 +100,25 @@ class Model
     private:
         Rabbits rabbits;
         Snakes  snakes;
-        pair polygonSize;
+        size polygonSize;
 
     public:
         Model() = delete;
 
-        Model(pair polySize):
+        Model(size polySize, int nSnakes = 1):
             polygonSize(polySize)
             {
-                int nRabbits  = 0.02*polygonSize.first*polygonSize.second;
-                int snakeSize = 0.01*polygonSize.first*polygonSize.second;
-                Randomize(nRabbits, snakeSize);
+                int nRabbits    = 10;
+                sizes snakeSizes(nSnakes, 8);
+                Randomize(nRabbits, snakeSizes);
             };
 
         ~Model()
             {};
         
-        void Randomize(int nRabbits, int snakeSize);
+        void Randomize(size_t nRabbits, sizes snakeSizes);
 
-        void AddRabbit(const Rabbit& rabbit)
-            {
-                rabbits.push_back(rabbit);
-            }
-
-        void AddSnake(const Snake& snake)
-            {
-                snakes.push_back(snake);
-            }
-
-        void Update(const pair& newPolygonSize);
+        void Update();
 
         Rabbits& GetRabbits()
             {
@@ -140,5 +128,10 @@ class Model
         Snakes& GetSnakes()
             {
                 return snakes;
+            }
+
+        size GetPolygonSize() const
+            {
+                return polygonSize;
             }
 };
