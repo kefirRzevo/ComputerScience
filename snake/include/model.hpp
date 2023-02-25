@@ -105,7 +105,7 @@ class Model
     public:
         Model() = delete;
 
-        Model(size polySize, int nSnakes = 1):
+        Model(size polySize, int nSnakes = 3):
             polygonSize(polySize)
             {
                 int nRabbits    = 10;

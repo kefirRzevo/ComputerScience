@@ -62,10 +62,10 @@ Coordinate TextView::ModelCoordToView(const Coordinate& modelCoord) const
     const size& windowSize = GetWindowSize();
     Coordinate viewCoord = {-1, 0};
 
-    if(modelCoord.first > polygonSize.first || modelCoord.first < 0)
+    if(modelCoord.first > static_cast<int>(polygonSize.first) || modelCoord.first < 0)
         return viewCoord;
 
-    if(modelCoord.second > polygonSize.second || modelCoord.second < 0)
+    if(modelCoord.second > static_cast<int>(polygonSize.second) || modelCoord.second < 0)
         return viewCoord;
 
     double relativeX = (double)modelCoord.first/polygonSize.first;
@@ -85,9 +85,10 @@ void TextView::DrawRabbits() const
         if(rabbitViewCoord.first == -1)
             continue;
 
-        Symbol(rabbitViewCoord.first, rabbitViewCoord.second, '@');
+        Symbol(rabbitViewCoord, '@');
     }
 }
+
 
 void TextView::DrawSnakes() const
 {
@@ -98,21 +99,44 @@ void TextView::DrawSnakes() const
         const Coordinate& viewTail = ModelCoordToView(snakeCoords.back());
         const Coordinate& viewHead = ModelCoordToView(snakeCoords.front());
 
-        int i = 0;
-        for(const auto& coord: snake.SeeCoordinates())
+        for(auto i = snakeCoords.begin(); i != snakeCoords.end(); i++)
         {
-            if(i != 0 && i != snake.SeeCoordinates().size())
+            const auto& j = std::next(i);
+
+            if(j == snakeCoords.end())
+                continue;
+
+            Coordinate jView = ModelCoordToView(*j);
+            Coordinate iView = ModelCoordToView(*i);
+
+            if(iView.first == -1)
+                continue;
+
+            if((*i).first == (*j).first && (abs(iView.second - jView.second) != 1))
             {
-                Coordinate viewCoord = ModelCoordToView(coord);
-                Symbol(viewCoord.first, viewCoord.second, '?');
+                int min = std::min(iView.second, jView.second);
+                int max = std::max(iView.second, jView.second);
+
+                for(int k = min + 1; k < max; k++)
+                    Symbol({iView.first, k}, '?');
             }
-            i++;
+            else if((*i).second == (*j).second && (abs(iView.first - jView.first) != 1))
+            {
+                int min = std::min(iView.first, jView.first);
+                int max = std::max(iView.first, jView.first); 
+
+                for(int k = min + 1; k < max; k++)
+                    Symbol({k, iView.second}, '?');
+            }
+
+            Symbol(iView, '?');
         }
 
-        Symbol(viewTail.first, viewTail.second, 'T');
-        //fout1 << "tail " << tail.first << " " << tail.second << std::endl;
-        Symbol(viewHead.first, viewHead.second, 'H');
-        //fout1 << "head " << head.first << " " << head.second << std::endl;
+        if(viewTail.first != -1)
+            Symbol(viewTail, 'T');
+
+        if(viewHead.first != -1)
+            Symbol(viewHead, 'H');
     }
 }
 

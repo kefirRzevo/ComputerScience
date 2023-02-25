@@ -76,18 +76,18 @@ class TextView: public View
         void HLine(int x0, int y0, int len, const char sym) const
             {
                 for(int i = x0; i < x0 + len; i++)
-                    Symbol(i, y0, sym);
+                    Symbol({i, y0}, sym);
             }
 
         void VLine(int x0, int y0, int len, const char sym) const
             {
                 for(int i = y0; i < y0 + len; i++)
-                    Symbol(x0, i, sym);
+                    Symbol({x0, i}, sym);
             }
 
-        void Symbol(int x, int y, const char sym) const
+        void Symbol(Coordinate coord, const char sym) const
             {
-                printf("\e[%d;%dH", y, x);
+                printf("\e[%d;%dH", coord.second, coord.first);
                 printf("%c", sym);
             }
 
