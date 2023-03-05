@@ -1,36 +1,41 @@
 #include "../include/model.hpp"
 
-#include<fstream>
+//#include<fstream>
+//std::ofstream fout("dump.txt");
 
-std::ofstream fout1("dump.txt");
-int step = 0;
+//static int step = 0;
+
+//--------------------PROTOTYPES--------------------
 
 bool operator==(const Coordinate& lhs, const Coordinate& rhs);
 
-static void Dump(Snakes& snakes);
+//static void
+//Dump(Snakes& snakes);
 
-static Coordinate GetRandomPoint(const size& polygonSize);
+static Coordinate
+GetRandomPoint(const size& polygonSize);
 
-static Coordinate GetRandomDirection();
-
-static bool Impacts(const Coordinates& coords1, const Coordinates& coords2,
+static bool
+Impacts(const Coordinates& coords1, const Coordinates& coords2,
                                                 Coordinates* impacts);
 
-static bool SnakeImpacts(const Snakes& snakes, Coordinates* impacts);
+static bool
+SnakeImpacts(const Snakes& snakes, Coordinates* impacts);
 
-static bool RabbitImpacts(const Snakes& snakes, const Coordinates& rabbitCoords, 
-                                                Coordinates* impacts);
-
-static void GenerateSnake(Snake& snake, size_t snakeSize, 
-                                        const size& polygonSize);
+static bool
+RabbitImpacts(const Snakes& snakes, const Coordinates& rabbitCoords, Coordinates* impacts);
 
 
-bool operator==(const Coordinate& lhs, const Coordinate& rhs)
+//--------------------GENERAL--------------------
+
+bool
+operator==(const Coordinate& lhs, const Coordinate& rhs)
 {
     return lhs.first == rhs.first && lhs.second == rhs.second;
 }
 
-static Coordinate GetRandomPoint(const size& polygonSize)
+static
+Coordinate GetRandomPoint(const size& polygonSize)
 {
     Coordinate coord = {};
     coord.first  = std::rand() % polygonSize.first + 1;
@@ -39,18 +44,20 @@ static Coordinate GetRandomPoint(const size& polygonSize)
     return coord;
 }
 
-static Coordinate GetRandomDirection()
+
+Model::Model(size polySize, int nSnakes)
 {
-    Coordinate coord = {};
-    int x = 2 * (std::rand() % 2) - 1; // 1; -1
-    int y = std::rand() % 2;           // 0;  1
-    coord.first  = x*y;
-    coord.second = x-x*y;
+    polygonSize = polySize;
+    int nRabbits = 10;
+    sizes snakeSizes(nSnakes, 8);
+    Randomize(nRabbits, snakeSizes);
+};
 
-    return coord;
-}
 
-static bool Impacts(const Coordinates& coords1, const Coordinates& coords2,
+//--------------------IMPACTS--------------------
+
+static bool
+Impacts(const Coordinates& coords1, const Coordinates& coords2,
                                                 Coordinates* impacts)
 {
     bool impact = false;
@@ -71,7 +78,8 @@ static bool Impacts(const Coordinates& coords1, const Coordinates& coords2,
     return impact;
 }
 
-static bool SnakeImpacts(const Snakes& snakes, Coordinates* impacts)
+static bool
+SnakeImpacts(const Snakes& snakes, Coordinates* impacts)
 {
     size_t nSnakes = snakes.size();
 
@@ -81,50 +89,98 @@ static bool SnakeImpacts(const Snakes& snakes, Coordinates* impacts)
     bool impact = false;
     for(size_t i = 0; i < nSnakes; i++)
         for(size_t j = i + 1; j < nSnakes; j++)
-            if(Impacts(snakes[i].SeeCoordinates(), snakes[j].SeeCoordinates(), impacts))
+            if(Impacts(snakes[i].GetCoordinates(), snakes[j].GetCoordinates(), impacts))
                 impact = true;
 
     return impact;
 }
 
-static bool RabbitImpacts(const Snakes& snakes, const Coordinates& rabbitCoords, 
+static bool
+RabbitImpacts(const Snakes& snakes, const Coordinates& rabbitCoords, 
                                                 Coordinates* impacts)
 {
     bool impact = false;
     for(const auto& i: snakes)
-        if(Impacts(rabbitCoords, i.SeeCoordinates(), impacts))
+        if(Impacts(rabbitCoords, i.GetCoordinates(), impacts))
             impact = true;
 
     return impact;
 }
 
-static void GenerateSnake(Snake& snake, size_t snakeSize, 
-                                        const size& polygonSize)
-{
-    Coordinate  snakeSection = {};
-    Coordinates snakeSections = {};
 
-    Coordinate snakeDirection = GetRandomDirection();
+//--------------------SNAKE--------------------
+
+void
+Snake::SetDirection(Direction dir)
+{
+    switch (dir)
+    {
+        case UP:
+            direction = {0, 1};
+            break;
+        case RIGHT:
+            direction = {1, 0};
+            break;
+        case DOWN:
+            direction = {0, -1};
+            break;
+        case LEFT:
+        default:
+            direction = {-1, 0};
+            break;
+    }
+}
+
+void
+Snake::TurnLeft()
+{
+    direction = {direction.second, -direction.first};
+}
+
+void
+Snake::TurnRight()
+{
+    direction = {-direction.second, direction.first};
+}
+
+void
+Snake::Generate(size_t snakeSize, const size& polygonSize)
+{
+    coordinates.clear();
+
+    SetDirection(Direction(std::rand() % 4));
     Coordinate snakeTail = GetRandomPoint(polygonSize);
+    Coordinate snakeSection = {};
 
     snakeSection.first  = snakeTail.first;
     snakeSection.second = snakeTail.second;
-    
+
     for(size_t j = 0; j < snakeSize; j++)
     {
-        if(!snakeDirection.first)
-            snakeSection.second = snakeTail.second + j * snakeDirection.second;
+        if(!direction.first)
+            snakeSection.second = snakeTail.second + j * direction.second;
         else
-            snakeSection.first = snakeTail.first + j * snakeDirection.first;
+            snakeSection.first = snakeTail.first + j * direction.first;
 
-        snakeSections.push_front(snakeSection);
+        coordinates.push_front(snakeSection);
     }
-
-    snake.GetDirection() = snakeDirection;
-    snake.GetCoordinates() = snakeSections;
 }
 
-void Model::Randomize(size_t nRabbits, sizes snakeSizes)
+void
+Snake::Update(const Coordinate& polygonSize)
+{
+    Coordinate oldHead = coordinates.front();
+    Coordinate newHead = {  oldHead.first + direction.first,
+                            oldHead.second + direction.second};
+    coordinates.pop_back();
+    coordinates.push_front(newHead);
+}
+
+
+//--------------------MODEL--------------------
+
+void
+Model::Randomize(size_t nRabbits, sizes snakeSizes)
 {
     rabbits.clear();
     snakes.clear();
@@ -134,55 +190,56 @@ void Model::Randomize(size_t nRabbits, sizes snakeSizes)
     {
         do
         {
-            GenerateSnake(snake, snakeSize, polygonSize);
+            snake.Generate(snakeSize, polygonSize);
         } while (SnakeImpacts(snakes, nullptr));
 
         snakes.push_back(snake);
     }
 
-    Coordinates rabbitsCoords = {};
     Coordinate  rabbitCoord = {};
     for(size_t i = 0; i < nRabbits; i++)
     {
         do
         {
-            rabbitsCoords.clear();
             rabbitCoord = GetRandomPoint(polygonSize);
-            rabbitsCoords.push_front(rabbitCoord);
-        } while (RabbitImpacts(snakes, rabbitsCoords, nullptr) ||
+        } while (RabbitImpacts(snakes, {rabbitCoord}, nullptr) ||
                  (std::find(rabbits.begin(), rabbits.end(), rabbitCoord) != rabbits.end()));
 
         rabbits.push_back({rabbitCoord});
     }
 }
 
-void Model::Update()
+void
+Model::Update()
 {
     //Dump(snakes);
     for(auto& snake: snakes)
     {
-        Coordinates& snakeCoords = snake.GetCoordinates();
-        Coordinate oldHead = snakeCoords.front();
-        Coordinate newHead = {oldHead.first  + snake.SeeDirection().first,
-                              oldHead.second + snake.SeeDirection().second};
-        snakeCoords.pop_back();
-        snakeCoords.push_front(newHead);
+        snake.Update(polygonSize);
     }
 }
 
-static void Dump(Snakes& snakes)
+
+//--------------------FOR DEBUG--------------------
+
+/*
+static void
+Dump(Snakes& snakes)
 {
     int i = 0;
-    fout1 << "iterator " << step++ << std::endl;
+    fout << "iterator " << step++ << std::endl;
     for(const auto& snake: snakes)
     {
-        fout1 << "Snake: " << i << std::endl;
+        fout << "Snake: " << i << std::endl;
 
-        for(const auto& j: snake.SeeCoordinates())
+        for(const auto& j: snake.GetCoordinates())
         {
-            fout1 << j.first << " " << j.second << ";\t";
+            fout << j.first << " " << j.second << ";\t";
         }
-        fout1 << std::endl;
+        fout << std::endl;
         i++;
     }
 }
+*/
+
+//----------------------------------------//

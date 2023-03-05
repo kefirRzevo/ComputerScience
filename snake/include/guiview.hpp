@@ -12,7 +12,7 @@ class GuiView: public View
         ~GuiView()
             {}
 
-        void Draw() const override
+        void Run() override
             {
                 std::cout << "Not implemented" << std::endl;
             }

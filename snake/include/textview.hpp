@@ -2,10 +2,10 @@
 
 #include "view.hpp"
 
-
 class TextView: public View
 {
     public:
+
         enum Color
             {
                 BLACK   = 0,
@@ -20,22 +20,9 @@ class TextView: public View
 
         TextView();
 
-        ~TextView()
-            {
-                signal(SIGWINCH, SIG_DFL);
-                signal(SIGINT, SIG_DFL);
-                CarretOn();
-                DeleteProperties();
-            }
+        ~TextView();
 
-        void Draw() const override
-            {
-                Clear();
-                DrawRabbits();
-                DrawSnakes();
-                GetModel()->Update();
-                DrawFrame();
-            }
+        void Run() override;
 
         size GetWindowSize() const override
             {
@@ -48,15 +35,13 @@ class TextView: public View
             }
 
     private:
+
         size windowSize;
         bool status;
 
         void UpdateWindowSize() override;
 
-        void UpdateStatus() override
-            {
-                status = !status;
-            }
+        void UpdateStatus() override;
 
         void DrawRabbits() const;
 
@@ -64,51 +49,27 @@ class TextView: public View
 
         void DrawFrame() const;
 
+        void PollOnKey() const;
+
         Coordinate ModelCoordToView(const Coordinate& modelCoord) const;
 
         void AddProperties(enum TextView::Color fg, enum TextView::Color bg) const;
 
-        void DeleteProperties() const
-            {
-                printf("\e[0m");
-            }
+        void HLine(int x0, int y0, int len, const char sym) const;
 
-        void HLine(int x0, int y0, int len, const char sym) const
-            {
-                for(int i = x0; i < x0 + len; i++)
-                    Symbol({i, y0}, sym);
-            }
+        void VLine(int x0, int y0, int len, const char sym) const;
 
-        void VLine(int x0, int y0, int len, const char sym) const
-            {
-                for(int i = y0; i < y0 + len; i++)
-                    Symbol({x0, i}, sym);
-            }
+        void Symbol(Coordinate coord, const char sym) const;
 
-        void Symbol(Coordinate coord, const char sym) const
-            {
-                printf("\e[%d;%dH", coord.second, coord.first);
-                printf("%c", sym);
-            }
+        void String(int x, int y, const std::string& string) const;
 
-        void String(int x, int y, const std::string& string) const
-            {
-                printf("\e[%d;%dH", y, x);
-                printf("%s", string.c_str());
-            }
+        void Clear() const;
 
-        void Clear() const
-            {
-                printf("\e[2J");
-            }
+        void CarretOff() const;
 
-        void CarretOff() const
-            {
-                printf("\e[?25l");
-            }
+        void CarretOn() const;
 
-        void CarretOn() const
-            {
-                printf("\e[?25h");
-            }
+        void TermiosPropsOn() const;
+
+        void TermiosPropsOff() const;
 };

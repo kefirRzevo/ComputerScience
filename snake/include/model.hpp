@@ -15,12 +15,10 @@ class Rabbit
         Coordinate coordinate;
 
     public:
+        Rabbit() = default;
+
         Rabbit(const Coordinate& coord):
             coordinate(coord) {}
-
-        Rabbit(const Rabbit& rab) = default;
-
-        Rabbit() = default;
 
         Rabbit& operator=(const Coordinate& coord)
             {
@@ -33,15 +31,12 @@ class Rabbit
                 return coordinate == rhs.coordinate;
             }
 
-        ~Rabbit()
-            {};
-
-        Coordinate& GetCoordinate()
+        Coordinate& SetCoordinate()
             {
                 return coordinate;
             }
 
-        const Coordinate& SeeCoordinate() const
+        const Coordinate& GetCoordinate() const
             {
                 return coordinate;
             }
@@ -54,39 +49,43 @@ class Snake
         Coordinate  direction;
 
     public:
-        Snake(const Coordinates& coords, const Coordinate& dir):
-            coordinates(coords), direction(dir) {}
-
-        Snake(const Snake& snake) = default;
-
-        Snake& operator=(const Snake& snake)
+        enum Direction
             {
-                coordinates = snake.coordinates;
-                direction = snake.direction;
-                return *this;
-            }
+                UP    = 0,
+                RIGHT = 1,
+                DOWN  = 2,
+                LEFT  = 3,
+            };
 
         Snake() = default;
 
-        ~Snake()
-            {};
+        Snake(const Coordinates& coords, Direction dir):
+            coordinates(coords)
+            {
+                SetDirection(dir);
+            }
 
-        Coordinates& GetCoordinates()
+        void Generate(size_t snakeSize, const size& polygonSize);
+
+        void Update(const Coordinate& polygonSize);
+
+        Coordinates& SetCoordinates()
             {
                 return coordinates;
             }
 
-        Coordinate& GetDirection()
-            {
-                return direction;
-            }
-
-        const Coordinates& SeeCoordinates() const
+        const Coordinates& GetCoordinates() const
             {
                 return coordinates;
             }
 
-        const Coordinate& SeeDirection() const
+        void SetDirection(Direction dir);
+
+        void TurnLeft();
+
+        void TurnRight();
+
+        const Coordinate& GetDirection() const
             {
                 return direction;
             }
@@ -99,39 +98,50 @@ class Model
 {
     private:
         Rabbits rabbits;
-        Snakes  snakes;
+        Snakes snakes;
         size polygonSize;
 
     public:
         Model() = delete;
 
-        Model(size polySize, int nSnakes = 3):
-            polygonSize(polySize)
-            {
-                int nRabbits    = 10;
-                sizes snakeSizes(nSnakes, 8);
-                Randomize(nRabbits, snakeSizes);
-            };
+        Model(size polySize, int nSnakes = 2);
 
-        ~Model()
-            {};
-        
         void Randomize(size_t nRabbits, sizes snakeSizes);
 
         void Update();
 
-        Rabbits& GetRabbits()
+        const Rabbits& GetRabbits() const
             {
                 return rabbits;
             }
 
-        Snakes& GetSnakes()
+        Rabbits& SetRabbits()
+            {
+                return rabbits;
+            }
+
+        const Snakes& GetSnakes() const
             {
                 return snakes;
+            }
+
+        Snakes& SetSnakes()
+            {
+                return snakes;
+            }
+
+        Snake* GetSnake(size_t index)
+            {
+                return (index < snakes.size() ? &snakes[index] : nullptr);
             }
 
         size GetPolygonSize() const
             {
                 return polygonSize;
+            }
+
+        void SetPolygonSize(size size_)
+            {
+                polygonSize = size_;
             }
 };

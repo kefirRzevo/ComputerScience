@@ -3,19 +3,22 @@
 #include "../include/guiview.hpp"
 
 
-View* View::Get(const std::string& mode)
+//--------------------DEFINITIONS--------------------
+
+View*
+View::Get(const std::string& mode)
 {
-        static View* view;
+        static std::unique_ptr<View> view = nullptr;
 
         if(view)
-                return view;
+                return view.get();
 
         if(!mode.compare("gui"))
-                view = new GuiView();
-	else if(!mode.compare("text"))
-                view = new TextView();
-        else
-                view = nullptr;
+                view.reset(new GuiView());
+        else if(!mode.compare("text"))
+                view.reset(new TextView());
 
-        return view;	    
+        return view.get();   
 }
+
+//----------------------------------------//
