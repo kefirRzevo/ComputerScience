@@ -1,12 +1,11 @@
 #pragma once
 
+
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>
 
 #include "model.hpp"
-
-using size = std::pair<size_t, size_t>;
 
 
 class View
@@ -20,9 +19,12 @@ class View
 
 	    static View* Get(const std::string& mode = "text");
 
-        virtual void Run() = 0;
-        virtual size GetWindowSize() const = 0;
-        virtual bool GetStatus() const = 0;
+        virtual void RunLoop() = 0;
+    
+        Size GetWindowSize() const 
+            {
+                return windowSize;
+            }
 
         Model* GetModel() const
             {
@@ -34,18 +36,26 @@ class View
                 model = mod;
             }
 
-        void SetOnKey(std::function<void(int)> onKey)
+        void SetOnKey(std::function<void(int)> OnKey)
             {
-                listenersOnKey.push_back(onKey);
+                listenersOnKey.push_back(OnKey);
+            }
+
+        void SetOnTimer(std::function<void(int)> OnTimer)
+            {
+                listenersOnTimer.push_back(OnTimer);
             }
 
     protected:
 
         Model* model;
-        std::vector<std::function<void(int)>> listenersOnKey;
+        bool finished;
+        Size windowSize;
 
-        virtual void UpdateWindowSize() = 0;
-        virtual void UpdateStatus() = 0;
+        std::vector<std::function<void(int)>> listenersOnKey;
+        std::vector<std::function<void(int)>> listenersOnTimer;
 
         friend void SigHandler(int signum);
+
+        virtual void UpdateWindowSize() = 0;
 };

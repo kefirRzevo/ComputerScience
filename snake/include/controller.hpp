@@ -13,9 +13,10 @@ class Controller
 
     public:
 
-        Controller() = default;
+        Controller(Snake* snake_):
+            snake(snake_) {}
 
-        Snake* GetSnake() const
+        Snake* GetSnake()
             {
                 return snake;
             }
@@ -30,13 +31,22 @@ class Controller
 
 class HumanController: public Controller
 {
+    private:
+    
+        int leftKey;
+        int rightKey;
+        int upKey;
+        int downKey;
+
     public:
 
-        HumanController(Snake* snake_)
+        HumanController(Snake* snake_, int left, int right, int up, int down):
+            Controller(snake_),
+            leftKey(left), rightKey(right), upKey(up), downKey(down)
             {
-                SetSnake(snake_);
                 View* view = View::Get();
-                view->SetOnKey(std::bind(&HumanController::OnKey, this, std::placeholders::_1));
+                view->SetOnKey(std::bind(&HumanController::OnKey, this,
+                               std::placeholders::_1));
             }
 
         void OnKey(int key) override;

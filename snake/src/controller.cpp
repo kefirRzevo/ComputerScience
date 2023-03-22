@@ -8,18 +8,44 @@ void
 HumanController::OnKey(int key)
 {
     Snake* snake = GetSnake();
+    Snake::Direction snakeDir = snake->GetDirection();
 
-    switch (key)
+    if(key == leftKey)
     {
-        case 'a':
-            snake->TurnLeft();
-            break;
-        
-        case 'd':
-            snake->TurnRight();
-            break;
+        if( snakeDir == Snake::Direction::LEFT ||
+            snakeDir == Snake::Direction::RIGHT )
+            return;
 
-        default:
-            break;
+        snake->SetDirection(Snake::Direction::LEFT);
+        return;
+    }
+    else if(key == rightKey)
+    {
+        if( snakeDir == Snake::Direction::LEFT ||
+            snakeDir == Snake::Direction::RIGHT )
+            return;
+
+        snake->SetDirection(Snake::Direction::RIGHT);
+        return;
+    }
+    else if(key == upKey)
+    {
+        if( snakeDir == Snake::Direction::DOWN ||
+            snakeDir == Snake::Direction::UP )
+            return;
+
+        snake->SetDirection(Snake::Direction::DOWN);
+        return;
+    }
+    else if(key == downKey)
+    {
+        if( snakeDir == Snake::Direction::DOWN ||
+            snakeDir == Snake::Direction::UP )
+            return;
+
+        snake->SetDirection(Snake::Direction::UP);
+        return;
     }
 }
+
+

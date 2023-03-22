@@ -5,18 +5,18 @@
 
 int main(int argc, char* argv[])
 {
-        View* view = nullptr;
+    View* view = nullptr;
 
-        if(argc > 1)
-                view = View::Get(argv[1]);
-        else
-                view = View::Get();
+    if(argc > 1)
+        view = View::Get(argv[1]);
+    else
+        view = View::Get();
 
-        Model model({50, 50}, 1);
-        view->SetModel(&model);
-        HumanController(model.GetSnake(0));
+    Model model({50, 50}, Model::GameMode::MULTI);
+    view->SetModel(&model);
+    HumanController(model.GetSnake(0), 'a', 'd', 'w', 's');
 
-        view->Run();
+    view->RunLoop();
 
-        return 0;
+    return 0;
 }

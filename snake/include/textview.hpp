@@ -1,9 +1,20 @@
 #pragma once
 
+
 #include "view.hpp"
+
+#include <termios.h>
+
 
 class TextView: public View
 {
+    private:
+
+        bool frameFull;
+        Size frameSize;
+        Coordinate upLeftCorner;
+        struct termios termis_attr;
+
     public:
 
         enum Color
@@ -22,54 +33,45 @@ class TextView: public View
 
         ~TextView();
 
-        void Run() override;
-
-        size GetWindowSize() const override
-            {
-                return windowSize;
-            }
-
-        bool GetStatus() const override
-            {
-                return status;
-            }
-
-    private:
-
-        size windowSize;
-        bool status;
-
-        void UpdateWindowSize() override;
-
-        void UpdateStatus() override;
+        void RunLoop() override;
 
         void DrawRabbits() const;
 
         void DrawSnakes() const;
 
-        void DrawFrame() const;
+        void DrawFrame();
 
-        void PollOnKey() const;
+    private:
 
-        Coordinate ModelCoordToView(const Coordinate& modelCoord) const;
+        void RedrawRabbits() const;
 
-        void AddProperties(enum TextView::Color fg, enum TextView::Color bg) const;
+        void RedrawSnakes() const;
 
-        void HLine(int x0, int y0, int len, const char sym) const;
+        void AddProperties(enum TextView::Color fg, 
+                           enum TextView::Color bg) const;
 
-        void VLine(int x0, int y0, int len, const char sym) const;
+        void HLine(int x0, int y0, int len, int sym) const;
 
-        void Symbol(Coordinate coord, const char sym) const;
+        void VLine(int x0, int y0, int len, int sym) const;
+
+        void Symbol(Coordinate coord, int sym) const;
 
         void String(int x, int y, const std::string& string) const;
 
         void Clear() const;
 
+
         void CarretOff() const;
 
         void CarretOn() const;
 
-        void TermiosPropsOn() const;
 
-        void TermiosPropsOff() const;
+        void TermiosPropsOn();
+
+        void TermiosPropsOff();
+
+
+        void PollOnKey();
+
+        void UpdateWindowSize() override;
 };

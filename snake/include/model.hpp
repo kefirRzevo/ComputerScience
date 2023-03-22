@@ -1,147 +1,206 @@
 #pragma once
 
+
 #include <iostream>
 #include <vector>
 #include <list>
 
-using size        = std::pair<size_t, size_t>;
-using sizes       = std::vector<size_t>;
+class Rabbit;
+class Snake;
+class CleverSnake;
+class Model;
+
+using Size        = std::pair<size_t, size_t>;
 using Coordinate  = std::pair<int, int>;
 using Coordinates = std::list<Coordinate>;
+using Rabbits = std::list<Rabbit* >;
+using Snakes  = std::vector<Snake* >;
 
-class Rabbit
+
+class Rabbit: public Coordinate
 {
     private:
-        Coordinate coordinate;
+
+        size_t score;
+        bool   killed;
 
     public:
-        Rabbit() = default;
 
-        Rabbit(const Coordinate& coord):
-            coordinate(coord) {}
-
-        Rabbit& operator=(const Coordinate& coord)
+        Rabbit(const Coordinate& coord_ = {}, int score_ = 1):
+            score(score_), killed(false)
             {
-                coordinate = coord;
-                return *this;
+                static_cast<Coordinate>(*this) = coord_;
             }
+
+        bool RandomGenerate(Model* model, size_t score_ = 1);
 
         bool operator==(const Rabbit& rhs)
             {
-                return coordinate == rhs.coordinate;
+                return static_cast<Coordinate>(*this) == rhs.GetCoordinate();
             }
 
-        Coordinate& SetCoordinate()
+        void SetCoordinate(const Coordinate& coord_)
             {
-                return coordinate;
+                this->first  = coord_.first;
+                this->second = coord_.second;
             }
 
-        const Coordinate& GetCoordinate() const
+        Coordinate GetCoordinate() const
             {
-                return coordinate;
+                return static_cast<Coordinate>(*this);
+            }
+
+        void SetScore(int score_)
+            {
+                score = score_;
+            }
+
+        int GetScore() const
+            {
+                return score;
+            }
+
+        void Kill()
+            {
+                killed = true;
+            }
+
+        void Hill()
+            {
+                killed = false;
+            }
+
+        bool IsKilled() const
+            {
+                return killed;
             }
 };
 
+
 class Snake
 {
+    public:
+
+        enum Direction
+        {
+            LEFT  = 0,
+            RIGHT = 1,
+            UP    = 2,
+            DOWN  = 3,
+        };
+
     private:
-        Coordinates coordinates;
-        Coordinate  direction;
+
+        Coordinates coords;
+        Direction dir;
+        size_t scoreReserved = 0;
 
     public:
-        enum Direction
-            {
-                UP    = 0,
-                RIGHT = 1,
-                DOWN  = 2,
-                LEFT  = 3,
-            };
 
-        Snake() = default;
+        Snake(const Coordinates& coords_ = {}, Direction dir_ = Direction::UP):
+            coords(coords_), dir(dir_)
+            {}
 
-        Snake(const Coordinates& coords, Direction dir):
-            coordinates(coords)
+        bool RandomGenerate(Model* model, size_t snakeSize = 8);
+
+        bool Update(Model* model);
+
+        void Feed(Rabbit* rabbit)
             {
-                SetDirection(dir);
+                scoreReserved += rabbit->GetScore();
             }
 
-        void Generate(size_t snakeSize, const size& polygonSize);
-
-        void Update(const Coordinate& polygonSize);
-
-        Coordinates& SetCoordinates()
+        void SetCoordinates(const Coordinates& coords_)
             {
-                return coordinates;
+                coords = coords_;
             }
 
         const Coordinates& GetCoordinates() const
             {
-                return coordinates;
+                return coords;
             }
 
-        void SetDirection(Direction dir);
-
-        void TurnLeft();
-
-        void TurnRight();
-
-        const Coordinate& GetDirection() const
+        void SetDirection(Direction dir_)
             {
-                return direction;
+                dir = dir_;
+            }
+
+        Direction GetDirection() const
+            {
+                return dir;
+            }
+
+        Coordinate GetCoordinateDirection() const;
+
+        const Coordinate& GetFront() const
+            {
+                return coords.front();
+            }
+
+        const Coordinate& GetBack() const
+            {
+                return coords.back();
             }
 };
 
-using Rabbits = std::vector<Rabbit>;
-using Snakes  = std::vector<Snake>;
 
 class Model
 {
+    public:
+
+        enum class GameMode
+        {
+            SINGULAR,
+            MULTI,
+        };
+
     private:
-        Rabbits rabbits;
-        Snakes snakes;
-        size polygonSize;
+
+        GameMode mode;
+        bool finished;
+        int winner;
 
     public:
-        Model() = delete;
 
-        Model(size polySize, int nSnakes = 2);
+        Rabbits rabbits;
+        Snakes snakes;
 
-        void Randomize(size_t nRabbits, sizes snakeSizes);
+    private:
+
+        Size polygonSize;
+
+    public:
+
+        Model(Size polygonSize_, GameMode mode_);
+
+        ~Model();
 
         void Update();
 
-        const Rabbits& GetRabbits() const
-            {
-                return rabbits;
-            }
-
-        Rabbits& SetRabbits()
-            {
-                return rabbits;
-            }
-
-        const Snakes& GetSnakes() const
-            {
-                return snakes;
-            }
-
-        Snakes& SetSnakes()
-            {
-                return snakes;
-            }
-
         Snake* GetSnake(size_t index)
             {
-                return (index < snakes.size() ? &snakes[index] : nullptr);
+                return (index < snakes.size() ? snakes[index] : nullptr);
             }
 
-        size GetPolygonSize() const
+        Size GetPolygonSize() const
             {
                 return polygonSize;
             }
 
-        void SetPolygonSize(size size_)
+        void SetPolygonSize(Size size_)
             {
                 polygonSize = size_;
             }
+
+        bool GameIsFinished() const
+            {
+                return finished;
+            }
+
+        int GetWinner() const
+            {
+                return winner;
+            }
+
+        void OnTimer(int passedTime);
 };

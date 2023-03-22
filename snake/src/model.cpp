@@ -1,4 +1,5 @@
 #include "../include/model.hpp"
+#include "../include/view.hpp"
 
 //#include<fstream>
 //std::ofstream fout("dump.txt");
@@ -7,216 +8,242 @@
 
 //--------------------PROTOTYPES--------------------
 
-bool operator==(const Coordinate& lhs, const Coordinate& rhs);
 
 //static void
 //Dump(Snakes& snakes);
 
 static Coordinate
-GetRandomPoint(const size& polygonSize);
+GetRandomPoint(const Size& polygonSize);
 
-static bool
-Impacts(const Coordinates& coords1, const Coordinates& coords2,
-                                                Coordinates* impacts);
-
-static bool
-SnakeImpacts(const Snakes& snakes, Coordinates* impacts);
-
-static bool
-RabbitImpacts(const Snakes& snakes, const Coordinates& rabbitCoords, Coordinates* impacts);
 
 
 //--------------------GENERAL--------------------
 
-bool
-operator==(const Coordinate& lhs, const Coordinate& rhs)
-{
-    return lhs.first == rhs.first && lhs.second == rhs.second;
-}
-
-static
-Coordinate GetRandomPoint(const size& polygonSize)
+static Coordinate
+GetRandomPoint(const Size& polygonSize)
 {
     Coordinate coord = {};
-    coord.first  = std::rand() % polygonSize.first + 1;
+    coord.first  = std::rand() % polygonSize.first  + 1;
     coord.second = std::rand() % polygonSize.second + 1;
 
     return coord;
 }
 
 
-Model::Model(size polySize, int nSnakes)
+//--------------------RABBIT--------------------
+
+bool
+Rabbit::RandomGenerate(Model* model, size_t score_)
 {
-    polygonSize = polySize;
-    int nRabbits = 10;
-    sizes snakeSizes(nSnakes, 8);
-    Randomize(nRabbits, snakeSizes);
-};
+    assert(model);
 
+    size_t counter = 0;
+    Coordinate coord = {};
 
-//--------------------IMPACTS--------------------
+initializeRabbit:
 
-static bool
-Impacts(const Coordinates& coords1, const Coordinates& coords2,
-                                                Coordinates* impacts)
-{
-    bool impact = false;
-    for(const auto& i: coords1)
-    {
-        for(const auto& j: coords2)
-        {
-            if(i == j)
-            {
-                if(impacts)
-                    impacts->push_front(i);
-
-                impact = true;
-            }
-        }
-    }
-
-    return impact;
-}
-
-static bool
-SnakeImpacts(const Snakes& snakes, Coordinates* impacts)
-{
-    size_t nSnakes = snakes.size();
-
-    if(nSnakes <= 1)
+    counter++;
+    if(counter > 50)
         return false;
 
-    bool impact = false;
-    for(size_t i = 0; i < nSnakes; i++)
-        for(size_t j = i + 1; j < nSnakes; j++)
-            if(Impacts(snakes[i].GetCoordinates(), snakes[j].GetCoordinates(), impacts))
-                impact = true;
+    coord = GetRandomPoint(model->GetPolygonSize());
 
-    return impact;
-}
+    for(const auto& rabbit: model->rabbits)
+    {
+        if(rabbit == this)
+            continue;
 
-static bool
-RabbitImpacts(const Snakes& snakes, const Coordinates& rabbitCoords, 
-                                                Coordinates* impacts)
-{
-    bool impact = false;
-    for(const auto& i: snakes)
-        if(Impacts(rabbitCoords, i.GetCoordinates(), impacts))
-            impact = true;
+        if(coord == rabbit->GetCoordinate())
+            goto initializeRabbit;
+    }
 
-    return impact;
+    for(const auto& snake: model->snakes)
+        for(const auto& section: snake->GetCoordinates())
+            if(coord == section)
+                goto initializeRabbit;
+
+    SetCoordinate(coord);
+    score = score_;
+    Hill();
+    
+    return true;
 }
 
 
 //--------------------SNAKE--------------------
 
-void
-Snake::SetDirection(Direction dir)
+bool
+Snake::RandomGenerate(Model* model, size_t snakeSize)
 {
-    switch (dir)
-    {
-        case UP:
-            direction = {0, 1};
-            break;
-        case RIGHT:
-            direction = {1, 0};
-            break;
-        case DOWN:
-            direction = {0, -1};
-            break;
-        case LEFT:
-        default:
-            direction = {-1, 0};
-            break;
-    }
-}
+    assert(model);
 
-void
-Snake::TurnLeft()
-{
-    direction = {direction.second, -direction.first};
-}
+    size_t iterator = 0;
+    size_t counter = 0;
 
-void
-Snake::TurnRight()
-{
-    direction = {-direction.second, direction.first};
-}
+    Coordinate direction = {};
+    Coordinate back = {};
+    Coordinate section = {};
 
-void
-Snake::Generate(size_t snakeSize, const size& polygonSize)
-{
-    coordinates.clear();
+initializeSnake:
+
+    counter++;
+    if(counter > 50)
+        return false;
+
+    coords.clear();
 
     SetDirection(Direction(std::rand() % 4));
-    Coordinate snakeTail = GetRandomPoint(polygonSize);
-    Coordinate snakeSection = {};
 
-    snakeSection.first  = snakeTail.first;
-    snakeSection.second = snakeTail.second;
+    direction = GetCoordinateDirection();
+    back      = GetRandomPoint(model->GetPolygonSize());
 
-    for(size_t j = 0; j < snakeSize; j++)
+    section.first  = back.first;
+    section.second = back.second;
+
+    for(iterator = 0; iterator < snakeSize; iterator++)
     {
         if(!direction.first)
-            snakeSection.second = snakeTail.second + j * direction.second;
+            section.second = back.second + iterator * direction.second;
         else
-            snakeSection.first = snakeTail.first + j * direction.first;
+            section.first  = back.first  + iterator * direction.first;
 
-        coordinates.push_front(snakeSection);
+        for(const auto& rabbit: model->rabbits)
+            if(rabbit->GetCoordinate() == section)
+                goto initializeSnake;
+
+        for(const auto& snake: model->snakes)
+        {
+            if(snake == this)
+                continue;
+
+            for(const auto& snakeSection: snake->GetCoordinates())
+                if(snakeSection == section)
+                    goto initializeSnake;
+        }
+
+        coords.push_front(section);
     }
+
+    return true;
 }
 
-void
-Snake::Update(const Coordinate& polygonSize)
+Coordinate
+Snake::GetCoordinateDirection() const
 {
-    Coordinate oldHead = coordinates.front();
-    Coordinate newHead = {  oldHead.first + direction.first,
-                            oldHead.second + direction.second};
-    coordinates.pop_back();
-    coordinates.push_front(newHead);
+    switch(dir)
+    {
+        case Direction::UP:
+            return {0, 1};
+        
+        case Direction::RIGHT:
+            return {1, 0};
+
+        case Direction::LEFT:
+            return {-1, 0};
+
+        case Direction::DOWN:
+
+        default:
+            return {0, -1};
+    }
+
+    return {0, -1};
+}
+
+
+bool
+Snake::Update(Model* model)
+{
+    assert(model);
+
+    Coordinate direction = GetCoordinateDirection();
+    Coordinate newFront  = {coords.front().first  + direction.first,
+                            coords.front().second + direction.second};
+
+    for(const auto& snake: model->snakes)
+        for(const auto& section: snake->GetCoordinates())
+            if(section == newFront)
+                return true;
+
+    coords.push_front(newFront);
+
+    for(auto& rabbit: model->rabbits)
+        if(static_cast<Coordinate>(*rabbit) == newFront)
+        {
+            Feed(rabbit);
+            rabbit->Kill();
+        }
+
+    if(scoreReserved == 0)
+        coords.pop_back();
+    else
+        scoreReserved--;
+
+    return false;
 }
 
 
 //--------------------MODEL--------------------
 
-void
-Model::Randomize(size_t nRabbits, sizes snakeSizes)
+Model::Model(Size polygonSize_, GameMode mode_)
 {
-    rabbits.clear();
-    snakes.clear();
+    polygonSize = polygonSize_;
+    mode = mode_;
+    finished = false;
+    
+    Snake* playerSnake = new Snake();
+    if(!playerSnake->RandomGenerate(this))
+        assert(0);
+    snakes.push_back(playerSnake);
 
-    Snake snake{};
-    for(const auto snakeSize: snakeSizes)
+    if(mode == GameMode::MULTI)
     {
-        do
-        {
-            snake.Generate(snakeSize, polygonSize);
-        } while (SnakeImpacts(snakes, nullptr));
-
-        snakes.push_back(snake);
+        Snake* playerSnake2 = new Snake();
+        if(!playerSnake2->RandomGenerate(this))
+            assert(0);
+        snakes.push_back(playerSnake2);
     }
 
-    Coordinate  rabbitCoord = {};
-    for(size_t i = 0; i < nRabbits; i++)
+    for(size_t i = 0; i < 10; i++)
     {
-        do
-        {
-            rabbitCoord = GetRandomPoint(polygonSize);
-        } while (RabbitImpacts(snakes, {rabbitCoord}, nullptr) ||
-                 (std::find(rabbits.begin(), rabbits.end(), rabbitCoord) != rabbits.end()));
-
-        rabbits.push_back({rabbitCoord});
+        Rabbit* rabbit = new Rabbit();
+        if(!rabbit->RandomGenerate(this))
+            assert(0);
+        rabbits.push_front(rabbit);
     }
+
+    View* view =View::Get(); assert(view);
+    view->SetOnTimer(std::bind(&Model::OnTimer, this, std::placeholders::_1));
 }
+
+
+Model::~Model()
+{
+    for(const auto& snake: snakes)
+        delete snake;
+
+    for(const auto& rabbit: rabbits)
+        delete rabbit;
+}
+
 
 void
 Model::Update()
 {
-    //Dump(snakes);
-    for(auto& snake: snakes)
-    {
-        snake.Update(polygonSize);
-    }
+    for(const auto& snake: snakes)
+        if(snake->Update(this))
+            finished = false;
+        
+    for(const auto& rabbit: rabbits)
+        if(rabbit->IsKilled())
+            rabbit->RandomGenerate(this);
+}
+
+
+void
+Model::OnTimer(int passedTime)
+{
+    Update();
 }
 
 

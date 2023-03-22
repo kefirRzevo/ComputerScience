@@ -2,12 +2,13 @@
 #include <termios.h>
 #include <csignal>
 #include <poll.h>
+#include <cmath>
 
 #include "../include/textview.hpp"
 
 
-//#include <fstream>
-//std::ofstream fout("dump.txt");
+#include <fstream>
+std::ofstream fout("dump.txt");
 
 //----------------------------------------
 
@@ -28,13 +29,71 @@ static const int LEFT_paddind = 2;
 static const int RIGHT_padding = 2;
 
 
+
+static Coordinate
+GetSnakeFocus(Snake* snake)
+{
+    assert(snake);
+
+    const Coordinates& coords = snake->GetCoordinates();
+    assert(coords.size() != 0);
+
+    int sumX = 0;
+    int sumY = 0;
+
+    for(const auto& section: coords)
+    {
+        sumX += section.first;
+        sumY += section.second;
+    }
+
+    return {sumX/coords.size(), sumY/coords.size()};
+}
+
+static Coordinate
+GetFocus(Model* model)
+{
+    Coordinate focus = {};
+
+    if(model->snakes.size() == 0)
+    {
+        focus.first  = model->GetPolygonSize().first  / 2;
+        focus.second = model->GetPolygonSize().second / 2;
+        return focus;
+    }
+
+    for(const auto& snake: model->snakes)
+    {
+        focus.first  += GetSnakeFocus(snake).first;
+        focus.second += GetSnakeFocus(snake).second;
+    }
+
+    focus.first  /= model->snakes.size();
+    focus.second /= model->snakes.size();
+
+    return focus;
+}
+
+static bool
+IsInFrame(const Coordinate& frameSize, const Coordinate& point)
+{
+    if(point.first <= 0 || point.first + 2 > frameSize.first)
+        return false;
+    
+    if(point.second <= 0 || point.second + 2 > frameSize.second)
+        return false;
+
+    return true;
+}
+
+
+
 //--------------------GENERAL--------------------
 
 TextView::TextView()
 {
+    finished = false;
     UpdateWindowSize();
-    status = true;
-
     signal(SIGWINCH, SigHandler);
     signal(SIGINT, SigHandler);
     TermiosPropsOff();
@@ -44,7 +103,6 @@ TextView::TextView()
 TextView::~TextView()
 {
     signal(SIGWINCH, SIG_DFL);
-    signal(SIGINT, SIG_DFL);
     TermiosPropsOn();
     CarretOn();
 }
@@ -54,15 +112,16 @@ SigHandler(int signum)
 {
     View* view = View::Get();
     if(!view)
-            return;
+        return;
 
     if(signum == SIGWINCH)
     {
-            view->UpdateWindowSize();
+        view->UpdateWindowSize();
     }
-    else if(signum == SIGINT)
+
+    if(signum == SIGINT)
     {
-            view->UpdateStatus();
+        view->finished = true;
     }
 }
 
@@ -76,13 +135,7 @@ TextView::UpdateWindowSize()
 }
 
 void
-TextView::UpdateStatus()
-{
-    status = !status;
-}
-
-void 
-TextView::PollOnKey() const
+TextView::PollOnKey()
 {
     struct pollfd requested = {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0};
 
@@ -90,8 +143,13 @@ TextView::PollOnKey() const
 
     if (requested.revents & POLL_IN)
     {
-        char symbol = 0;
+        unsigned char symbol = 0;
         read(STDIN_FILENO, &symbol, 1);
+        
+        if(symbol == 'q')
+        {
+            finished = true;
+        }
 
         for (const auto& action: listenersOnKey)
         {
@@ -101,133 +159,154 @@ TextView::PollOnKey() const
 }
 
 void
-TextView::Run()
+TextView::RunLoop()
 {
-    std::cout << "by\n";
     while(1)
     {
-        Clear();
+        DrawFrame();
         DrawRabbits();
         DrawSnakes();
-        DrawFrame();
+        fflush(stdout);
         usleep(400000);
-        if(!status)
+        if(finished)
             break;
+        Clear();
         PollOnKey();
-        GetModel()->Update();
+        model->Update();
     }
-}
-
-Coordinate
-TextView::ModelCoordToView(const Coordinate& modelCoord) const
-{
-    const size& polygonSize = model->GetPolygonSize();
-    const size& windowSize = GetWindowSize();
-    Coordinate viewCoord = {-1, 0};
-
-    if(modelCoord.first > static_cast<int>(polygonSize.first) || modelCoord.first < 0)
-        return viewCoord;
-
-    if(modelCoord.second > static_cast<int>(polygonSize.second) || modelCoord.second < 0)
-        return viewCoord;
-
-    double relativeX = (double)modelCoord.first/polygonSize.first;
-    double relativeY = (double)modelCoord.second/polygonSize.second;
-    
-    viewCoord.first = relativeX * (windowSize.first - LEFT_paddind - RIGHT_padding - 2) + LEFT_paddind + 1;
-    viewCoord.second = relativeY * (windowSize.second - TOP_paddind - BOTTOM_padding - 2) + TOP_paddind + 1;
-
-    if(viewCoord.first > static_cast<int>(windowSize.first) || viewCoord.first < 0)
-        return {-1, 0};
-    
-    if(viewCoord.second > static_cast<int>(windowSize.second) || viewCoord.second < 0)
-        return {-1, 0};
-
-    return viewCoord;
 }
 
 
 //--------------------DRAWING--------------------
 
 void
+TextView::RedrawRabbits() const
+{
+
+}
+
+void
+TextView::RedrawSnakes() const
+{
+
+}
+
+void
 TextView::DrawRabbits() const
 {
-    const Rabbits& rabbits = model->GetRabbits();
-    for(const auto& rabbit: rabbits)
+    for(const auto& rabbit: model->rabbits)
     {
-        Coordinate rabbitViewCoord = ModelCoordToView(rabbit.GetCoordinate());
-        if(rabbitViewCoord.first == -1)
-            continue;
+        Coordinate rabbitCoord = rabbit->GetCoordinate();
 
-        Symbol(rabbitViewCoord, '@');
+        if(IsInFrame(frameSize, rabbitCoord))
+        {
+            rabbitCoord.first  += upLeftCorner.first;
+            rabbitCoord.second += upLeftCorner.second;
+
+            Symbol(rabbitCoord, 'R');
+        }
     }
 }
 
 void
 TextView::DrawSnakes() const
 {
-    const Snakes& snakes = model->GetSnakes();
-    for(const auto& snake: snakes)
+    for(const auto& snake: model->snakes)
     {
-        const Coordinates& snakeCoords = snake.GetCoordinates();
-        const Coordinate& viewTail = ModelCoordToView(snakeCoords.back());
-        const Coordinate& viewHead = ModelCoordToView(snakeCoords.front());
-
-        for(auto i = snakeCoords.begin(); i != snakeCoords.end(); i++)
+        for(auto iterator  = ++snake->GetCoordinates().begin(); 
+                 iterator != --snake->GetCoordinates().end(); ++iterator)
         {
-            const auto& j = std::next(i);
+            Coordinate section = *iterator;
 
-            if(j == snakeCoords.end())
-                continue;
+            if(IsInFrame(frameSize, section))
+            {            
+                section.first  += upLeftCorner.first;
+                section.second += upLeftCorner.second;
 
-            Coordinate jView = ModelCoordToView(*j);
-            Coordinate iView = ModelCoordToView(*i);
-
-            if(iView.first == -1)
-                continue;
-
-            if((*i).first == (*j).first && (abs(iView.second - jView.second) != 1))
-            {
-                int min = std::min(iView.second, jView.second);
-                int max = std::max(iView.second, jView.second);
-
-                for(int k = min + 1; k < max; k++)
-                    Symbol({iView.first, k}, '?');
+                Symbol(section, '0');
             }
-            else if((*i).second == (*j).second && (abs(iView.first - jView.first) != 1))
-            {
-                int min = std::min(iView.first, jView.first);
-                int max = std::max(iView.first, jView.first); 
-
-                for(int k = min + 1; k < max; k++)
-                    Symbol({k, iView.second}, '?');
-            }
-
-            Symbol(iView, '?');
         }
 
-        if(viewTail.first != -1)
-            Symbol(viewTail, 'T');
+        Coordinate back = snake->GetBack();
 
-        if(viewHead.first != -1)
-            Symbol(viewHead, 'H');
+        if(IsInFrame(frameSize, back))
+        {
+            back.first  += upLeftCorner.first;
+            back.second += upLeftCorner.second;
+
+            Symbol(back, 'B');
+        }
+
+        Coordinate front = snake->GetFront();
+        if(IsInFrame(frameSize, front))
+        {
+            front.first  += upLeftCorner.first;
+            front.second += upLeftCorner.second;
+
+            Symbol(front, 'F');
+        }
     }
 }
 
 void
-TextView::DrawFrame() const
+TextView::DrawFrame()
 {
-    int width = GetWindowSize().first;
-    int height = GetWindowSize().second;
+    size_t viewWidth  = windowSize.first;
+    size_t viewHeight = windowSize.second;
+
+    size_t modelWidth  = model->GetPolygonSize().first;
+    size_t modelHeight = model->GetPolygonSize().second;
+
+    size_t frameWidth  = 0;
+    size_t frameHeight = 0;
+
+    int cornerUpLeftX = 0;
+    int cornerUpLeftY = 0;
+
+    frameFull = true;
+    if(viewWidth <= modelWidth + 2 + LEFT_paddind + RIGHT_padding)
+    {
+        frameWidth = viewWidth - LEFT_paddind - RIGHT_padding;
+        cornerUpLeftX = LEFT_paddind + 1;
+        frameFull = false;
+    }
+    else
+    {
+        frameWidth = modelWidth + 2;
+        cornerUpLeftX = (viewWidth - frameWidth) / 2 + 1;
+    }
+
+    if(viewHeight <= modelHeight + 2 + TOP_paddind + BOTTOM_padding)
+    {
+        frameHeight = viewHeight - TOP_paddind - BOTTOM_padding;
+        cornerUpLeftY = TOP_paddind + 1;
+        frameFull = false;
+    }
+    else
+    {
+        frameHeight = modelHeight + 2;
+        cornerUpLeftY = (viewHeight - frameHeight) / 2 + 1;
+    }
 
     AddProperties(RED, WHITE);
-    HLine(LEFT_paddind + 1, TOP_paddind + 1, width - LEFT_paddind - RIGHT_padding, '=');
-    HLine(LEFT_paddind + 1, height - BOTTOM_padding, width - LEFT_paddind - RIGHT_padding, '=');
-    VLine(LEFT_paddind + 1, TOP_paddind + 1, height - TOP_paddind - BOTTOM_padding, '#');
-    VLine(width - RIGHT_padding, TOP_paddind + 1, height - TOP_paddind - BOTTOM_padding, '#');
 
+    HLine(cornerUpLeftX, cornerUpLeftY, frameWidth, '=');
+    HLine(cornerUpLeftX, cornerUpLeftY + frameHeight - 1, frameWidth, '=');
+    VLine(cornerUpLeftX, cornerUpLeftY, frameHeight, '#');
+    VLine(cornerUpLeftX + frameWidth - 1, cornerUpLeftY, frameHeight, '#');
+
+    frameSize.first  = frameWidth;
+    frameSize.second = frameHeight;
+
+    upLeftCorner.first  = cornerUpLeftX;
+    upLeftCorner.second = cornerUpLeftY;
+
+    {
+        fout << "corner: " << upLeftCorner.first << " " << upLeftCorner.second << "\n";
+        fout << "sizes:  " << frameWidth << " "<<frameHeight << "\n";
+    }
     std::string name = "Hello world!";
-    String((width - name.size()) / 2, (TOP_paddind - 1) / 2 + 1, name);
+    String((viewWidth - name.size()) / 2 + 1, (TOP_paddind - 1) / 2 + 1, name);
 
     fflush(stdout);
 }
@@ -238,26 +317,26 @@ TextView::DrawFrame() const
 void
 TextView::AddProperties(enum TextView::Color fg, enum TextView::Color bg) const
 {
-        printf("\e[%d;%dm", fg + CSI_fg_color_code, bg + CSI_bg_color_code);
-        fflush(stdout);
+    printf("\e[%d;%dm", fg + CSI_fg_color_code, bg + CSI_bg_color_code);
+    fflush(stdout);
 }
 
 void
-TextView::HLine(int x0, int y0, int len, const char sym) const
+TextView::HLine(int x0, int y0, int len, int sym) const
 {
     for(int i = x0; i < x0 + len; i++)
         Symbol({i, y0}, sym);
 }
 
 void
-TextView::VLine(int x0, int y0, int len, const char sym) const
+TextView::VLine(int x0, int y0, int len, int sym) const
 {
     for(int i = y0; i < y0 + len; i++)
         Symbol({x0, i}, sym);
 }
 
 void
-TextView::Symbol(Coordinate coord, const char sym) const
+TextView::Symbol(Coordinate coord, int sym) const
 {
     printf("\e[%d;%dH", coord.second, coord.first);
     printf("%c", sym);
@@ -299,32 +378,21 @@ TermiosAttrs()
 }
 
 void
-TextView::TermiosPropsOn() const
+TextView::TermiosPropsOn()
 {
-    struct termios* termis_attr = TermiosAttrs();
-    tcgetattr(STDIN_FILENO, termis_attr);
-
-    struct termios attr_raw = *termis_attr;
-    cfmakeraw(&attr_raw);
-    
-    /*attr_raw.c_cflag|= VINTR;
-    attr_raw.c_iflag|= VINTR;
-    attr_raw.c_ispeed|= VINTR;
-    attr_raw.c_lflag|= VINTR;
-    attr_raw.c_oflag|= VINTR;
-    attr_raw.c_ospeed|= VINTR;*/
-    
-    attr_raw.c_cc[8] = 1;
-    attr_raw.c_cc[9] = 1;
-    attr_raw.c_lflag |= ISIG;
-
-    tcsetattr(STDIN_FILENO, TCSANOW , &attr_raw);
+    tcsetattr(STDIN_FILENO, TCSANOW, &(this->termis_attr));
 }
 
 void
-TextView::TermiosPropsOff() const
+TextView::TermiosPropsOff()
 {
-    tcsetattr(STDIN_FILENO, TCSANOW, TermiosAttrs());
+    tcgetattr(STDIN_FILENO, &(this->termis_attr));
+
+    struct termios attr_raw = this->termis_attr;
+    cfmakeraw(&attr_raw);
+    attr_raw.c_lflag |= ISIG;
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &attr_raw);
 }
 
 //----------------------------------------//
