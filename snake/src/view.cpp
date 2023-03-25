@@ -3,7 +3,7 @@
 #include "../include/guiview.hpp"
 
 
-//--------------------DEFINITIONS--------------------
+//----------------------------------------//
 
 View*
 View::Get(const std::string& mode)
@@ -19,6 +19,17 @@ View::Get(const std::string& mode)
                 view.reset(new TextView());
 
         return view.get();   
+}
+
+//----------------------------------------//
+
+void
+View::PollOnTimer(int passedTime)
+{
+        for(const auto& action: listenersOnTimer)
+        {
+                action(passedTime);
+        }
 }
 
 //----------------------------------------//

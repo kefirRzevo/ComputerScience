@@ -7,6 +7,8 @@
 
 #include "model.hpp"
 
+using OnKeyCall = std::function<void(int)>;
+using OnTimerCall = std::function<void(int)>;
 
 class View
 {
@@ -36,12 +38,12 @@ class View
                 model = mod;
             }
 
-        void SetOnKey(std::function<void(int)> OnKey)
+        void SetOnKey(OnKeyCall OnKey)
             {
                 listenersOnKey.push_back(OnKey);
             }
 
-        void SetOnTimer(std::function<void(int)> OnTimer)
+        void SetOnTimer(OnTimerCall OnTimer)
             {
                 listenersOnTimer.push_back(OnTimer);
             }
@@ -52,10 +54,12 @@ class View
         bool finished;
         Size windowSize;
 
-        std::vector<std::function<void(int)>> listenersOnKey;
-        std::vector<std::function<void(int)>> listenersOnTimer;
+        std::vector<OnKeyCall>   listenersOnKey;
+        std::vector<OnTimerCall> listenersOnTimer;
 
         friend void SigHandler(int signum);
+
+        void PollOnTimer(int msecPassed);
 
         virtual void UpdateWindowSize() = 0;
 };

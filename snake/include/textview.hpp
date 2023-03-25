@@ -1,10 +1,12 @@
 #pragma once
 
 
-#include "view.hpp"
-
 #include <termios.h>
 
+#include "view.hpp"
+
+
+//----------------------------------------//
 
 class TextView: public View
 {
@@ -14,6 +16,7 @@ class TextView: public View
         Size frameSize;
         Coordinate upLeftCorner;
         struct termios termis_attr;
+        std::string results;
 
     public:
 
@@ -56,7 +59,7 @@ class TextView: public View
 
         void Symbol(Coordinate coord, int sym) const;
 
-        void String(int x, int y, const std::string& string) const;
+        void String(int x, int y, const char* string) const;
 
         void Clear() const;
 
@@ -73,5 +76,9 @@ class TextView: public View
 
         void PollOnKey();
 
+        void UpdateResults();
+
         void UpdateWindowSize() override;
 };
+
+//----------------------------------------//

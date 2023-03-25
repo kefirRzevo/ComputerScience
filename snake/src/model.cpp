@@ -1,23 +1,22 @@
 #include "../include/model.hpp"
 #include "../include/view.hpp"
 
-//#include<fstream>
-//std::ofstream fout("dump.txt");
-
-//static int step = 0;
-
-//--------------------PROTOTYPES--------------------
-
-
-//static void
-//Dump(Snakes& snakes);
+#ifdef DEBUG
+#include<fstream>
+std::ofstream fout2("model.txt");
+#endif
 
 static Coordinate
 GetRandomPoint(const Size& polygonSize);
 
+static int
+GetDistance(const Coordinate* coord1, const Coordinate* coord2);
+
+static bool
+GoingTowards(const Snake* snake1, const Snake* snake2);
 
 
-//--------------------GENERAL--------------------
+//----------------------------------------//
 
 static Coordinate
 GetRandomPoint(const Size& polygonSize)
@@ -29,8 +28,33 @@ GetRandomPoint(const Size& polygonSize)
     return coord;
 }
 
+//----------------------------------------//
 
-//--------------------RABBIT--------------------
+static int
+GetDistance(const Coordinate* coord1, const Coordinate* coord2)
+{
+     return abs(coord1->first  - coord2->first) +
+            abs(coord1->second - coord2->second) - 1;
+}
+
+//----------------------------------------//
+
+static bool
+GoingTowards(const Snake* snake1, const Snake* snake2)
+{
+    Snake::Direction dir1 = snake1->GetDirection();
+    Snake::Direction dir2 = snake2->GetDirection();
+
+    if( (dir1 == Snake::Direction::DOWN  && dir2 == Snake::Direction::UP)    ||
+        (dir1 == Snake::Direction::UP    && dir2 == Snake::Direction::DOWN)  ||
+        (dir1 == Snake::Direction::LEFT  && dir2 == Snake::Direction::RIGHT) ||
+        (dir1 == Snake::Direction::RIGHT && dir2 == Snake::Direction::LEFT) )
+        return true;
+    
+    return false;
+}
+
+//----------------------------------------//
 
 bool
 Rabbit::RandomGenerate(Model* model, size_t score_)
@@ -69,16 +93,15 @@ initializeRabbit:
     return true;
 }
 
-
-//--------------------SNAKE--------------------
+//----------------------------------------//
 
 bool
 Snake::RandomGenerate(Model* model, size_t snakeSize)
 {
     assert(model);
 
-    size_t iterator = 0;
-    size_t counter = 0;
+    int iterator = 0;
+    int counter = 0;
 
     Coordinate direction = {};
     Coordinate back = {};
@@ -100,7 +123,7 @@ initializeSnake:
     section.first  = back.first;
     section.second = back.second;
 
-    for(iterator = 0; iterator < snakeSize; iterator++)
+    for(iterator = 0; iterator < static_cast<int>(snakeSize); iterator++)
     {
         if(!direction.first)
             section.second = back.second + iterator * direction.second;
@@ -127,13 +150,15 @@ initializeSnake:
     return true;
 }
 
+//----------------------------------------//
+
 Coordinate
 Snake::GetCoordinateDirection() const
 {
     switch(dir)
     {
         case Direction::UP:
-            return {0, 1};
+            return {0, -1};
         
         case Direction::RIGHT:
             return {1, 0};
@@ -144,17 +169,22 @@ Snake::GetCoordinateDirection() const
         case Direction::DOWN:
 
         default:
-            return {0, -1};
+            return {0, 1};
     }
 
-    return {0, -1};
+    return {0, 1};
 }
 
+//----------------------------------------//
 
-bool
+void
 Snake::Update(Model* model)
 {
     assert(model);
+
+    updated = true;
+    if(!alive)
+        return;
 
     Coordinate direction = GetCoordinateDirection();
     Coordinate newFront  = {coords.front().first  + direction.first,
@@ -163,7 +193,12 @@ Snake::Update(Model* model)
     for(const auto& snake: model->snakes)
         for(const auto& section: snake->GetCoordinates())
             if(section == newFront)
-                return true;
+            {
+                alive = false;
+                if(newFront == snake->GetFront() && GoingTowards(this, snake))
+                    snake->Kill();
+                return;
+            }
 
     coords.push_front(newFront);
 
@@ -178,30 +213,21 @@ Snake::Update(Model* model)
         coords.pop_back();
     else
         scoreReserved--;
-
-    return false;
 }
-
 
 //--------------------MODEL--------------------
 
-Model::Model(Size polygonSize_, GameMode mode_)
+Model::Model(Size polygonSize_, size_t nSnakes)
 {
     polygonSize = polygonSize_;
-    mode = mode_;
     finished = false;
     
-    Snake* playerSnake = new Snake();
-    if(!playerSnake->RandomGenerate(this))
-        assert(0);
-    snakes.push_back(playerSnake);
-
-    if(mode == GameMode::MULTI)
+    for(size_t i = 0; i < nSnakes; i++)
     {
-        Snake* playerSnake2 = new Snake();
-        if(!playerSnake2->RandomGenerate(this))
+        Snake* snake = new Snake();
+        if(!snake->RandomGenerate(this))
             assert(0);
-        snakes.push_back(playerSnake2);
+        snakes.push_back(snake);
     }
 
     for(size_t i = 0; i < 10; i++)
@@ -212,10 +238,11 @@ Model::Model(Size polygonSize_, GameMode mode_)
         rabbits.push_front(rabbit);
     }
 
-    View* view =View::Get(); assert(view);
+    View* view = View::Get();
     view->SetOnTimer(std::bind(&Model::OnTimer, this, std::placeholders::_1));
 }
 
+//----------------------------------------//
 
 Model::~Model()
 {
@@ -226,47 +253,63 @@ Model::~Model()
         delete rabbit;
 }
 
+//----------------------------------------//
 
 void
 Model::Update()
 {
-    for(const auto& snake: snakes)
-        if(snake->Update(this))
-            finished = false;
-        
+    for(size_t i = 0; i < snakes.size(); i++)
+    {
+        snakes[i]->Update(this);
+        if(!snakes[i]->IsAlive())
+        {
+            snakes[i]->Kill();
+            finished = true;
+        }
+    }
+
     for(const auto& rabbit: rabbits)
         if(rabbit->IsKilled())
             rabbit->RandomGenerate(this);
 }
 
+//----------------------------------------//
 
 void
 Model::OnTimer(int passedTime)
 {
+    static int sumPassedTime = 0;
+    sumPassedTime += passedTime;
+
+    if(sumPassedTime < 500)
+        return;
+
+    sumPassedTime = sumPassedTime % 500;
+
     Update();
 }
 
+//----------------------------------------//
 
-//--------------------FOR DEBUG--------------------
-
-/*
-static void
-Dump(Snakes& snakes)
+Rabbit*
+Model::GetClosestRabbit(const Coordinate& point)
 {
-    int i = 0;
-    fout << "iterator " << step++ << std::endl;
-    for(const auto& snake: snakes)
-    {
-        fout << "Snake: " << i << std::endl;
+    Rabbit* closestRabbit = *rabbits.begin();
+    int closestDistance = GetDistance(static_cast<Coordinate* >(closestRabbit),
+                                      &point);
 
-        for(const auto& j: snake.GetCoordinates())
+    int distance = 0;
+    for(const auto& rabbit: rabbits)
+    {
+        distance = GetDistance(static_cast<Coordinate* >(rabbit), &point);
+        if(distance < closestDistance)
         {
-            fout << j.first << " " << j.second << ";\t";
+            closestRabbit = rabbit;
+            closestDistance = distance;
         }
-        fout << std::endl;
-        i++;
     }
+
+    return closestRabbit;
 }
-*/
 
 //----------------------------------------//

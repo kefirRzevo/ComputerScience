@@ -12,9 +12,11 @@ int main(int argc, char* argv[])
     else
         view = View::Get();
 
-    Model model({50, 50}, Model::GameMode::MULTI);
+    Model model({50, 20}, 2);
     view->SetModel(&model);
     HumanController(model.GetSnake(0), 'a', 'd', 'w', 's');
+    BotController(model.GetSnake(1));
+    //HumanController(model.GetSnake(2), 'l', 'r', 'u', 'n');
 
     view->RunLoop();
 
