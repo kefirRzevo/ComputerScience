@@ -3,19 +3,25 @@
 
 int main()
 {
-
-
-    
     Window myWindow({WINDOW_WIDTH, WINDOW_HEIGHT}, "hi");
 
     Renderer* rend = Renderer::Get(&myWindow);
-
-    rend->DrawPixel({10, 10});
+    //rend->SetThickness(5);
+    Font font{"res/TimesNewRoman.ttf"};
+    Text text(font, "hello", White, 20);
 
     Event event{};
     while(rend->OnRender())
     {
         event.Poll();
+        rend->SetColor(Black);
+        rend->Clear();
+        rend->SetColor(White);
+        //rend->DrawPixel({10, 10});
+        //rend->DrawCircle({30, 30}, 20);
+        //rend->DrawTexture(TextureManager::Get()->GetTexture("res/button.png"), {10, 10, 200, 200});
+        //rend->DrawTexture(TextureManager::Get()->GetTexture("res/button.png"), {250, 100, 500, 400}, {10, 10, 200, 200});
+        rend->DrawText({20, 200}, text);
         rend->Display();
     }
 

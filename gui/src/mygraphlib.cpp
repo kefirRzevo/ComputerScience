@@ -1,6 +1,8 @@
 #include "../include/mygraphlib.hpp"
 #include "../include/config.hpp"
 
+#include <cmath>
+
 //----------------------------------------//
 
 sf::Color
@@ -137,33 +139,34 @@ Window::Get_SF_RenderWindow()
 
 Font::Font(const char* path)
 {
-    sfFont.loadFromFile(path);
+    if(!sfFont.loadFromFile(path))
+        assert(0);
 }
 
 //----------------------------------------//
 
-const sf::Font*
+const sf::Font&
 Font::Get_SF_Font() const
 {
-    return &sfFont;
+    return sfFont;
 }
 
 //----------------------------------------//
 
 Text::Text(const Font& font, const char* text, Color color, size_t size)
 {
-    sfText.setFont(*font.Get_SF_Font());
-    //sfText.setColor(To_SF_Color(color));
+    sfText.setFont(font.Get_SF_Font());
+    sfText.setFillColor(To_SF_Color(color));
     sfText.setString(text);
     sfText.setCharacterSize(size);
 }
 
 //----------------------------------------//
 
-sf::Text*
-Text::Get_SF_Text()
+const sf::Text&
+Text::Get_SF_Text() const
 {
-    return &sfText;
+    return sfText;
 }
 
 //----------------------------------------//
@@ -295,8 +298,11 @@ TextureManager::GetDefaultTexture()
 Renderer::Renderer(Window* window)
 {
     sfRenderWindow = window->Get_SF_RenderWindow();
-    sfColor = sf::Color::Black;
+    sfColor = To_SF_Color(DEFAULT_COLOR);
+    thickness = DEFAULT_THICKNESS;
 }
+
+//----------------------------------------//
 
 Renderer*
 Renderer::Get(Window* sfRenderWindow_)
@@ -309,11 +315,15 @@ Renderer::Get(Window* sfRenderWindow_)
     return renderer.get();
 }
 
+//----------------------------------------//
+
 sf::RenderWindow*
 Renderer::Get_SF_RenderWindow()
 {
     return sfRenderWindow;
 }
+
+//----------------------------------------//
 
 void
 Renderer::SetColor(Color color)
@@ -321,20 +331,124 @@ Renderer::SetColor(Color color)
     sfColor = To_SF_Color(color);
 }
 
+//----------------------------------------//
+
 void
-Renderer::DrawPixel(const Vec2i& pos)
+Renderer::SetThickness(float thickness_)
 {
-    sf::CircleShape pixel(1, 1);
-    pixel.move({static_cast<float>(pos.x), static_cast<float>(pos.y)});
+    thickness = thickness_;
+}
+
+//----------------------------------------//
+
+void
+Renderer::DrawPixel(const Vec2f& pos)
+{
+    sf::CircleShape pixel(1.f, 1);
+    pixel.setFillColor(sfColor);
+    pixel.move(pos.x, pos.y);
     sfRenderWindow->draw(pixel);
 }
 
+//----------------------------------------//
+
 void
-Renderer::DrawCircle(const Vec2i& center, int radius)
+Renderer::DrawCircle(const Vec2f& center, float radius)
 {
     sf::CircleShape circle(radius);
-    circle.getFillColor(color);
+    circle.setFillColor(sfColor);
+    circle.move(center.x, center.y);
+    sfRenderWindow->draw(circle);
 }
+
+//----------------------------------------//
+
+void
+Renderer::DrawThickLine(const Vec2f& point, float degreeAngle, float length)
+{
+    sf::RectangleShape line({length, thickness});
+    line.move(point.x, point.y);
+    line.rotate(degreeAngle);
+    sfRenderWindow->draw(line);
+}
+
+//----------------------------------------//
+
+void
+Renderer::DrawThickLineSlow(const Vec2f& p1, const Vec2f& p2)
+{
+    float length = std::sqrt((p1.x - p2.x) * (p1.x - p2.x) + 
+                             (p1.y - p2.y) * (p1.y - p2.y));
+    sf::RectangleShape line({length, thickness});
+    line.move(p1.x, p1.y);
+    line.rotate(180 / PI * atan((p1.y - p2.y) / (p1.x - p2.x)));
+    sfRenderWindow->draw(line);
+}
+
+//----------------------------------------//
+
+void
+Renderer::DrawLine(const Vec2f& p1, const Vec2f& p2)
+{
+    sf::Vertex line[] =
+    {
+        sf::Vertex(sf::Vector2f(p1.x, p1.y), sfColor),
+        sf::Vertex(sf::Vector2f(p2.x, p2.y), sfColor)
+    };
+    sfRenderWindow->draw(line, 2, sf::Lines);
+}
+
+//----------------------------------------//
+
+void
+Renderer::DrawRect(const Rect& rect)
+{
+    sf::RectangleShape rect_({static_cast<float>(rect.size.x), 
+                              static_cast<float>(rect.size.y)});
+    rect_.setFillColor(sfColor);
+    rect_.move(rect.begin.x, rect.begin.y);
+    sfRenderWindow->draw(rect_);
+}
+
+//----------------------------------------//
+
+void
+Renderer::DrawTexture(Texture* src, const Rect& dstRect)
+{
+    sf::Texture* texture =  src->Get_SF_Texture();
+    sf::Sprite sprite(*texture);
+    sprite.setScale(dstRect.size.x / sprite.getLocalBounds().width,
+                    dstRect.size.y / sprite.getLocalBounds().height);
+    sprite.move(dstRect.begin.x, dstRect.begin.y);
+    sfRenderWindow->draw(sprite);
+}
+
+//----------------------------------------//
+
+void
+Renderer::DrawTexture(Texture* src, const Rect& srcRect, const Rect& dstRect)
+{
+    sf::Texture* texture =  src->Get_SF_Texture();
+    sf::IntRect sfSrcRect = {srcRect.begin.x, srcRect.begin.y, 
+                             srcRect.size.y,  srcRect.size.y};
+    sf::Sprite sprite(*texture, sfSrcRect);
+    sprite.setScale(dstRect.size.x / sprite.getLocalBounds().width,
+                    dstRect.size.y / sprite.getLocalBounds().height);
+    sprite.move(dstRect.begin.x, dstRect.begin.y);
+    sfRenderWindow->draw(sprite);
+}
+
+//----------------------------------------//
+
+void
+Renderer::DrawText(const Vec2f& pos, const Text& text)
+{
+    sf::Text sfTextNew = text.Get_SF_Text();
+    sfTextNew.move(pos.x, pos.y);
+    sfRenderWindow->draw(sfTextNew);
+}
+
+//----------------------------------------//
 
 bool
 Renderer::OnRender() const
@@ -342,11 +456,15 @@ Renderer::OnRender() const
     return sfRenderWindow->isOpen();
 }
 
+//----------------------------------------//
+
 void
 Renderer::Clear()
 {
     sfRenderWindow->clear(sfColor);
 }
+
+//----------------------------------------//
 
 void
 Renderer::Display()
@@ -354,8 +472,12 @@ Renderer::Display()
     sfRenderWindow->display();
 }
 
+//----------------------------------------//
+
 void
 Renderer::Close()
 {
     sfRenderWindow->close();
 }
+
+//----------------------------------------//

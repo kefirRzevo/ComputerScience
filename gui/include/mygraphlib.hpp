@@ -27,6 +27,7 @@ class Renderer;
 
 using Vec2i = Vec2<int>;
 using Vec2u = Vec2<unsigned int>;
+using Vec2f = Vec2<float>;
 
 //----------------------------------------//
 
@@ -34,9 +35,9 @@ using Color = unsigned int;
 
 const Color White = 0xFF'FF'FF'FF;
 const Color Black = 0x00'00'00'00;
-const Color Red   = 0xFF'FF'00'00;
-const Color Green = 0xFF'00'FF'00;
-const Color Blue  = 0xFF'00'00'FF;
+const Color Red   = 0xFF'00'00'FF;
+const Color Green = 0x00'FF'00'FF;
+const Color Blue  = 0x00'00'FF'FF;
 
 sf::Color
 To_SF_Color(Color color);
@@ -116,6 +117,9 @@ class Rect
 
         Rect(const Vec2i& begin_, const Vec2i& size_):
             begin(begin_), size(size_) {}
+
+        Rect(int beginX, int beginY, int sizeW, int sizeH):
+            begin(beginX, beginY), size(sizeW, sizeH) {}
 
         bool IsInside(const Vec2i& point) const;
 };
@@ -262,7 +266,7 @@ class Font
 
         Font(const char* path);
 
-        const sf::Font*
+        const sf::Font&
         Get_SF_Font() const;
 };
 
@@ -278,8 +282,8 @@ class Text
 
         Text(const Font& font, const char* text, Color color, size_t size);
 
-        sf::Text*
-        Get_SF_Text();
+        const sf::Text&
+        Get_SF_Text() const;
 };
 
 //----------------------------------------//
@@ -346,6 +350,8 @@ class Renderer
 
         sf::Color sfColor;
 
+        float thickness;
+
         Renderer(Window* window);
 
     public:
@@ -358,26 +364,28 @@ class Renderer
 
         void
         SetColor(Color color);
+        void
+        SetThickness(float thickness_);
 
         void
-        DrawPixel(const Vec2i& pos);
+        DrawPixel(const Vec2f& pos);
         void
-        DrawCircle(const Vec2i& center, int radius);
+        DrawCircle(const Vec2f& center, float radius);
         void
-        DrawLine(const Vec2i& p1, const Vec2i& p2);
+        DrawThickLine(const Vec2f& point, float degreeAngle, float length);
         void
-        DrawLine(const Vec2i& p1, const Vec2i& p2, size_t thickness);
+        DrawThickLineSlow(const Vec2f& p1, const Vec2f& p2);
+        void
+        DrawLine(const Vec2f& p1, const Vec2f& p2);
         void
         DrawRect(const Rect& rect);
-        void
-        DrawRect(const Rect& rect, size_t thickness);
 
         void
-        DrawTexture(Texture* src, const Rect& rscRect);
+        DrawTexture(Texture* src, const Rect& dstRect);
         void
-        DrawTexture(Texture* src, const Rect& rscRect, const Rect& dstRect);
+        DrawTexture(Texture* src, const Rect& srcRect, const Rect& dstRect);
         void
-        DrawText(const Vec2i& pos, const Text& text);
+        DrawText(const Vec2f& pos, const Text& text);
 
         bool
         OnRender() const;
