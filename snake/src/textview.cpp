@@ -25,55 +25,6 @@ static const int BOTTOM_padding = 1;
 static const int LEFT_paddind = 2;
 static const int RIGHT_padding = 2;
 
-//----------------------------------------//
-
-/*
-static Coordinate
-GetSnakeFocus(Snake* snake)
-{
-    assert(snake);
-
-    const Coordinates& coords = snake->GetCoordinates();
-    assert(coords.size() != 0);
-
-    int sumX = 0;
-    int sumY = 0;
-
-    for(const auto& section: coords)
-    {
-        sumX += section.first;
-        sumY += section.second;
-    }
-
-    return {sumX/coords.size(), sumY/coords.size()};
-}
-
-//----------------------------------------//
-
-static Coordinate
-GetFocus(Model* model)
-{
-    Coordinate focus = {};
-
-    if(model->snakes.size() == 0)
-    {
-        focus.first  = model->GetPolygonSize().first  / 2;
-        focus.second = model->GetPolygonSize().second / 2;
-        return focus;
-    }
-
-    for(const auto& snake: model->snakes)
-    {
-        focus.first  += GetSnakeFocus(snake).first;
-        focus.second += GetSnakeFocus(snake).second;
-    }
-
-    focus.first  /= model->snakes.size();
-    focus.second /= model->snakes.size();
-
-    return focus;
-}
-*/
 
 //----------------------------------------//
 
@@ -99,6 +50,7 @@ TextView::TextView()
     signal(SIGINT, SigHandler);
     TermiosPropsOff();
     CarretOff();
+    SetOnTimer({DRAW_TIME_MSEC, std::bind(&TextView::OnTimer, this)});
 }
 
 //----------------------------------------//
@@ -139,6 +91,7 @@ TextView::UpdateWindowSize()
     ioctl(0, TIOCGSIZE, &ts);
     windowSize.first = ts.ts_cols;
     windowSize.second = ts.ts_lines;
+    timeToDraw = true;
 }
 
 //----------------------------------------//
@@ -175,28 +128,41 @@ TextView::PollOnKey()
 //----------------------------------------//
 
 void
+TextView::OnTimer()
+{
+    if(model->SnakesAlive())
+        timeToDraw = true;
+}
+
+void
 TextView::RunLoop()
 {
     timeval start  = {};
     timeval end    = {};
     timeval passed = {};
+    int msecPassed = 0;
 
     while(1)
     {
         gettimeofday(&start, nullptr);
         PollOnKey();
         gettimeofday(&end, nullptr);
+
         timersub(&end, &start, &passed);
+        msecPassed = passed.tv_sec * 1000 + passed.tv_usec / 1000;
+        PollOnTimer(msecPassed);
 
-        PollOnTimer(passed.tv_sec * 1000 + passed.tv_usec / 1000);
+        if(timeToDraw)
+        {
+            Clear();
+            DrawFrame();
+            DrawRabbits();
+            DrawSnakes();
+            fflush(stdout);
+            timeToDraw = false;
+        }
 
-        Clear();
-        DrawFrame();
-        DrawRabbits();
-        DrawSnakes();
-        fflush(stdout);
-
-        if(finished || GetModel()->GameIsFinished())
+        if(finished)
             break;
     }
 }
@@ -227,6 +193,9 @@ TextView::DrawSnakes() const
 {
     for(const auto& snake: model->snakes)
     {
+        if(!snake->IsInGame())
+            continue;
+
         for(auto iterator  = ++snake->GetCoordinates().begin(); 
                  iterator != --snake->GetCoordinates().end(); ++iterator)
         {
@@ -279,12 +248,10 @@ TextView::DrawFrame()
     int cornerUpLeftX = 0;
     int cornerUpLeftY = 0;
 
-    frameFull = true;
     if(viewWidth <= modelWidth + 2 + LEFT_paddind + RIGHT_padding)
     {
         frameWidth = viewWidth - LEFT_paddind - RIGHT_padding;
         cornerUpLeftX = LEFT_paddind + 1;
-        frameFull = false;
     }
     else
     {
@@ -296,7 +263,6 @@ TextView::DrawFrame()
     {
         frameHeight = viewHeight - TOP_paddind - BOTTOM_padding;
         cornerUpLeftY = TOP_paddind + 1;
-        frameFull = false;
     }
     else
     {
@@ -317,10 +283,10 @@ TextView::DrawFrame()
     upLeftCorner.first  = cornerUpLeftX;
     upLeftCorner.second = cornerUpLeftY;
 
+    int resultsSize = results.size();
     UpdateResults();
-    assert(static_cast<int>(results.size()) < viewWidth);
-
-    String((viewWidth - static_cast<int>(results.size())) / 2 + 1, 
+    assert(resultsSize < viewWidth);
+    String((viewWidth - resultsSize) / 2 + 1,
            (TOP_paddind - 1) / 2 + 1, results.c_str());
 }
 
@@ -332,12 +298,17 @@ TextView::UpdateResults()
     results.clear();
     Model* model = GetModel();
 
-    for(size_t i = 0; i < model->snakes.size(); i++)
+    size_t i = 0;
+    for(const auto& snake: model->snakes)
     {
         results += "Player";
-        results += std::to_string(i);
+        results += std::to_string(i++);
         results += " ";
-        results += std::to_string(model->snakes[i]->GetScore());
+        results += std::to_string(snake->GetScore());
+
+        if(!snake->IsAlive())
+            results += "(Died)";
+
         results += "; ";
     }
 }

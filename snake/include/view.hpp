@@ -8,7 +8,7 @@
 #include "model.hpp"
 
 using OnKeyCall = std::function<void(int)>;
-using OnTimerCall = std::function<void(int)>;
+using OnTimerCall = std::pair<int, std::function<void(void)>>;
 
 class View
 {
@@ -46,16 +46,24 @@ class View
         void SetOnTimer(OnTimerCall OnTimer)
             {
                 listenersOnTimer.push_back(OnTimer);
+                passedTimes.push_back(OnTimer.first);
+            }
+
+        void SetTimeToDraw()
+            {
+                timeToDraw = true;
             }
 
     protected:
 
         Model* model;
-        bool finished;
         Size windowSize;
+        bool finished;
+        bool timeToDraw;
 
-        std::vector<OnKeyCall>   listenersOnKey;
+        std::vector<OnKeyCall> listenersOnKey;
         std::vector<OnTimerCall> listenersOnTimer;
+        std::vector<int> passedTimes;
 
         friend void SigHandler(int signum);
 

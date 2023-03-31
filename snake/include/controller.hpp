@@ -5,11 +5,13 @@
 #include "model.hpp"
 
 
+using DirPriority = std::pair<int, Snake::Direction>;
+
 //----------------------------------------//
 
 class Controller
 {
-    private:
+    protected:
 
         Snake* snake;
 
@@ -32,7 +34,7 @@ class Controller
             }
 
         virtual void OnKey(int key) = 0;
-        virtual void OnTimer(int passedTime) = 0;
+        virtual void OnTimer() = 0;
 };
 
 //----------------------------------------//
@@ -59,10 +61,8 @@ class HumanController: public Controller
 
         void OnKey(int key) override;
 
-        void OnTimer(int passedTime) override
-            {
-                assert(passedTime);
-            }
+        void OnTimer() override
+            {}
 };
 
 //----------------------------------------//
@@ -72,13 +72,18 @@ class BotController: public Controller
     public:
 
         BotController(Snake* snake_):
-            Controller(snake_)
+            Controller(snake_), target({})
             {
                 View* view = View::Get();
-                view->SetOnTimer(std::bind(&BotController::OnTimer, this,
-                                 std::placeholders::_1));
                 Model* model = view->GetModel();
-                victim = model->GetClosestRabbit(GetSnake()->GetFront());
+                view->SetOnTimer({BOT_TICK_MSEC, 
+                                 std::bind(&BotController::OnTimer, this)});
+                target = model->GetClosestRabbitCoord(snake_->GetFront());
+
+                dirPriors[0].second = Snake::LEFT;
+                dirPriors[1].second = Snake::RIGHT;
+                dirPriors[2].second = Snake::UP;
+                dirPriors[3].second = Snake::DOWN;
             }
 
         void OnKey(int key) override
@@ -86,11 +91,16 @@ class BotController: public Controller
                 assert(key);
             }
 
-        void OnTimer(int passedTime) override;
+        void OnTimer() override;
 
     private:
 
-        Rabbit* victim;
+        Coordinate target;
+        DirPriority dirPriors[4];
+
+        bool IsPointSecure(const Coordinate& point) const;
+
+        void GetDirsPriority();
 };
 
 //----------------------------------------//

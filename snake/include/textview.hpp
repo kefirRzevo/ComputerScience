@@ -12,9 +12,9 @@ class TextView: public View
 {
     private:
 
-        bool frameFull;
         Size frameSize;
         Coordinate upLeftCorner;
+
         struct termios termis_attr;
         std::string results;
 
@@ -75,6 +75,8 @@ class TextView: public View
 
 
         void PollOnKey();
+
+        void OnTimer();
 
         void UpdateResults();
 

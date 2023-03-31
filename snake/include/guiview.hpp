@@ -1,7 +1,12 @@
 #pragma once
 
+
+//#include <SFML/Graphics.hpp>
+
 #include "view.hpp"
 
+
+//----------------------------------------//
 
 class GuiView: public View
 {
@@ -18,8 +23,11 @@ class GuiView: public View
             }
 
     private:
+
         void UpdateWindowSize() override
             {
                 std::cout << "Not implemented" << std::endl;
             }
 };
+
+//----------------------------------------//

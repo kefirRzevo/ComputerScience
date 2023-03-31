@@ -12,11 +12,12 @@ int main(int argc, char* argv[])
     else
         view = View::Get();
 
-    Model model({50, 20}, 2);
+    Model model({50, 25}, 1);
     view->SetModel(&model);
-    HumanController(model.GetSnake(0), 'a', 'd', 'w', 's');
-    BotController(model.GetSnake(1));
-    //HumanController(model.GetSnake(2), 'l', 'r', 'u', 'n');
+    //HumanController(model.GetSnake(0), 'a', 'd', 'w', 's');
+    BotController(model.GetSnake(0));
+    //BotController(model.GetSnake(1));
+    //HumanController(model.GetSnake(1), 68, 67, 65, 66);
 
     view->RunLoop();
 

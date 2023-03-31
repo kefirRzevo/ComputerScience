@@ -26,10 +26,15 @@ View::Get(const std::string& mode)
 void
 View::PollOnTimer(int passedTime)
 {
-        for(const auto& action: listenersOnTimer)
+    for(size_t i = 0; i < passedTimes.size(); i++)
+    {
+        passedTimes[i] += passedTime;
+        if(passedTimes[i] > listenersOnTimer[i].first)
         {
-                action(passedTime);
+            passedTimes[i] %= listenersOnTimer[i].first;
+            listenersOnTimer[i].second();
         }
+    }
 }
 
 //----------------------------------------//

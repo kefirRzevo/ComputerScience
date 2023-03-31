@@ -1,124 +1,134 @@
 #include "../include/controller.hpp"
 
+#define DEBUG
+
 #ifdef DEBUG
 #include<fstream>
 std::ofstream fout1("controller.txt");
 #endif
 
 
+static Coordinate
+GetShift(const Coordinate& coord, Snake::Direction dir);
+
+
+//----------------------------------------//
+
+static Coordinate
+GetShift(const Coordinate& coord, Snake::Direction dir)
+{
+    Coordinate dirCoord = Snake::GetCoordDirection(dir);
+    return {coord.first + dirCoord.first, coord.second + dirCoord.second};
+}
+
 //----------------------------------------//
 
 void 
 HumanController::OnKey(int key)
 {
-    if(!GetSnake()->GetUpdated())
+    if(!snake->IsAlive())
         return;
 
-    Snake* snake = GetSnake();
-    Snake::Direction snakeDir = snake->GetDirection();
-
     if(key == leftKey)
-    {
-        if( snakeDir == Snake::Direction::LEFT ||
-            snakeDir == Snake::Direction::RIGHT )
-            goto leave;
-
-        snake->SetDirection(Snake::Direction::LEFT);
-    }
+        snake->SetDirection(Snake::LEFT);
     else if(key == rightKey)
-    {
-        if( snakeDir == Snake::Direction::LEFT ||
-            snakeDir == Snake::Direction::RIGHT )
-            goto leave;
-
-        snake->SetDirection(Snake::Direction::RIGHT);
-    }
+        snake->SetDirection(Snake::RIGHT);
     else if(key == upKey)
-    {
-        if( snakeDir == Snake::Direction::DOWN ||
-            snakeDir == Snake::Direction::UP )
-            goto leave;
-
-        snake->SetDirection(Snake::Direction::UP);
-    }
+        snake->SetDirection(Snake::UP);
     else if(key == downKey)
-    {
-        if( snakeDir == Snake::Direction::DOWN ||
-            snakeDir == Snake::Direction::UP )
-            goto leave;
+        snake->SetDirection(Snake::DOWN);
+}
 
-        snake->SetDirection(Snake::Direction::DOWN);
+//----------------------------------------//
+
+bool
+BotController::IsPointSecure(const Coordinate& point) const
+{
+    Model* model = View::Get()->GetModel();
+    for(const auto& snake_: model->snakes)
+    {
+        for(const auto& section: snake_->GetCoordinates())
+            if(section == point)
+                return false;
+        
+        if(snake_ == snake)
+            continue;
+
+        Coordinate newFront = GetShift(snake_->GetFront(), snake_->GetDirection());
+        if(newFront == point)
+            return false;
     }
 
-leave:
-
-    snake->UnsetUpdated();
+    return true;
 }
 
 //----------------------------------------//
 
 void
-BotController::OnTimer(int passedTime)
+BotController::GetDirsPriority()
 {
-    assert(passedTime);
+    Snake::Direction prevDir = snake->GetDirection();
+    Coordinate prevFront = snake->GetFront();
 
-    if(!GetSnake()->GetUpdated())
+    for(size_t i = 0; i < 4; i++)
+    {
+        Snake::Direction newDir = dirPriors[i].second;
+        Coordinate newFront = GetShift(prevFront, newDir);
+
+        if(!IsPointSecure(newFront))
+        {
+            dirPriors[i].first = 0;
+            continue;
+        }
+
+        int prevDistance = Model::GetDistance(target, prevFront);
+        int newDistance  = Model::GetDistance(target, newFront);
+
+        if(newDistance < prevDistance && prevDir == newDir)
+        {
+            dirPriors[i].first = 8;
+            continue;
+        }
+
+        if(newDistance < prevDistance)
+        {
+            dirPriors[i].first = 4;
+            continue;
+        }
+
+        if(prevDir != newDir)
+        {
+            dirPriors[i].first = 2;
+            continue;
+        }
+
+        dirPriors[i].first = 1;
+    }
+}
+
+//----------------------------------------//
+
+void
+BotController::OnTimer()
+{
+    if(!snake->IsAlive())
         return;
 
-    static int prevScore = 0;
-    View* view = View::Get();
-    Model* model = view->GetModel();
-
-    Snake* snake = GetSnake();
-    Snake::Direction snakeDir = snake->GetDirection();
-
-    Coordinate victimCoord = *static_cast<Coordinate* >(victim);
+    Model* model = View::Get()->GetModel();
     Coordinate front = snake->GetFront();
 
+    if(!model->IsThereRabbit(target))
+        target = model->GetClosestRabbitCoord(front);
 
-    if(snake->GetScore() > prevScore)
-    {
-        prevScore = snake->GetScore();
-        victim = model->GetClosestRabbit(GetSnake()->GetFront());
-        victimCoord = *static_cast<Coordinate* >(victim);
-    }
+    GetDirsPriority();
 
-    if(front.first < victimCoord.first)
-    {
-        if(front.second < victimCoord.second && snakeDir == Snake::Direction::LEFT)
-            snake->SetDirection(Snake::Direction::DOWN);
-        else if(front.second >= victimCoord.second && snakeDir == Snake::Direction::LEFT)
-            snake->SetDirection(Snake::Direction::UP);
-        else if(snakeDir != Snake::Direction::LEFT)
-            snake->SetDirection(Snake::Direction::RIGHT);
-        else
-            assert(0);
-    }
-    else if(front.first > victimCoord.first)
-    {
-        if(front.second <= victimCoord.second && snakeDir == Snake::Direction::RIGHT)
-            snake->SetDirection(Snake::Direction::DOWN);
-        else if(front.second > victimCoord.second && snakeDir == Snake::Direction::RIGHT)
-            snake->SetDirection(Snake::Direction::UP);
-        else
-            snake->SetDirection(Snake::Direction::LEFT);
-    }
-    else if(front.second < victimCoord.second)
-    {
-        if(snakeDir == Snake::Direction::UP)
-            snake->SetDirection(Snake::Direction::LEFT);
-        else
-            snake->SetDirection(Snake::Direction::DOWN);
-    }
-    else
-    {
-        if(snakeDir == Snake::Direction::DOWN)
-            snake->SetDirection(Snake::Direction::RIGHT);
-        else
-            snake->SetDirection(Snake::Direction::UP);
-    }
+    DirPriority highestPrior = dirPriors[0];
+    for(size_t i = 1; i < 4; i++)
+        if(dirPriors[i].first > highestPrior.first)
+            highestPrior = dirPriors[i];
 
-    snake->UnsetUpdated();
+    snake->SetDirection(highestPrior.second);
+    snake->Dump();
 }
 
 //----------------------------------------//

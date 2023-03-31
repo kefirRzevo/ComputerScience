@@ -5,6 +5,8 @@
 #include <vector>
 #include <list>
 
+#include "config.hpp"
+
 #define DEBUG
 
 class Rabbit;
@@ -15,7 +17,7 @@ using Size        = std::pair<int, int>;
 using Coordinate  = std::pair<int, int>;
 using Coordinates = std::list<Coordinate>;
 using Rabbits = std::list<Rabbit* >;
-using Snakes  = std::vector<Snake* >;
+using Snakes  = std::list<Snake* >;
 
 
 //----------------------------------------//
@@ -24,22 +26,22 @@ class Rabbit: public Coordinate
 {
     private:
 
-        size_t score;
-        bool killed;
+        int score;
+        bool alive;
 
     public:
 
-        Rabbit(const Coordinate& coord_ = {}, size_t score_ = 1):
-            score(score_), killed(false)
+        Rabbit(const Coordinate& coord_ = {}, int score_ = 1):
+            score(score_), alive(true)
             {
-                static_cast<Coordinate>(*this) = coord_;
+                *static_cast<Coordinate* >(this) = coord_;
             }
 
-        bool RandomGenerate(Model* model, size_t score_ = 1);
+        void RandomGenerate(Model* model, int score_ = RABBIT_SCORE);
 
         bool operator==(const Rabbit& rhs)
             {
-                return static_cast<Coordinate>(*this) == rhs.GetCoordinate();
+                return *static_cast<Coordinate* >(this) == rhs.GetCoordinate();
             }
 
         void SetCoordinate(const Coordinate& coord_)
@@ -53,29 +55,25 @@ class Rabbit: public Coordinate
                 return static_cast<Coordinate>(*this);
             }
 
-        void SetScore(size_t score_)
-            {
-                score = score_;
-            }
-
-        size_t GetScore() const
+        int GetScore() const
             {
                 return score;
             }
 
         void Kill()
             {
-                killed = true;
+                alive = false;
             }
 
-        void Hill()
+        void Hill(int score_ = 1)
             {
-                killed = false;
+                score = score_;
+                alive = true;
             }
 
-        bool IsKilled() const
+        bool IsAlive() const
             {
-                return killed;
+                return alive;
             }
 };
 
@@ -97,40 +95,35 @@ class Snake
 
         Coordinates coords;
         Direction dir;
-        size_t scoreReserved = 0;
+
+        Direction dirAfterUpdate;
+        Coordinate newFront;
+
+        int scoreReserved;
         int score;
+
         bool alive;
-        bool updated;
+        bool inGame;
 
     public:
 
-        Snake(const Coordinates& coords_ = {}, Direction dir_ = Direction::UP):
-            coords(coords_), dir(dir_), score(0), alive(true), updated(false)
-            {}
+        Snake(const Coordinates& coords_ = {}, Direction dir_ = Direction::UP);
 
-        bool RandomGenerate(Model* model, size_t snakeSize = 8);
+        void RandomGenerate(Model* model, int snakeSize = SNAKE_SIZE);
+
+        void SetNewFront();
 
         void Update(Model* model);
 
-        void Feed(Rabbit* rabbit)
+        void Feed(int score_)
             {
-                scoreReserved += rabbit->GetScore();
-                score += static_cast<int>(rabbit->GetScore());
+                scoreReserved += score_;
+                score += score_;
             }
 
         void Kill()
             {
-                score = -1;
-            }
-
-        bool GetUpdated() const
-            {
-                return updated;
-            }
-
-        void UnsetUpdated()
-            {
-                updated = false;
+                alive = false;
             }
 
         int GetScore() const
@@ -148,17 +141,24 @@ class Snake
                 return coords;
             }
 
-        void SetDirection(Direction dir_)
-            {
-                dir = dir_;
-            }
+        void SetDirection(Direction dir_);
 
         Direction GetDirection() const
             {
                 return dir;
             }
 
-        Coordinate GetCoordinateDirection() const;
+        Direction GetDirAfterUpdate() const
+            {
+                return dirAfterUpdate;
+            }
+
+        static Coordinate GetCoordDirection(Snake::Direction dir);
+
+        const Coordinate& GetNewFront() const
+            {
+                return newFront;
+            }
 
         const Coordinate& GetFront() const
             {
@@ -174,31 +174,30 @@ class Snake
             {
                 return alive;
             }
+
+        bool IsInGame() const
+            {
+                return inGame;
+            }
+
+        void OnTimerDeath();
+
+        void Dump() const;
 };
 
 //----------------------------------------//
 
 class Model
 {
-    public:
-
-        enum class GameMode
-        {
-            SINGULAR,
-            MULTI,
-        };
-
     private:
 
         Size polygonSize;
-        bool finished;
+        bool snakesAlive;
 
     public:
 
         Rabbits rabbits;
         Snakes snakes;
-
-    public:
 
         Model(Size polygonSize_, size_t nSnakes = 2);
 
@@ -208,27 +207,38 @@ class Model
 
         Snake* GetSnake(size_t index)
             {
-                return (index < snakes.size() ? snakes[index] : nullptr);
+                auto snakeIterator = snakes.begin();
+                std::advance(snakeIterator, index);
+                return *snakeIterator;
             }
+
+        void DeleteSnake(Snake* snake);
 
         Size GetPolygonSize() const
             {
                 return polygonSize;
             }
 
-        void SetPolygonSize(Size size_)
+        bool SnakesAlive() const
+            {
+                return snakesAlive;
+            }
+
+        void SetPolygonSize(const Size& size_)
             {
                 polygonSize = size_;
             }
 
-        bool GameIsFinished() const
-            {
-                return finished;
-            }
+        Coordinate GetClosestRabbitCoord(const Coordinate& point) const;
 
-        Rabbit* GetClosestRabbit(const Coordinate& point);
+        void OnTimer();
 
-        void OnTimer(int passedTime);
+        int GetSnakeIndex(const Snake* snake) const;
+
+        bool IsThereRabbit(const Coordinate& point) const;
+
+        static int GetDistance(const Coordinate& coord1,
+                               const Coordinate& coord2);
 };
 
 //----------------------------------------//
