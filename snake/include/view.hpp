@@ -19,7 +19,7 @@ class View
         virtual ~View()
             {}
 
-	    static View* Get(const std::string& mode = "text");
+	    static View* Get(const std::string& mode = "gui");
 
         virtual void RunLoop() = 0;
     
@@ -49,17 +49,11 @@ class View
                 passedTimes.push_back(OnTimer.first);
             }
 
-        void SetTimeToDraw()
-            {
-                timeToDraw = true;
-            }
-
     protected:
 
         Model* model;
         Size windowSize;
         bool finished;
-        bool timeToDraw;
 
         std::vector<OnKeyCall> listenersOnKey;
         std::vector<OnTimerCall> listenersOnTimer;
@@ -67,7 +61,9 @@ class View
 
         friend void SigHandler(int signum);
 
-        void PollOnTimer(int msecPassed);
+        void PollOnKey(int key);
+
+        void PollOnTimer(int microsecPassed);
 
         virtual void UpdateWindowSize() = 0;
 };

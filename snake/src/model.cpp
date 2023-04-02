@@ -90,7 +90,8 @@ Snake::Snake(const Coordinates& coords_, Direction dir_)
     inGame = true;
 
     View* view = View::Get();
-    view->SetOnTimer({AFTER_DEATH_MSEC, std::bind(&Snake::OnTimerDeath, this)});
+    view->SetOnTimer({AFTER_DEATH_MSEC * 1000,
+                      std::bind(&Snake::OnTimerDeath, this)});
 }
 
 //----------------------------------------//
@@ -301,7 +302,8 @@ Model::Model(Size polygonSize_, size_t nSnakes)
     }
 
     View* view = View::Get();
-    view->SetOnTimer({TICK_MSEC, std::bind(&Model::OnTimer, this)});
+    view->SetOnTimer({TICK_MSEC * 1000, 
+                      std::bind(&Model::OnTimer, this)});
 }
 
 //----------------------------------------//

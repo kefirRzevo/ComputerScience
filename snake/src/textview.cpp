@@ -6,6 +6,7 @@
 #include <cmath>
 
 #include "../include/textview.hpp"
+#include "../include/config.hpp"
 
 #ifdef DEBUG
 #include <fstream>
@@ -15,30 +16,9 @@ std::ofstream fout("textview.txt");
 void 
 SigHandler(int signum);
 
-static const int POLL_PERIOD = 10;
-
 static const int CSI_fg_color_code = 30;
 static const int CSI_bg_color_code = 40; 
 
-static const int TOP_paddind = 3;
-static const int BOTTOM_padding = 1;
-static const int LEFT_paddind = 2;
-static const int RIGHT_padding = 2;
-
-
-//----------------------------------------//
-
-static bool
-IsInFrame(const Coordinate& frameSize, const Coordinate& point)
-{
-    if(point.first <= 0 || point.first + 2 > frameSize.first)
-        return false;
-
-    if(point.second <= 0 || point.second + 2 > frameSize.second)
-        return false;
-
-    return true;
-}
 
 //----------------------------------------//
 
@@ -50,7 +30,7 @@ TextView::TextView()
     signal(SIGINT, SigHandler);
     TermiosPropsOff();
     CarretOff();
-    SetOnTimer({DRAW_TIME_MSEC, std::bind(&TextView::OnTimer, this)});
+    SetOnTimer({TICK_MSEC * 1000, std::bind(&TextView::OnTimer, this)});
 }
 
 //----------------------------------------//
@@ -96,8 +76,22 @@ TextView::UpdateWindowSize()
 
 //----------------------------------------//
 
-void
-TextView::PollOnKey()
+bool
+TextView::IsInFrame(const Coordinate& point) const
+{
+    if(point.first <= 0 || point.first + 2 > frameSize.first)
+        return false;
+
+    if(point.second <= 0 || point.second + 2 > frameSize.second)
+        return false;
+
+    return true;
+}
+
+//----------------------------------------//
+
+int
+TextView::GetPolledKey() const
 {
     struct pollfd requested = 
     {
@@ -106,23 +100,16 @@ TextView::PollOnKey()
         .revents = 0
     };
 
-    poll(&requested, 1, POLL_PERIOD);
+    poll(&requested, 1, TICK_MSEC / 10);
 
     if (requested.revents & POLL_IN)
     {
         int symbol = 0;
         read(STDIN_FILENO, &symbol, 1);
-        
-        if(symbol == 'q')
-        {
-            finished = true;
-        }
-
-        for (const auto& action: listenersOnKey)
-        {
-            action(symbol);
-        }
+        return symbol;
     }
+
+    return 0;
 }
 
 //----------------------------------------//
@@ -132,7 +119,11 @@ TextView::OnTimer()
 {
     if(model->SnakesAlive())
         timeToDraw = true;
+    else
+        timeToDraw = false;
 }
+
+//----------------------------------------//
 
 void
 TextView::RunLoop()
@@ -140,17 +131,16 @@ TextView::RunLoop()
     timeval start  = {};
     timeval end    = {};
     timeval passed = {};
-    int msecPassed = 0;
 
+    gettimeofday(&start, nullptr);
     while(1)
     {
-        gettimeofday(&start, nullptr);
-        PollOnKey();
-        gettimeofday(&end, nullptr);
+        PollOnKey(GetPolledKey());
 
+        gettimeofday(&end, nullptr);
         timersub(&end, &start, &passed);
-        msecPassed = passed.tv_sec * 1000 + passed.tv_usec / 1000;
-        PollOnTimer(msecPassed);
+        PollOnTimer(passed.tv_sec * 1000000 + passed.tv_usec);
+        gettimeofday(&start, nullptr);
 
         if(timeToDraw)
         {
@@ -176,7 +166,7 @@ TextView::DrawRabbits() const
     {
         Coordinate rabbitCoord = rabbit->GetCoordinate();
 
-        if(IsInFrame(frameSize, rabbitCoord))
+        if(IsInFrame(rabbitCoord))
         {
             rabbitCoord.first  += upLeftCorner.first;
             rabbitCoord.second += upLeftCorner.second;
@@ -201,7 +191,7 @@ TextView::DrawSnakes() const
         {
             Coordinate section = *iterator;
 
-            if(IsInFrame(frameSize, section))
+            if(IsInFrame(section))
             {            
                 section.first  += upLeftCorner.first;
                 section.second += upLeftCorner.second;
@@ -212,7 +202,7 @@ TextView::DrawSnakes() const
 
         Coordinate back = snake->GetBack();
 
-        if(IsInFrame(frameSize, back))
+        if(IsInFrame(back))
         {
             back.first  += upLeftCorner.first;
             back.second += upLeftCorner.second;
@@ -221,7 +211,7 @@ TextView::DrawSnakes() const
         }
 
         Coordinate front = snake->GetFront();
-        if(IsInFrame(frameSize, front))
+        if(IsInFrame(front))
         {
             front.first  += upLeftCorner.first;
             front.second += upLeftCorner.second;
@@ -248,10 +238,10 @@ TextView::DrawFrame()
     int cornerUpLeftX = 0;
     int cornerUpLeftY = 0;
 
-    if(viewWidth <= modelWidth + 2 + LEFT_paddind + RIGHT_padding)
+    if(viewWidth <= modelWidth + 2 + PADDING_LEFT + PADDING_RIGHT)
     {
-        frameWidth = viewWidth - LEFT_paddind - RIGHT_padding;
-        cornerUpLeftX = LEFT_paddind + 1;
+        frameWidth = viewWidth - PADDING_LEFT - PADDING_RIGHT;
+        cornerUpLeftX = PADDING_LEFT + 1;
     }
     else
     {
@@ -259,10 +249,10 @@ TextView::DrawFrame()
         cornerUpLeftX = (viewWidth - frameWidth) / 2 + 1;
     }
 
-    if(viewHeight <= modelHeight + 2 + TOP_paddind + BOTTOM_padding)
+    if(viewHeight <= modelHeight + 2 + PADDING_TOP + PADDING_BOTTOM)
     {
-        frameHeight = viewHeight - TOP_paddind - BOTTOM_padding;
-        cornerUpLeftY = TOP_paddind + 1;
+        frameHeight = viewHeight - PADDING_TOP - PADDING_BOTTOM;
+        cornerUpLeftY = PADDING_TOP + 1;
     }
     else
     {
@@ -287,7 +277,7 @@ TextView::DrawFrame()
     UpdateResults();
     assert(resultsSize < viewWidth);
     String((viewWidth - resultsSize) / 2 + 1,
-           (TOP_paddind - 1) / 2 + 1, results.c_str());
+           (PADDING_TOP - 1) / 2 + 1, results.c_str());
 }
 
 //----------------------------------------//

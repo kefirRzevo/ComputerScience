@@ -14,6 +14,7 @@ class TextView: public View
 
         Size frameSize;
         Coordinate upLeftCorner;
+        bool timeToDraw;
 
         struct termios termis_attr;
         std::string results;
@@ -46,11 +47,7 @@ class TextView: public View
 
     private:
 
-        void RedrawRabbits() const;
-
-        void RedrawSnakes() const;
-
-        void AddProperties(enum TextView::Color fg, 
+        void AddProperties(enum TextView::Color fg,
                            enum TextView::Color bg) const;
 
         void HLine(int x0, int y0, int len, int sym) const;
@@ -73,8 +70,10 @@ class TextView: public View
 
         void TermiosPropsOff();
 
+        
+        bool IsInFrame(const Coordinate& point) const;
 
-        void PollOnKey();
+        int GetPolledKey() const;
 
         void OnTimer();
 

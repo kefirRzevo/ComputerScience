@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
     else
         view = View::Get();
 
-    Model model({50, 25}, 1);
+    Model model({POLYGON_WIDTH, POLYGON_HEIGHT}, N_SNAKES);
     view->SetModel(&model);
     //HumanController(model.GetSnake(0), 'a', 'd', 'w', 's');
     BotController(model.GetSnake(0));

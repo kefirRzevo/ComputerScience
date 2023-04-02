@@ -76,7 +76,7 @@ class BotController: public Controller
             {
                 View* view = View::Get();
                 Model* model = view->GetModel();
-                view->SetOnTimer({BOT_TICK_MSEC, 
+                view->SetOnTimer({TICK_MSEC * 1000, 
                                  std::bind(&BotController::OnTimer, this)});
                 target = model->GetClosestRabbitCoord(snake_->GetFront());
 

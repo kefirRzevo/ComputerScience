@@ -1,7 +1,7 @@
 #pragma once
 
 
-//#include <SFML/Graphics.hpp>
+#include <SFML/Graphics.hpp>
 
 #include "view.hpp"
 
@@ -10,17 +10,24 @@
 
 class GuiView: public View
 {
+    private:
+
+        sf::RenderWindow sfWindow;
+        sf::Font sfFont;
+        sf::Texture sfSnakeTexture;
+        sf::Texture sfRabbitTexture;
+
     public:
-        GuiView()
-            {};
 
-        ~GuiView()
-            {}
+        GuiView();
 
-        void RunLoop() override
-            {
-                std::cout << "Not implemented" << std::endl;
-            }
+        ~GuiView();
+
+        void RunLoop() override;
+
+        void DrawRabbits();
+
+        void DrawSnakes();
 
     private:
 
