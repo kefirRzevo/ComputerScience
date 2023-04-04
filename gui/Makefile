@@ -1,8 +1,7 @@
 CC  = gcc
-CXX = g++ -std=c++11
+CXX = g++ -std=c++14
 
-CXXFLAGS = -I inc -Wall -Wextra -g -std=c++14 -Wall -Wextra 
-#\
+CXXFLAGS = -I inc -Wall -Wextra -g -std=c++14 #-Wall -Wextra \
 -Weffc++ -Wc++0x-compat \
 -Wc++11-compat -Wc++14-compat -Wcast-qual \
 -Wchar-subscripts   \
@@ -38,16 +37,15 @@ CXXFLAGS = -I inc -Wall -Wextra -g -std=c++14 -Wall -Wextra
 -fsanitize=unreachable \
 -fsanitize=vla-bound \
 -fsanitize=vptr
-
 DBGFLAGS = -fsanitize=address -ggdb3
 
 TARGET = app
-SRCDIR = src/
-OBJDIR = obj/
-INCDIR = include/
+SRCDIR = application/ graphlib/ gui/
+OBJDIR = build/
+INCDIR = application/ graphlib/ gui/
 
-SOURCES = main.cpp $(wildcard $(SRCDIR)*.cpp)
-OBJECTS = $(foreach SRC, $(SOURCES), $(basename $(OBJDIR)$(notdir $(SRC))).o)
+SOURCES = main.cpp $(foreach SRC, $(SRCDIR), $(wildcard $(SRC)*.cpp))
+OBJECTS = $(foreach SRC, $(SOURCES), $(basename $(OBJDIR)$(SRC)).o)
 DEPENDS = $(patsubst %.o, %.d, $(OBJECTS))
 
 # .PHONY means these rules get executed even if
@@ -75,5 +73,18 @@ $(TARGET): $(OBJECTS)
 $(OBJDIR)main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
-$(OBJDIR)%.o: $(SRCDIR)%.cpp
+$(OBJDIR)%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+
+#define BuildRule =
+#$(OBJDIR)$(basename $(notdir $(1))).o: $(1)
+#	echo $@
+#	$(CXX) $< -c -o $@ $(CXXFLAGS)
+#endef
+
+#-include depends
+
+#$(eval $(call BuildRule,main))
+
+#$(foreach SRC, $(SOURCES), $(eval $(call BuildRule, $(SRC))))
