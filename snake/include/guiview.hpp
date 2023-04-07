@@ -29,12 +29,13 @@ class GuiView: public View
 
         void DrawSnakes();
 
+        void DrawFrame();
+
+        void DrawResults();
+
     private:
 
-        void UpdateWindowSize() override
-            {
-                std::cout << "Not implemented" << std::endl;
-            }
+        sf::Color GetStyleColor(int snakeStyle) const;
 };
 
 //----------------------------------------//

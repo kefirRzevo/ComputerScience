@@ -32,6 +32,33 @@ GetTextureIndx(const Coordinate& a, const Coordinate& b, const Coordinate& c);
 
 //----------------------------------------//
 
+KeyCode
+fromGraphView(int graphKey)
+{
+    if(graphKey == sf::Keyboard::Q)
+        return keyQuit;
+    else if(graphKey == sf::Keyboard::W)
+        return keyW;
+    else if(graphKey == sf::Keyboard::A)
+        return keyA;
+    else if(graphKey == sf::Keyboard::S)
+        return keyS;
+    else if(graphKey == sf::Keyboard::D)
+        return keyD;
+    else if(graphKey == sf::Keyboard::Up)
+        return keyArrowU;
+    else if(graphKey == sf::Keyboard::Left)
+        return keyArrowL;
+    else if(graphKey == sf::Keyboard::Down)
+        return keyArrowD;
+    else if(graphKey == sf::Keyboard::Right)
+        return keyArrowR;
+
+    return keyUnknown;
+}
+
+//----------------------------------------//
+
 static sf::IntRect&&
 CutRect(const sf::Texture& texture, int i, int j, int w, int h)
 {
@@ -54,6 +81,7 @@ GetSprite(const Coordinate& point, const sf::Texture& texture,
 
     sprite.setScale(SQUARE_SIZE / sprite.getLocalBounds().width,
                     SQUARE_SIZE / sprite.getLocalBounds().height);
+
     sprite.move(SQUARE_SIZE * (point.first + PADDING_LEFT),
                 SQUARE_SIZE * (point.second + PADDING_TOP));
 
@@ -162,11 +190,13 @@ GuiView::GuiView()
     int width  = (POLYGON_WIDTH + PADDING_LEFT + PADDING_RIGHT + 2) * SQUARE_SIZE;
     int height = (POLYGON_HEIGHT + PADDING_TOP + PADDING_BOTTOM + 2) * SQUARE_SIZE;
 
-    sfWindow.create(sf::VideoMode(width, height), "Snake Game");
+    sfWindow.create(sf::VideoMode(static_cast<unsigned int>(width), 
+                                  static_cast<unsigned int>(height)), "Snake Game");
     sfFont.loadFromFile(FONT_PATH);
     sfSnakeTexture.loadFromFile(TEXTURE_PATH);
-    sf::IntRect rabTextureRect = CutRect(sfSnakeTexture, 0, 3);
-    sfRabbitTexture.loadFromFile(TEXTURE_PATH, rabTextureRect);
+    //sf::IntRect rabTextureRect = CutRect(sfSnakeTexture, 0, 3);
+    //sfRabbitTexture.loadFromFile(TEXTURE_PATH, rabTextureRect);
+    sfRabbitTexture.loadFromFile(RABTEXTURE_PATH);
 }
 
 //----------------------------------------//
@@ -196,7 +226,12 @@ GuiView::DrawSnakes()
 {
     for(const auto& snake: model->snakes)
     {
+        if(!snake->IsInGame())
+            continue;
+
         const Coordinates& coords = snake->GetCoordinates();
+        sf::Color fillColor = GetStyleColor(snake->GetStyleType());
+
         for(auto it = coords.begin(); it != coords.end(); it++)
         {
             if(!IsInPolygon(model->GetPolygonSize(), *it))
@@ -214,6 +249,7 @@ GuiView::DrawSnakes()
             sf::IntRect sectRect = CutRect(sfSnakeTexture, textureIndx.first,
                                                            textureIndx.second);
             sf::Sprite sprite(GetSprite(*it, sfSnakeTexture, sectRect));
+            sprite.setColor(fillColor);
             sfWindow.draw(sprite);
         }
     }
@@ -237,7 +273,7 @@ GuiView::RunLoop()
             if(sfEvent.type == sf::Event::Closed)
                 break;
             else if(sfEvent.type == sf::Event::KeyPressed)
-                PollOnKey(sfEvent.key.code);
+                PollOnKey(fromGraphView(sfEvent.key.code));
         }
 
         end = sfClock.getElapsedTime();
@@ -245,6 +281,8 @@ GuiView::RunLoop()
         start = sfClock.getElapsedTime();
 
         sfWindow.clear();
+        DrawFrame();
+        DrawResults();
         DrawRabbits();
         DrawSnakes();
         sfWindow.display();
@@ -252,6 +290,90 @@ GuiView::RunLoop()
         if(finished)
             break;
     }
+}
+
+//----------------------------------------//
+
+void
+GuiView::DrawFrame()
+{
+    float unit = static_cast<float>(SQUARE_SIZE);
+    float width = static_cast<float>(model->GetPolygonSize().first);
+    float height = static_cast<float>(model->GetPolygonSize().second);
+    sf::Color fillColor = sf::Color::Blue;
+    fillColor.a = 128;
+
+    sf::RectangleShape column{{unit, (height + 2) * unit}};
+    column.setFillColor(fillColor);
+    column.move(unit * PADDING_LEFT, unit * PADDING_TOP);
+    sfWindow.draw(column);
+    column.move(unit * (width + 1), 0);
+    sfWindow.draw(column);
+
+    sf::RectangleShape row{{width * unit, unit}};
+    row.setFillColor(fillColor);
+    row.move(unit * (PADDING_LEFT + 1), unit * PADDING_TOP);
+    sfWindow.draw(row);
+    row.move(0, unit * (height + 1));
+    sfWindow.draw(row);
+}
+
+//----------------------------------------//
+
+void
+GuiView::DrawResults()
+{
+    float sumIndent = static_cast<float>(PADDING_LEFT * SQUARE_SIZE);
+    for(const auto& snake: GetModel()->snakes)
+    {
+        std::string playerResult;
+        playerResult += "Player";
+        playerResult += std::to_string(GetModel()->GetSnakeIndex(snake));
+        playerResult += " ";
+        playerResult += std::to_string(snake->GetScore());
+        if(!snake->IsAlive())
+            playerResult += "(Died)";
+        playerResult += ";";
+        
+        sf::Text result(playerResult, sfFont);
+        result.move(sumIndent, static_cast<float>((PADDING_TOP - 1) * SQUARE_SIZE) / 2);
+        result.setFillColor(GetStyleColor(snake->GetStyleType()));
+        sfWindow.draw(result);
+        sumIndent += result.getLocalBounds().width;
+        sumIndent += static_cast<float>(SQUARE_SIZE);
+    }
+}
+
+//----------------------------------------//
+
+sf::Color
+GuiView::GetStyleColor(int snakeStyle) const
+{
+    switch (snakeStyle)
+    {
+        case 0:
+            return sf::Color::Red;
+
+        case 1:
+            return sf::Color::Green;
+
+        case 2:
+            return sf::Color::Blue;
+
+        case 3:
+            return sf::Color::Yellow;
+
+        case 4:
+            return sf::Color::Magenta;
+
+        case 5:
+            return sf::Color::Cyan;
+        
+        default:
+            return sf::Color::White;
+    }
+
+    return sf::Color::White;
 }
 
 //----------------------------------------//

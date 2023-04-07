@@ -8,17 +8,73 @@
 #include "../include/textview.hpp"
 #include "../include/config.hpp"
 
-#ifdef DEBUG
-#include <fstream>
-std::ofstream fout("textview.txt");
-#endif
+
+Color Black    = 0;
+Color Red      = 1;
+Color Green    = 2;
+Color Yellow   = 3;
+Color Blue     = 4;
+Color Magennta = 5;
+Color Cyan     = 6;
+Color White    = 7;
+
+Color
+Brighten(Color col);
+
+Color
+FromInt(int number);
+
+Color
+FromRGB(int r, int g, int b);
 
 void 
 SigHandler(int signum);
 
-static const int CSI_fg_color_code = 30;
-static const int CSI_bg_color_code = 40; 
+//----------------------------------------//
 
+Color
+Brighten(Color col)
+{
+    assert(col >= 0 && col <= 7);
+    return col + 8;
+}
+
+//----------------------------------------//
+
+Color
+FromInt(int number)
+{
+    assert(number >=0 && number <= 255);
+    return number;
+}
+
+//----------------------------------------//
+
+Color
+FromRGB(int r, int g, int b)
+{
+    assert(r >= 0 && g >= 0 && b >=0 && r <=5 && g <= 5 && b <= 5);
+    return 16 + 36 * r + 6 * g + b;
+}
+
+//----------------------------------------//
+
+KeyCode
+fromTextView(int textKey)
+{
+    if(textKey == 'q' || textKey == 'Q')
+        return keyQuit;
+    else if(textKey == 'w' || textKey == 'W')
+        return keyW;
+    else if(textKey == 'a' || textKey == 'A')
+        return keyA;
+    else if(textKey == 's' || textKey == 'S')
+        return keyS;
+    else if(textKey == 'd' || textKey == 'D')
+        return keyD;
+
+    return keyUnknown;
+}
 
 //----------------------------------------//
 
@@ -53,7 +109,8 @@ SigHandler(int signum)
 
     if(signum == SIGWINCH)
     {
-        view->UpdateWindowSize();
+        if(dynamic_cast<TextView* >(view))
+            static_cast<TextView* >(view)->UpdateWindowSize();
     }
 
     if(signum == SIGINT)
@@ -90,7 +147,7 @@ TextView::IsInFrame(const Coordinate& point) const
 
 //----------------------------------------//
 
-int
+KeyCode
 TextView::GetPolledKey() const
 {
     struct pollfd requested = 
@@ -106,10 +163,28 @@ TextView::GetPolledKey() const
     {
         int symbol = 0;
         read(STDIN_FILENO, &symbol, 1);
-        return symbol;
+        if(symbol != '\033')
+        {
+            return fromTextView(symbol);
+        }
+        else
+        {
+            read(STDIN_FILENO, &symbol, 1);
+            if(symbol != '[')
+                return keyUnknown;
+            read(STDIN_FILENO, &symbol, 1);
+            if(symbol == 'A')
+                return keyArrowU;
+            else if(symbol == 'B')
+                return keyArrowD;
+            else if(symbol == 'C')
+                return keyArrowR;
+            else if(symbol == 'D')
+                return keyArrowL;
+        }
     }
 
-    return 0;
+    return noKey;
 }
 
 //----------------------------------------//
@@ -144,8 +219,9 @@ TextView::RunLoop()
 
         if(timeToDraw)
         {
-            Clear();
+            Clear(FromInt(141));
             DrawFrame();
+            DrawResults();
             DrawRabbits();
             DrawSnakes();
             fflush(stdout);
@@ -164,6 +240,7 @@ TextView::DrawRabbits() const
 {
     for(const auto& rabbit: model->rabbits)
     {
+        SetRabbitStyleColors(rabbit->GetStyleType());
         Coordinate rabbitCoord = rabbit->GetCoordinate();
 
         if(IsInFrame(rabbitCoord))
@@ -185,6 +262,8 @@ TextView::DrawSnakes() const
     {
         if(!snake->IsInGame())
             continue;
+
+        SetSnakeStyleColors(snake->GetStyleType());
 
         for(auto iterator  = ++snake->GetCoordinates().begin(); 
                  iterator != --snake->GetCoordinates().end(); ++iterator)
@@ -260,8 +339,7 @@ TextView::DrawFrame()
         cornerUpLeftY = (viewHeight - frameHeight) / 2 + 1;
     }
 
-    AddProperties(RED, WHITE);
-
+    SetColor(FromInt(54), FromInt(27));
     HLine(cornerUpLeftX, cornerUpLeftY, frameWidth, '=');
     HLine(cornerUpLeftX, cornerUpLeftY + frameHeight - 1, frameWidth, '=');
     VLine(cornerUpLeftX, cornerUpLeftY, frameHeight, '#');
@@ -272,43 +350,58 @@ TextView::DrawFrame()
 
     upLeftCorner.first  = cornerUpLeftX;
     upLeftCorner.second = cornerUpLeftY;
-
-    int resultsSize = results.size();
-    UpdateResults();
-    assert(resultsSize < viewWidth);
-    String((viewWidth - resultsSize) / 2 + 1,
-           (PADDING_TOP - 1) / 2 + 1, results.c_str());
 }
 
 //----------------------------------------//
 
 void
-TextView::UpdateResults()
+TextView::DrawResults() const
 {
-    results.clear();
-    Model* model = GetModel();
-
-    size_t i = 0;
-    for(const auto& snake: model->snakes)
+    int sumIndent = upLeftCorner.first;
+    for(const auto& snake: GetModel()->snakes)
     {
-        results += "Player";
-        results += std::to_string(i++);
-        results += " ";
-        results += std::to_string(snake->GetScore());
-
+        std::string playerResult;
+        playerResult += "Player";
+        playerResult += std::to_string(GetModel()->GetSnakeIndex(snake));
+        playerResult += " ";
+        playerResult += std::to_string(snake->GetScore());
         if(!snake->IsAlive())
-            results += "(Died)";
-
-        results += "; ";
+            playerResult += "(Died)";
+        playerResult += ";";
+        
+        SetSnakeStyleColors(snake->GetStyleType());
+        String(sumIndent, upLeftCorner.second / 2, playerResult.c_str());
+        sumIndent += playerResult.size();
+        SetColor(-1, FromInt(141));
+        Symbol({sumIndent++, upLeftCorner.second / 2}, ' ');
     }
 }
 
 //----------------------------------------//
 
 void
-TextView::AddProperties(enum TextView::Color fg, enum TextView::Color bg) const
+TextView::SetSnakeStyleColors(int snakeStyle) const
 {
-    printf("\e[%d;%dm", fg + CSI_fg_color_code, bg + CSI_bg_color_code);
+    SetColor(FromInt(9 + snakeStyle), FromInt(1 + snakeStyle));
+}
+
+//----------------------------------------//
+
+void
+TextView::SetRabbitStyleColors(int rabbitStyle) const
+{
+    SetColor(FromInt(17 + 7 * rabbitStyle), FromInt(17 + 9 * rabbitStyle));
+}
+
+//----------------------------------------//
+
+void
+TextView::SetColor(Color fg, Color bg) const
+{
+    if(fg >= 0)
+        printf("\e[38;5;%dm", fg);
+    if(bg >= 0)
+        printf("\e[48;5;%dm", bg);
 }
 
 //----------------------------------------//
@@ -350,8 +443,9 @@ TextView::String(int x, int y, const char* string) const
 //----------------------------------------//
 
 void
-TextView::Clear() const
+TextView::Clear(Color bg) const
 {
+    SetColor(-1, bg);
     printf("\e[2J");
 }
 

@@ -4,7 +4,7 @@
 #include "include/controller.hpp"
 
 int main(int argc, char* argv[])
-{
+{std::srand(std::time(nullptr));
     View* view = nullptr;
 
     if(argc > 1)
@@ -14,10 +14,11 @@ int main(int argc, char* argv[])
 
     Model model({POLYGON_WIDTH, POLYGON_HEIGHT}, N_SNAKES);
     view->SetModel(&model);
-    //HumanController(model.GetSnake(0), 'a', 'd', 'w', 's');
     BotController(model.GetSnake(0));
-    //BotController(model.GetSnake(1));
-    //HumanController(model.GetSnake(1), 68, 67, 65, 66);
+    BotController(model.GetSnake(1));
+    BotController(model.GetSnake(2));
+    //HumanController(model.GetSnake(1), keyArrowL, keyArrowR, keyArrowU, keyArrowD);
+    //HumanController(model.GetSnake(2), keyA, keyD, keyW, keyS);
 
     view->RunLoop();
 

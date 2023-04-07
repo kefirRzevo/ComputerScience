@@ -1,7 +1,7 @@
 CC  = gcc
 CXX = g++ -std=c++11
 
-CXXFLAGS = -I inc -Wall -Wextra -g -std=c++14 -Wall -Wextra \
+CXXFLAGS = -I inc -Wall -Wextra -g -std=c++14 #-Wall -Wextra \
 -Weffc++ -Wc++0x-compat \
 -Wc++11-compat -Wc++14-compat -Wcast-qual \
 -Wchar-subscripts   \
@@ -66,7 +66,7 @@ clean:
 	$(RM) $(OBJECTS) $(DEPENDS) $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@ -lsfml-graphics -lsfml-window -lsfml-system
 
 -include $(DEPENDS)
 

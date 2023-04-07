@@ -2,13 +2,6 @@
 #include "../include/view.hpp"
 
 
-#include <stdio.h>
-#ifdef DEBUG
-//#include<fstream>
-FILE* fp = fopen("model.txt", "w+");
-#endif
-
-
 static Coordinate
 GetRandomPoint(const Size& polygonSize);
 
@@ -78,53 +71,14 @@ initializeRabbit:
 
 //----------------------------------------//
 
-Snake::Snake(const Coordinates& coords_, Direction dir_)
+Snake::Snake(int styleType_):
+coords({}), newFront({}), dirInFuture(Direction::UP),
+dirAfterUpdate(Direction::UP), styleType(styleType_), scoreReserved(0), score(0),
+alive(true), inGame(true)
 {
-    coords = coords_;
-    dir = dir_;
-    dirAfterUpdate = {};
-    newFront = {};
-    scoreReserved = 0;
-    score = 0;
-    alive = true;
-    inGame = true;
-
     View* view = View::Get();
     view->SetOnTimer({AFTER_DEATH_MSEC * 1000,
                       std::bind(&Snake::OnTimerDeath, this)});
-}
-
-//----------------------------------------//
-
-void
-Snake::SetDirection(Direction dir_)
-{
-    if(dirAfterUpdate == Direction::LEFT)
-    {
-        if(dir_ == Snake::LEFT ||
-           dir_ == Snake::RIGHT )
-            return;
-    }
-    else if(dirAfterUpdate == Direction::RIGHT)
-    {
-        if(dir_ == Snake::LEFT ||
-           dir_ == Snake::RIGHT )
-            return;
-    }
-    else if(dirAfterUpdate == Direction::UP)
-    {
-        if(dir_ == Snake::DOWN ||
-           dir_ == Snake::UP )
-            return;
-    }
-    else if(dirAfterUpdate == Direction::DOWN)
-    {
-        if(dir_ == Snake::DOWN ||
-           dir_ == Snake::UP )
-            return;
-    }
-
-    dir = dir_;
 }
 
 //----------------------------------------//
@@ -147,9 +101,9 @@ initializeSnake:
 
     coords.clear();
 
-    dir = Direction(std::rand() % 4);
+    dirInFuture = Direction(std::rand() % 4);
 
-    direction = Snake::GetCoordDirection(dir);
+    direction = Snake::GetCoordDirection(dirInFuture);
     back      = GetRandomPoint(model->GetPolygonSize());
 
     section.first  = back.first;
@@ -181,7 +135,7 @@ initializeSnake:
 
         coords.push_front(section);
     }
-    dirAfterUpdate = dir;
+    dirAfterUpdate = dirInFuture;
 }
 
 //----------------------------------------//
@@ -211,13 +165,39 @@ Snake::GetCoordDirection(Snake::Direction dir)
 
 //----------------------------------------//
 
+Snake::Direction
+Snake::GetOppositeDir(Snake::Direction dir)
+{
+    switch(dir)
+    {
+        case Snake::Direction::DOWN:
+            return Snake::Direction::UP;
+        
+        case Snake::Direction::RIGHT:
+            return Snake::Direction::LEFT;
+
+        case Snake::Direction::LEFT:
+            return Snake::Direction::RIGHT;
+
+        case Snake::Direction::UP:
+            return Snake::Direction::DOWN;
+
+        default:
+            return dir;
+    }
+
+    return dir;
+}
+
+//----------------------------------------//
+
 void
 Snake::SetNewFront()
 {
     if(!inGame)
         return;
 
-    Coordinate direction =Snake::GetCoordDirection(dir);
+    Coordinate direction = Snake::GetCoordDirection(dirInFuture);
     newFront = {coords.front().first  + direction.first,
                 coords.front().second + direction.second};
 }
@@ -263,7 +243,7 @@ Snake::Update(Model* model)
     else
         scoreReserved--;
 
-    dirAfterUpdate = dir;
+    UpdateDirection();
 }
 
 //----------------------------------------//
@@ -289,14 +269,14 @@ Model::Model(Size polygonSize_, size_t nSnakes)
 
     for(size_t i = 0; i < nSnakes; i++)
     {
-        Snake* snake = new Snake();
+        Snake* snake = new Snake(i);
         snake->RandomGenerate(this);
         snakes.push_back(snake);
     }
 
     for(size_t i = 0; i < N_RABBITS; i++)
     {
-        Rabbit* rabbit = new Rabbit();
+        Rabbit* rabbit = new Rabbit(i);
         rabbit->RandomGenerate(this);
         rabbits.push_front(rabbit);
     }
@@ -339,6 +319,7 @@ Model::Update()
     for(const auto& rabbit: rabbits)
         if(!rabbit->IsAlive())
             rabbit->RandomGenerate(this);
+
 }
 
 //----------------------------------------//
@@ -409,7 +390,7 @@ Snake::Dump() const
         fprintf(fp, "|%-2d %-2d", coord.first, coord.second);
 
     fprintf(fp, "|\ndir ");
-    switch(GetDirection())
+    switch(dirAfterUpdate)
     {
         case Snake::DOWN:
             fprintf(fp, " Down");
@@ -427,9 +408,9 @@ Snake::Dump() const
             fprintf(fp, "   Up");
     }
 
-    fprintf(fp, "; DirAfter ");
+    fprintf(fp, "; DirFuture ");
 
-    switch(GetDirAfterUpdate())
+    switch(dirInFuture)
     {
         case Snake::DOWN:
             fprintf(fp, " DOWN");

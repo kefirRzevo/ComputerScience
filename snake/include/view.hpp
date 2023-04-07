@@ -7,7 +7,28 @@
 
 #include "model.hpp"
 
-using OnKeyCall = std::function<void(int)>;
+
+enum KeyCode
+{
+    keyW,
+    keyA,
+    keyS,
+    keyD,
+    keyArrowL,
+    keyArrowR,
+    keyArrowU,
+    keyArrowD,
+    keyQuit,
+    keyUnknown,
+    noKey,
+
+    sum,
+};
+
+KeyCode fromTextView(int textKey);
+KeyCode fromGraphView(int graphKey);
+
+using OnKeyCall = std::function<void(KeyCode)>;
 using OnTimerCall = std::pair<int, std::function<void(void)>>;
 
 class View
@@ -22,11 +43,6 @@ class View
 	    static View* Get(const std::string& mode = "gui");
 
         virtual void RunLoop() = 0;
-    
-        Size GetWindowSize() const 
-            {
-                return windowSize;
-            }
 
         Model* GetModel() const
             {
@@ -52,18 +68,15 @@ class View
     protected:
 
         Model* model;
-        Size windowSize;
         bool finished;
 
         std::vector<OnKeyCall> listenersOnKey;
         std::vector<OnTimerCall> listenersOnTimer;
         std::vector<int> passedTimes;
 
-        friend void SigHandler(int signum);
-
-        void PollOnKey(int key);
+        void PollOnKey(KeyCode key);
 
         void PollOnTimer(int microsecPassed);
 
-        virtual void UpdateWindowSize() = 0;
+        friend void SigHandler(int signum);
 };

@@ -5,6 +5,7 @@
 
 #include "view.hpp"
 
+using Color = int;
 
 //----------------------------------------//
 
@@ -12,26 +13,14 @@ class TextView: public View
 {
     private:
 
+        Size windowSize;
         Size frameSize;
         Coordinate upLeftCorner;
         bool timeToDraw;
 
         struct termios termis_attr;
-        std::string results;
 
     public:
-
-        enum Color
-            {
-                BLACK   = 0,
-                RED     = 1,
-                GREEN   = 2,
-                BROWN   = 3,
-                BLUE    = 4,
-                MAGENTA = 5,
-                CYAN    = 6,
-                WHITE   = 7,
-            };
 
         TextView();
 
@@ -43,12 +32,17 @@ class TextView: public View
 
         void DrawSnakes() const;
 
+        void DrawResults() const;
+
         void DrawFrame();
 
     private:
 
-        void AddProperties(enum TextView::Color fg,
-                           enum TextView::Color bg) const;
+        void SetSnakeStyleColors(int snakeStyle) const;
+
+        void SetRabbitStyleColors(int rabbitStyle) const;
+
+        void SetColor(Color fg, Color bg) const;
 
         void HLine(int x0, int y0, int len, int sym) const;
 
@@ -58,7 +52,7 @@ class TextView: public View
 
         void String(int x, int y, const char* string) const;
 
-        void Clear() const;
+        void Clear(Color bg = -1) const;
 
 
         void CarretOff() const;
@@ -73,13 +67,13 @@ class TextView: public View
         
         bool IsInFrame(const Coordinate& point) const;
 
-        int GetPolledKey() const;
+        KeyCode GetPolledKey() const;
 
         void OnTimer();
 
-        void UpdateResults();
+        void UpdateWindowSize();
 
-        void UpdateWindowSize() override;
+        friend void SigHandler(int signum);
 };
 
 //----------------------------------------//

@@ -24,12 +24,12 @@ View::Get(const std::string& mode)
 //----------------------------------------//
 
 void
-View::PollOnKey(int key)
+View::PollOnKey(KeyCode key)
 {
-    if(key == 'q')
+    if(key == keyQuit)
         finished = true;
 
-    if(!key)
+    if(key == keyUnknown)
         return;
 
     for (const auto& action: listenersOnKey)

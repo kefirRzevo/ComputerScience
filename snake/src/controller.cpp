@@ -1,16 +1,91 @@
 #include "../include/controller.hpp"
 
-#define DEBUG
+#include <algorithm>
+#include <vector>
 
-#ifdef DEBUG
-#include<fstream>
-std::ofstream fout1("controller.txt");
-#endif
+#define DEBUG
 
 
 static Coordinate
 GetShift(const Coordinate& coord, Snake::Direction dir);
 
+bool
+IsPointSecure(const Coordinate& point);
+
+
+class Route
+{
+    public:
+
+        Snake::Direction dir;
+        Coordinate newPos;
+        int dist;
+        bool secure;
+
+        Route() = default;
+
+        void Create(Snake::Direction dir_, const Coordinate& curPos, const Coordinate& target)
+            {
+                dir = dir_;
+                newPos = GetShift(curPos, dir);
+                secure = IsPointSecure(newPos);
+                dist = Model::GetDistance(newPos, target);
+            }
+};
+
+struct RouteCompare
+{
+    bool operator()( Route* lx, Route* rx ) const
+    {
+        return lx->dist < rx->dist;
+    }
+};
+
+class RouteTree
+{
+    private:
+
+        Snake::Direction curDir;
+        Coordinate target;
+        Route routes[3];
+
+    public:
+
+        RouteTree(const Coordinate& target_, const Coordinate& pos_, Snake::Direction dir_):
+            curDir(dir_), target(target_)
+            {
+                int i = 0;
+                for(int j = 0; j < 4; j++)
+                {
+                    Snake::Direction dir = static_cast<Snake::Direction>(j);
+                    if(dir == Snake::GetOppositeDir(dir_))
+                        continue;
+
+                    routes[i++].Create(dir, pos_, target_);
+                    fprintf(fp, "|dir %d|dist %d| secure %d|\n", j, routes[i-1].dist, routes[i-1].secure);
+                }
+            }
+
+        Snake::Direction GetDirection()
+            {
+                std::vector<Route*> secureRoutes;
+                for(int i = 0; i < 3; i++)
+                    if(routes[i].secure)
+                        secureRoutes.push_back(&routes[i]);
+
+                if(secureRoutes.size() > 0)
+                {
+                    std::sort(secureRoutes.begin(), secureRoutes.end(), RouteCompare());
+                    for(int i = secureRoutes.size() - 1; i >= 0; i--)
+                        if(secureRoutes[i]->dist > secureRoutes[0]->dist)
+                            secureRoutes.pop_back();
+
+                    return secureRoutes[std::rand() % secureRoutes.size()]->dir;
+                }
+
+                return curDir;
+            }
+};
 
 //----------------------------------------//
 
@@ -24,86 +99,46 @@ GetShift(const Coordinate& coord, Snake::Direction dir)
 //----------------------------------------//
 
 void 
-HumanController::OnKey(int key)
+HumanController::OnKey(KeyCode key)
 {
     if(!snake->IsAlive())
         return;
 
+    Snake::Direction dir = snake->GetDirection();
+    Snake::Direction newDir = dir;
+
     if(key == leftKey)
-        snake->SetDirection(Snake::LEFT);
+        newDir = Snake::LEFT;
     else if(key == rightKey)
-        snake->SetDirection(Snake::RIGHT);
+        newDir = Snake::RIGHT;
     else if(key == upKey)
-        snake->SetDirection(Snake::UP);
+        newDir = Snake::UP;
     else if(key == downKey)
-        snake->SetDirection(Snake::DOWN);
+        newDir = Snake::DOWN;
+
+    if(newDir == dir || newDir == Snake::GetOppositeDir(dir))
+        return;
+
+    snake->SetDirection(newDir);
 }
 
 //----------------------------------------//
 
 bool
-BotController::IsPointSecure(const Coordinate& point) const
+IsPointSecure(const Coordinate& point)
 {
     Model* model = View::Get()->GetModel();
-    for(const auto& snake_: model->snakes)
+    for(const auto& snake: model->snakes)
     {
-        for(const auto& section: snake_->GetCoordinates())
-            if(section == point)
-                return false;
-        
-        if(snake_ == snake)
+        if(!snake->IsInGame())
             continue;
 
-        Coordinate newFront = GetShift(snake_->GetFront(), snake_->GetDirection());
-        if(newFront == point)
-            return false;
+        for(const auto& section: snake->GetCoordinates())
+            if(section == point)
+                return false;
     }
 
     return true;
-}
-
-//----------------------------------------//
-
-void
-BotController::GetDirsPriority()
-{
-    Snake::Direction prevDir = snake->GetDirection();
-    Coordinate prevFront = snake->GetFront();
-
-    for(size_t i = 0; i < 4; i++)
-    {
-        Snake::Direction newDir = dirPriors[i].second;
-        Coordinate newFront = GetShift(prevFront, newDir);
-
-        if(!IsPointSecure(newFront))
-        {
-            dirPriors[i].first = 0;
-            continue;
-        }
-
-        int prevDistance = Model::GetDistance(target, prevFront);
-        int newDistance  = Model::GetDistance(target, newFront);
-
-        if(newDistance < prevDistance && prevDir == newDir)
-        {
-            dirPriors[i].first = 8;
-            continue;
-        }
-
-        if(newDistance < prevDistance)
-        {
-            dirPriors[i].first = 4;
-            continue;
-        }
-
-        if(prevDir != newDir)
-        {
-            dirPriors[i].first = 2;
-            continue;
-        }
-
-        dirPriors[i].first = 1;
-    }
 }
 
 //----------------------------------------//
@@ -119,16 +154,13 @@ BotController::OnTimer()
 
     if(!model->IsThereRabbit(target))
         target = model->GetClosestRabbitCoord(front);
-
-    GetDirsPriority();
-
-    DirPriority highestPrior = dirPriors[0];
-    for(size_t i = 1; i < 4; i++)
-        if(dirPriors[i].first > highestPrior.first)
-            highestPrior = dirPriors[i];
-
-    snake->SetDirection(highestPrior.second);
-    snake->Dump();
+fprintf(fp, "\n\n");
+    fprintf(fp, "|x %d|y %d| target %d|%d|\n", snake->GetFront().first, snake->GetFront().second, target.first, target.second);
+    RouteTree tree{target, snake->GetFront(), snake->GetDirection()};
+    Snake::Direction a = tree.GetDirection();
+    fprintf(fp, "newDir %d\n", a);
+    fflush(fp);
+    snake->SetDirection(a);
 }
 
 //----------------------------------------//

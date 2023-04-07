@@ -7,7 +7,6 @@
 
 #include "config.hpp"
 
-#define DEBUG
 
 class Rabbit;
 class Snake;
@@ -19,6 +18,14 @@ using Coordinates = std::list<Coordinate>;
 using Rabbits = std::list<Rabbit* >;
 using Snakes  = std::list<Snake* >;
 
+static FILE* fp = fopen("dump.txt", "w+");
+
+#ifdef DEBUG
+#define $$ do{fprintf(fp, "%s %d\n", __FILE__, __LINE__); fflush(fp);}while(0); 
+#else
+#define $$
+#endif
+
 
 //----------------------------------------//
 
@@ -28,13 +35,15 @@ class Rabbit: public Coordinate
 
         int score;
         bool alive;
+        int styleType;
 
     public:
 
-        Rabbit(const Coordinate& coord_ = {}, int score_ = 1):
-            score(score_), alive(true)
+        Rabbit(int styleType_):
+            score(1), alive(true), styleType(styleType_)
             {
-                *static_cast<Coordinate* >(this) = coord_;
+                first = 0;
+                second = 0;
             }
 
         void RandomGenerate(Model* model, int score_ = RABBIT_SCORE);
@@ -50,6 +59,11 @@ class Rabbit: public Coordinate
                 this->second = coord_.second;
             }
 
+        void SetStyleType(int styleType_)
+            {
+                styleType = styleType_;
+            }
+
         Coordinate GetCoordinate() const
             {
                 return static_cast<Coordinate>(*this);
@@ -58,6 +72,11 @@ class Rabbit: public Coordinate
         int GetScore() const
             {
                 return score;
+            }
+
+        int GetStyleType() const
+            {
+                return styleType;
             }
 
         void Kill()
@@ -94,11 +113,12 @@ class Snake
     private:
 
         Coordinates coords;
-        Direction dir;
-
-        Direction dirAfterUpdate;
         Coordinate newFront;
 
+        Direction dirInFuture;
+        Direction dirAfterUpdate;
+
+        int styleType;
         int scoreReserved;
         int score;
 
@@ -107,7 +127,7 @@ class Snake
 
     public:
 
-        Snake(const Coordinates& coords_ = {}, Direction dir_ = Direction::UP);
+        Snake(int styleType_);
 
         void RandomGenerate(Model* model, int snakeSize = SNAKE_SIZE);
 
@@ -126,11 +146,6 @@ class Snake
                 alive = false;
             }
 
-        int GetScore() const
-            {
-                return score;
-            }
-
         void SetCoordinates(const Coordinates& coords_)
             {
                 coords = coords_;
@@ -141,19 +156,25 @@ class Snake
                 return coords;
             }
 
-        void SetDirection(Direction dir_);
+        void SetDirection(Direction dir)
+            {
+                dirInFuture = dir;
+            }
+
+        void SetStyleType(int styleType_)
+            {
+                styleType = styleType_;
+            }
+
+        int GetScore() const
+            {
+                return score;
+            }
 
         Direction GetDirection() const
             {
-                return dir;
-            }
-
-        Direction GetDirAfterUpdate() const
-            {
                 return dirAfterUpdate;
             }
-
-        static Coordinate GetCoordDirection(Snake::Direction dir);
 
         const Coordinate& GetNewFront() const
             {
@@ -169,6 +190,11 @@ class Snake
             {
                 return coords.back();
             }
+    
+        int GetStyleType() const
+            {
+                return styleType;
+            }
 
         bool IsAlive() const
             {
@@ -183,6 +209,17 @@ class Snake
         void OnTimerDeath();
 
         void Dump() const;
+
+        static Snake::Direction GetOppositeDir(Snake::Direction dir);
+
+        static Coordinate GetCoordDirection(Snake::Direction dir);
+
+    private:
+
+        void UpdateDirection()
+            {
+                dirAfterUpdate = dirInFuture;
+            }
 };
 
 //----------------------------------------//
