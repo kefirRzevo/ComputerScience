@@ -22,7 +22,7 @@ class Command
 
 class CloseCommand: public Command
 {
-    private:
+    protected:
 
         Widget* widget;
 
