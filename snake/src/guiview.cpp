@@ -187,6 +187,8 @@ GetTextureIndx(const Coordinate& a, const Coordinate& b, const Coordinate& c)
 
 GuiView::GuiView()
 {
+    finished = false;
+    
     int width  = (POLYGON_WIDTH + PADDING_LEFT + PADDING_RIGHT + 2) * SQUARE_SIZE;
     int height = (POLYGON_HEIGHT + PADDING_TOP + PADDING_BOTTOM + 2) * SQUARE_SIZE;
 

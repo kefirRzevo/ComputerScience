@@ -428,7 +428,7 @@ Snake::Dump() const
             fprintf(fp, "   UP");
     }
     fprintf(fp, ";\n\n");
-    fflush(stdout);
+    fflush(fp);
 }
 
 //----------------------------------------//

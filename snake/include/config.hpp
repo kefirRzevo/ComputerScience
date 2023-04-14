@@ -23,3 +23,5 @@ static const char* RABTEXTURE_PATH = "res/bunny.png";
 static const int TICK_MSEC = 100;
 static const int BOT_TICK_MSEC = 95;
 static const int AFTER_DEATH_MSEC = 5 * TICK_MSEC;
+
+static const int RECURSION_DEEP = 2;

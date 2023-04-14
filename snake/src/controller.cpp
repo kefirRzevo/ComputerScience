@@ -4,7 +4,10 @@
 #include <vector>
 
 #define DEBUG
+#define $ fprintf(stderr, "%d\n", __LINE__);
 
+class Route;
+struct RouteCompare;
 
 static Coordinate
 GetShift(const Coordinate& coord, Snake::Direction dir);
@@ -12,78 +15,117 @@ GetShift(const Coordinate& coord, Snake::Direction dir);
 bool
 IsPointSecure(const Coordinate& point);
 
-
 class Route
 {
     public:
 
         Snake::Direction dir;
-        Coordinate newPos;
+        Coordinate pos;
         int dist;
         bool secure;
+        Route* child[3];
+        Route* bestChild;
 
-        Route() = default;
+        Route           (            ) = default;
+        Route           (const Route&) = delete;
+        Route& operator=(const Route&) = delete;
 
-        void Create(Snake::Direction dir_, const Coordinate& curPos, const Coordinate& target)
+        ~Route()
             {
-                dir = dir_;
-                newPos = GetShift(curPos, dir);
-                secure = IsPointSecure(newPos);
-                dist = Model::GetDistance(newPos, target);
+                for(size_t i = 0; i < 3; i++)
+                    delete child[i];
             }
+
+        void Create(Snake::Direction dir_, const Coordinate& parentPos,
+            const Coordinate& target, int deep)
+            {
+                dir    = dir_;
+                pos    = parentPos;
+                dist   = Model::GetDistance(pos, target);
+                secure = IsPointSecure(pos);
+
+                if(deep == 0)
+                {
+                    for(size_t i = 0; i < 3; i++)
+                        child[i] = nullptr;
+
+                    bestChild = this;
+                    return;
+                }
+
+                int j = 0;
+                for(int i = 0; i < 4; i++)
+                {
+                    Snake::Direction childDir = static_cast<Snake::Direction>(i);
+                    if(childDir == Snake::GetOppositeDir(dir))
+                        continue;
+                    
+                    child[j] = new Route();
+                    child[j++]->Create(childDir, GetShift(parentPos, childDir), target, deep - 1);
+                }
+                bestChild = nullptr;
+            }
+
+        void
+        SetBestChild();
 };
 
 struct RouteCompare
 {
-    bool operator()( Route* lx, Route* rx ) const
+    bool operator()(Route* lx, Route* rx) const
     {
         return lx->dist < rx->dist;
     }
 };
 
+void
+Route::SetBestChild()
+{
+    if(!child[0])
+        return;
+
+    std::vector<Route*> secureChildren;
+    for(int i = 0; i < 3; i++)
+    {
+        child[i]->SetBestChild();
+        if(child[i]->bestChild)
+            if(child[i]->bestChild->secure && child[i]->secure)
+                secureChildren.push_back(child[i]);
+    }
+
+    if(secureChildren.size() > 0)
+    {
+        std::sort(secureChildren.begin(), secureChildren.end(), RouteCompare());
+
+        for(int i = secureChildren.size() - 1; i >= 0; i--)
+            if(secureChildren[i]->dist > secureChildren[0]->dist)
+                secureChildren.pop_back();
+        bestChild = secureChildren[std::rand() % secureChildren.size()];
+        return;
+    }
+    bestChild = child[std::rand() % 3];
+}
+
 class RouteTree
 {
     private:
 
-        Snake::Direction curDir;
         Coordinate target;
-        Route routes[3];
+        Route route;
 
     public:
 
-        RouteTree(const Coordinate& target_, const Coordinate& pos_, Snake::Direction dir_):
-            curDir(dir_), target(target_)
+        RouteTree(Snake::Direction snakeDir_, const Coordinate& target_,
+            const Coordinate& snakePos_, int deep_ = 5):
+            route()
             {
-                int i = 0;
-                for(int j = 0; j < 4; j++)
-                {
-                    Snake::Direction dir = static_cast<Snake::Direction>(j);
-                    if(dir == Snake::GetOppositeDir(dir_))
-                        continue;
-
-                    routes[i++].Create(dir, pos_, target_);
-                    fprintf(fp, "|dir %d|dist %d| secure %d|\n", j, routes[i-1].dist, routes[i-1].secure);
-                }
+                route.Create(snakeDir_, snakePos_, target_, deep_);
             }
 
         Snake::Direction GetDirection()
             {
-                std::vector<Route*> secureRoutes;
-                for(int i = 0; i < 3; i++)
-                    if(routes[i].secure)
-                        secureRoutes.push_back(&routes[i]);
-
-                if(secureRoutes.size() > 0)
-                {
-                    std::sort(secureRoutes.begin(), secureRoutes.end(), RouteCompare());
-                    for(int i = secureRoutes.size() - 1; i >= 0; i--)
-                        if(secureRoutes[i]->dist > secureRoutes[0]->dist)
-                            secureRoutes.pop_back();
-
-                    return secureRoutes[std::rand() % secureRoutes.size()]->dir;
-                }
-
-                return curDir;
+                route.SetBestChild();
+                return route.bestChild->dir;
             }
 };
 
@@ -132,7 +174,7 @@ IsPointSecure(const Coordinate& point)
     {
         if(!snake->IsInGame())
             continue;
-
+snake->Dump();
         for(const auto& section: snake->GetCoordinates())
             if(section == point)
                 return false;
@@ -154,11 +196,11 @@ BotController::OnTimer()
 
     if(!model->IsThereRabbit(target))
         target = model->GetClosestRabbitCoord(front);
-fprintf(fp, "\n\n");
-    fprintf(fp, "|x %d|y %d| target %d|%d|\n", snake->GetFront().first, snake->GetFront().second, target.first, target.second);
-    RouteTree tree{target, snake->GetFront(), snake->GetDirection()};
+
+    //fprintf(fp, "\n\ndir %d|x %d|y %d| target %d|%d|\n",snake->GetDirection(), snake->GetFront().first, snake->GetFront().second, target.first, target.second);
+    RouteTree tree{snake->GetDirection(), target, snake->GetFront()};
     Snake::Direction a = tree.GetDirection();
-    fprintf(fp, "newDir %d\n", a);
+    //fprintf(fp, "newDir %d\n", a);
     fflush(fp);
     snake->SetDirection(a);
 }
