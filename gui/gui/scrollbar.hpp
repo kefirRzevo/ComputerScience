@@ -42,7 +42,7 @@ class ScrollBox: public Widget
         void
         SetScrollBar(ScrollBar* scrollBar_);
         void
-        SetPosition(Vec2i pos_);
+        SetPosition(Vec2i pos_) override;
 
         bool
         ProcessListenerEvent(const Event& event_) override;

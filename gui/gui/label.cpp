@@ -1,8 +1,9 @@
 #include "label.hpp"
 
-Label::Label(Vec2i size_, Color bgColor_, const Font& font_,
-const char* string_, Color textColor_, int textSize_):
-Widget(size_, nullptr, 0, 0),
+
+TextLabel::TextLabel(Vec2i size_, Color bgColor_,
+const char* string_, const Font& font_, Color textColor_, int textSize_):
+Widget(size_, nullptr, 0),
 text(font_, string_, textColor_, textSize_), bgColor(bgColor_)
 {
     Vec2i textSize = text.GetSize();
@@ -11,7 +12,7 @@ text(font_, string_, textColor_, textSize_), bgColor(bgColor_)
 }
 
 void
-Label::Move(Vec2i delta_)
+TextLabel::Move(Vec2i delta_)
 {
     location.left += delta_.x;
     location.top  += delta_.y;
@@ -22,18 +23,42 @@ Label::Move(Vec2i delta_)
 }
 
 void
-Label::Resize(const RectInt& location_)
+TextLabel::SetPosition(Vec2i pos_)
 {
-    location = location_;
+    location.left = pos_.x;
+    location.top  = pos_.y;
+
     Vec2i textSize = text.GetSize();
     text.SetPosition({location.left + (location.width  - textSize.x) / 2,
                       location.top  + (location.height - textSize.y) / 2});
 }
 
 void
-Label::Render() const
+TextLabel::SetSize(Vec2i size_)
+{
+    location.width  = size_.x;
+    location.height = size_.y;
+
+    Vec2i textSize = text.GetSize();
+    text.SetPosition({location.left + (location.width  - textSize.x) / 2,
+                      location.top  + (location.height - textSize.y) / 2});   
+}
+
+void
+TextLabel::Render() const
 {
     Renderer::Get()->SetColor(bgColor);
-    Renderer::Get()->DrawRect(location);
     Renderer::Get()->DrawText(text);
+}
+
+//----------------------------------------//
+
+Icon::Icon(Vec2i size_, Texture* texture_):
+Widget(size_, texture_, 0)
+{}
+
+bool
+Icon::OnEvent(const Event& event_)
+{
+    return false;
 }

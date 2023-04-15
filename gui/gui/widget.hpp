@@ -21,12 +21,12 @@ class Border
 
         Widget* widget;
 
-        Color   color;
         int     thickness;
+        Color   color;
 
     public:
 
-        Border(Widget* widget_, Color color_, int thickness_);
+        Border(Widget* widget_, int thickness_, Color color_);
 
         const Widget*
         GetWidget() const;
@@ -71,12 +71,12 @@ class Widget
         Widget& operator=(const Widget&) = delete;
 
         Widget(const RectInt& location_, Texture* texture_,
-        Color color_ = defaultBorderColor,
-        int thickness_ = defaultBorderThickness);
+        int thickness_ = defaultBorderThickness,
+        Color color_ = defaultBorderColor);
 
         Widget(Vec2i size_, Texture* texture_,
-        Color color_ = defaultBorderColor,
-        int thickness_ = defaultBorderThickness);
+        int thickness_ = defaultBorderThickness,
+        Color color_ = defaultBorderColor);
 
         virtual ~Widget();
 
@@ -96,7 +96,9 @@ class Widget
         virtual void
         Move(Vec2i delta_);
         virtual void
-        Resize(const RectInt& location_);
+        SetPosition(Vec2i pos_);
+        virtual void
+        SetSize(Vec2i size_);
         void
         SetParent(Widget* parent_);
         void

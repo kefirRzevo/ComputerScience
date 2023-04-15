@@ -68,6 +68,10 @@ EventManager::Poll_SF_Event()
             events.push({keyPressed, {sfEvent.key.code}});
             return true;
 
+        case sf::Event::TextEntered:
+            events.push({textEntered, {static_cast<int>(sfEvent.text.unicode)}});
+            return true;
+
         case sf::Event::MouseButtonPressed:pressed = true;
             lastPos = {sfEvent.mouseButton.x, sfEvent.mouseButton.y};
             prevPos = lastPos;

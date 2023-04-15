@@ -14,7 +14,7 @@ ScrollBarResponseTest::OnResponse(float value_)
 }
 
 ScrollBox::ScrollBox(Vec2i size_, Texture* texture_):
-Widget(size_, texture_, 0, 0), scrollBar(nullptr)
+Widget(size_, texture_, 0), scrollBar(nullptr)
 {}
 
 void

@@ -12,6 +12,7 @@ enum EventType
 {
     quit,
     keyPressed,
+    textEntered,
     mousePressed,
     mouseReleased,
     mouseHovered,

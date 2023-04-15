@@ -1,8 +1,8 @@
 #include "widget.hpp"
 
 
-Border::Border(Widget* widget_, Color color_, int thickness_):
-widget(widget_), color(color_), thickness(thickness_)
+Border::Border(Widget* widget_, int thickness_, Color color_):
+widget(widget_), thickness(thickness_), color(color_)
 {}
 
 const Widget*
@@ -174,15 +174,15 @@ Border::OnResize(Vec2i pos_, Vec2i delta_) const
 
 //----------------------------------------//
 
-Widget::Widget(const RectInt& location_, Texture* texture_, Color color_, int thickness_):
+Widget::Widget(const RectInt& location_, Texture* texture_, int thickness_, Color color_):
 location(location_), parent(nullptr), system(nullptr), activeChild(nullptr),
 texture(texture_), border(nullptr)
 {
     if(thickness_ > 0)
-        border = new Border(this, color_, thickness_);
+        border = new Border(this, thickness_, color_);
 }
 
-Widget::Widget(Vec2i size_, Texture* texture_, Color color_, int thickness_):
+Widget::Widget(Vec2i size_, Texture* texture_, int thickness_, Color color_):
 location(size_), parent(nullptr), system(nullptr), activeChild(nullptr),
 texture(texture_), border(nullptr)
 {
@@ -240,9 +240,17 @@ Widget::Move(Vec2i delta_)
 }
 
 void
-Widget::Resize(const RectInt& location_)
+Widget::SetPosition(Vec2i pos_)
 {
-    location = location_;
+    location.left = pos_.x;
+    location.top  = pos_.y;
+}
+
+void
+Widget::SetSize(Vec2i size_)
+{
+    location.width  = size_.x;
+    location.height = size_.y;
 }
 
 void
@@ -330,7 +338,6 @@ Widget::OnEvent(const Event& event_)
     {
         case mousePressed:
 
-            system->Reset();
             system->Subscribe(this, mouseMoved);
             system->Subscribe(this, mouseHovered);
             break;
@@ -339,14 +346,13 @@ Widget::OnEvent(const Event& event_)
 
             pos   = event_.mouse.pos;
             delta = event_.mouse.offset;
-
             if(border)
             {
                 if(border->IsInside(pos))
                 {
                     newLocation = border->OnResize(pos, delta);
-                    if(newLocation.width > 0 && newLocation.height > 0)
-                        Resize(newLocation);
+                    SetPosition({newLocation.left, newLocation.top});
+                    SetSize({newLocation.width, newLocation.height});
                     break;
                 }
             }

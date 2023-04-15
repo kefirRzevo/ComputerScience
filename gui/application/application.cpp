@@ -1,6 +1,7 @@
 #include "../gui/widget.hpp"
 #include "../gui/button.hpp"
 #include "../gui/label.hpp"
+#include "../gui/scrollbar.hpp"
 #include "../graphlib/graphlib.hpp"
 #include "application.hpp"
 
@@ -22,11 +23,17 @@ App::Run()
     Widget* widget2 = new Widget{{70, 80}, text1};
     Widget* widget3 = new Widget{{70, 90}, text1};
     Button* btn1 = new Button{{50, 50}, new CloseCommand{widget2}, btn1t, btn2t, btn3t};
-    Label* lab1 = new Label{{80, 60}, Blue, font1, "AAA"};
-    widget1->Attach(widget2);
-    widget1->Attach(widget3);
-    widget1->Attach(btn1);
-    widget1->Attach(lab1);
+    TextLabel* lab1 = new TextLabel{{80, 60}, Blue, "AAA" , font1};
+
+    ScrollBarResponse* scrollResp1 = new ScrollBarResponseTest();
+    ScrollBox* box1 = new ScrollBox{{40, 40}, text1};
+    ScrollBar* bar1 = new HorScrollBar{{200, 40}, text1, scrollResp1, box1};
+
+    //widget1->Attach(widget2);
+    //widget1->Attach(widget3);
+    //widget1->Attach(btn1);
+    //widget1->Attach(lab1);
+    widget1->Attach(bar1);
     //widget1->Attach(btn1);
     WidgetSystem* syst1 = new WidgetSystem{widget1};
 

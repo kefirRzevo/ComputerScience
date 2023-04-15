@@ -56,7 +56,6 @@ Button::OnEvent(const Event& event_)
     {
         case mousePressed:
 
-            system->Reset();
             system->Subscribe(this, mouseHovered);
             system->Subscribe(this, mouseReleased);
 

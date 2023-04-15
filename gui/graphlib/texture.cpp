@@ -21,7 +21,6 @@ Font::Get_SF_Font() const
 FontManager::FontManager()
 {
     defaultFont = &GetFont(DEFAULT_FONT_PATH);
-    assert(defaultFont);
 }
 
 //----------------------------------------//
