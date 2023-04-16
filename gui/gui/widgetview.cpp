@@ -1,7 +1,9 @@
 #include "widgetview.hpp"
 
-
 //----------------------------------------//
+
+WidgetView::WidgetView(Texture* texture_):
+texture(texture_) {};
 
 WidgetView::~WidgetView()
 {}
@@ -12,10 +14,22 @@ WidgetView::GetWidget()
     return widget;
 }
 
+Texture*
+WidgetView::GetTexture()
+{
+    return texture;
+}
+
 void
 WidgetView::SetWidget(Widget* widget_)
 {
     widget = widget_;
+}
+
+void
+WidgetView::SetTexture(Texture* texture_)
+{
+    texture = texture_;
 }
 
 bool
@@ -24,10 +38,16 @@ WidgetView::IsInside(Vec2i pos_) const
     return widget->GetLocation().IsInside(pos_);
 }
 
+void
+WidgetView::OnRender() const
+{
+    Renderer::Get()->DrawTexture(*texture, widget->GetLocation());
+}
+
 //----------------------------------------//
 
-BorderView::BorderView(int thickness_, Color color_):
-thickness(thickness_), color(color_)
+BorderView::BorderView(Texture* texture_, int thickness_, Color color_):
+WidgetView(texture_), thickness(thickness_), color(color_)
 {}
 
 Color
@@ -47,7 +67,6 @@ BorderView::SetBorderColor(Color color_)
 {
     color = color_;
 }
-
 void
 BorderView::SetBorderThickness(int thickness_)
 {
@@ -185,86 +204,47 @@ BorderView::RenderBorder() const
 
     int nPoints = thickness * 4;
 
-    rend->DrawCircle({rect.left,              rect.top              }, thickness, nPoints);
-    rend->DrawCircle({rect.left + rect.width, rect.top              }, thickness, nPoints);
-    rend->DrawCircle({rect.left,              rect.top + rect.height}, thickness, nPoints);
-    rend->DrawCircle({rect.left + rect.width, rect.top + rect.height}, thickness, nPoints);
+    rend->DrawCircle({rect.left,              rect.top              }, 
+                                                    thickness, nPoints);
+    rend->DrawCircle({rect.left + rect.width, rect.top              }, 
+                                                    thickness, nPoints);
+    rend->DrawCircle({rect.left,              rect.top + rect.height}, 
+                                                    thickness, nPoints);
+    rend->DrawCircle({rect.left + rect.width, rect.top + rect.height}, 
+                                                    thickness, nPoints);
+}
+
+void
+BorderView::OnRender() const
+{
+    RenderBorder();
+    Renderer::Get()->DrawTexture(*texture, widget->GetLocation());
 }
 
 //----------------------------------------//
 
-TextureView::TextureView(Texture* texture_):
-texture(texture_)
+ButtonView::ButtonView
+(Texture* onRelease_, Texture* onPress_, Texture* onHover_):
+WidgetView(onRelease_),
+onRelease(onRelease_), onPress(onPress_), onHover(onHover_)
 {}
 
 Texture*
-TextureView::GetTexture()
+ButtonView::GetReleaseTexture()
 {
-    return texture;
+    return onRelease;
 }
 
-void
-TextureView::SetTexture(Texture* texture_)
+Texture*
+ButtonView::GetPressTexture()
 {
-    texture = texture_;
+    return onPress;
 }
 
-void
-TextureView::OnRender() const
+Texture*
+ButtonView::GetHoverTexture()
 {
-    Renderer::Get()->DrawTexture(*texture, widget->GetLocation());
-}
-
-//----------------------------------------//
-
-ColorView::ColorView(Color bgColor_):
-bgColor(bgColor_)
-{}
-
-Color
-ColorView::GetColor() const
-{
-    return bgColor;
-}
-
-void
-ColorView::SetColor(Color bgColor_)
-{
-    bgColor = bgColor_;
-}
-
-void
-ColorView::OnRender() const
-{
-    Renderer::Get()->SetColor(bgColor);
-    Renderer::Get()->DrawRect(widget->GetLocation()); 
-}
-
-//----------------------------------------//
-
-BorderTextureView::BorderTextureView(Texture* texture_, int thickness_, Color color_):
-TextureView(texture_), BorderView(thickness_, color_)
-{}
-
-void
-BorderTextureView::OnRender() const
-{
-    RenderBorder();
-    Renderer::Get()->DrawTexture(*texture, widget->GetLocation());
-}
-
-//----------------------------------------//
-
-BorderColorView::BorderColorView(Color bgColor_, int thickness_, Color color_):
-ColorView(bgColor_), BorderView(thickness_, color_)
-{}
-
-void
-BorderColorView::OnRender() const
-{
-    RenderBorder();
-    Renderer::Get()->SetColor(bgColor);
-    Renderer::Get()->DrawRect(widget->GetLocation()); 
+    return onHover;
 }
 
 //----------------------------------------//

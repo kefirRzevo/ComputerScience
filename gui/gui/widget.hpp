@@ -2,67 +2,30 @@
 
 
 #include "../graphlib/graphlib.hpp"
-#include "config.hpp"
+#include "widgetview.hpp"
+#include "../config.hpp"
 
 #include <list>
 
 
 class Widget;
-class Border;
+class WidgetView;
 class WidgetSystem;
 
 #define $$ fprintf(stderr, "%-4d %s\n", __LINE__, __FILE__);
 
 //----------------------------------------//
 
-class Border
-{
-    protected:
-
-        Widget* widget;
-
-        int     thickness;
-        Color   color;
-
-    public:
-
-        Border(Widget* widget_, int thickness_, Color color_);
-
-        const Widget*
-        GetWidget() const;
-        Color
-        GetColor() const;
-        int
-        GetThickness() const;
-
-        void
-        SetWidget(Widget* widget_);
-        void
-        SetColor(Color color_);
-        void
-        SetThickness(int thickness_);
-
-        bool
-        IsInside(Vec2i pos_) const;
-        void
-        OnRender() const;
-        RectInt
-        OnResize(Vec2i pos_, Vec2i delta_) const;
-};
-
 class Widget
 {
     protected:
 
-        RectInt location;
+        RectInt     location;
+        WidgetView* view;
 
         std::list<Widget*>  children;
         Widget*             parent;
         WidgetSystem*       system;
-        Widget*             activeChild;
-        
-        Texture*    texture;
-        Border*     border;
 
     public:
 
@@ -70,28 +33,19 @@ class Widget
         Widget           (const Widget&) = delete;
         Widget& operator=(const Widget&) = delete;
 
-        Widget(const RectInt& location_, Texture* texture_,
-        int thickness_ = defaultBorderThickness,
-        Color color_ = defaultBorderColor);
-
-        Widget(Vec2i size_, Texture* texture_,
-        int thickness_ = defaultBorderThickness,
-        Color color_ = defaultBorderColor);
+        Widget(const RectInt& location_, WidgetView* view_);
+        Widget(      Vec2i    size_,     WidgetView* view_);
 
         virtual ~Widget();
 
         const RectInt&
         GetLocation() const;
+        WidgetView*
+        GetWidgetView();
         Widget*
         GetParent();
         WidgetSystem*
         GetWidgetSystem();
-        Widget*
-        GetActiveChild();
-        Texture*
-        GetTexture();
-        //Border*
-        //GetBorder();
 
         virtual void
         Move(Vec2i delta_);
@@ -100,15 +54,11 @@ class Widget
         virtual void
         SetSize(Vec2i size_);
         void
+        SetWidgetView(WidgetView* view_);
+        void
         SetParent(Widget* parent_);
         void
         SetWidgetSystem(WidgetSystem* system_);
-        void
-        SetActiveChild(Widget* child_);
-        void
-        SetTexture(Texture* texture_);
-        //void
-        //SetBorder(Border* border_);
 
         void
         Attach(Widget* child_);
@@ -125,7 +75,7 @@ class Widget
         virtual void
         Render() const;
         virtual bool
-        IsInside(Vec2i pos_);
+        IsInside(Vec2i pos_) const;
 };
 
 //----------------------------------------//
@@ -155,7 +105,7 @@ class WidgetSystem
         void
         ProcessEvent(const Event& event_);
         void
-        Render();
+        Render() const;
 };
 
 //----------------------------------------//

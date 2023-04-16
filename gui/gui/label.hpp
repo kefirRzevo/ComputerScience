@@ -2,19 +2,28 @@
 
 #include "widget.hpp"
 
-class TextLabel: public Widget
+
+//----------------------------------------//
+
+class Icon: public Widget
+{
+    public:
+
+        Icon(Vec2i size_, WidgetView* view_);
+
+        bool
+        OnEvent(const Event& event_) override;
+};
+
+class TextIcon: public Widget
 {
     protected:
 
-        Text  text;
-        Color bgColor;
+        std::unique_ptr<Text> text;
 
     public:
 
-        TextLabel(Vec2i size_, Color bgColor_,
-        const char* string_, const Font& font_,
-        Color textColor_  = defaultTextColor,
-        int   textSize_   = defaultTextSize);
+        TextIcon(Vec2i size_, WidgetView* view_, Text* text_);
 
         void
         Move(Vec2i delta_) override;
@@ -23,45 +32,64 @@ class TextLabel: public Widget
         void
         SetSize(Vec2i size_) override;
 
+        bool
+        OnEvent(const Event& event_) override;
+
         void
         Render() const override;
 };
 
-class Icon: public Widget
+//----------------------------------------//
+
+class TextLabelResponse
 {
     public:
 
-        Icon(Vec2i size_, Texture* texture_);
+        virtual ~TextLabelResponse();
 
-        Icon(Vec2i size_, Color bgColor);
-
-        bool
-        OnEvent(const Event& event_) override;
+        virtual void
+        OnResponse(const std::string& string) = 0;
 };
 
-/*
-class TextIcon: public Widget
+class TextLabelResponseTest: public TextLabelResponse
+{
+    public:
+
+        TextLabelResponseTest();
+
+        void
+        OnResponse(const std::string& string) override;
+};
+
+class TextLabel: public Widget
 {
     protected:
 
-        Text text;
+        std::unique_ptr<TextLabelResponse> responce;
+        std::unique_ptr<Text>              text;
 
     public:
 
-        TextIcon(Vec2i size_, Color bgColor, const char* string_,
-        const Font& font_ = FontManager::Get()->GetDefaultFont(),
-        Color textColor_  = defaultTextColor,
-        int   textSize_   = defaultTextSize);
+        TextLabel(Vec2i size_, WidgetView* view_,
+        TextLabelResponse* response_, Text* textStyle_);
+
+        bool
+        CheckSize(Vec2i size_);
 
         void
         Move(Vec2i delta_) override;
         void
-        Resize(const RectInt& location_) override;
+        SetPosition(Vec2i pos_) override;
+        void
+        SetSize(Vec2i size_) override;
 
+        bool
+        ProcessListenerEvent(const Event& event_);
         bool
         OnEvent(const Event& event_) override;
 
         void
-        OnRender() override;
+        Render() const override;
 };
-*/
+
+//----------------------------------------//

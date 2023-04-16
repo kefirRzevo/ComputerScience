@@ -1,67 +1,43 @@
 #include "renderer.hpp"
-#include "config.hpp"
+#include "../config.hpp"
 
+std::unique_ptr<Renderer> Renderer::renderer;
 
 //----------------------------------------//
 
-sf::RenderWindow*
-Window::Get_SF_RenderWindow()
+Window::Window(Vec2u size_, const std::string& name_):
+sfRenderWindow(sf::VideoMode(size_.x, size_.y), name_)
+{}
+
+//----------------------------------------//
+
+Renderer::Renderer(Window* window):
+sfRenderWindow(&window->sfRenderWindow)
+{}
+
+void
+Renderer::Initialize(Window* window_)
 {
-    return &sfRenderWindow;
+    renderer.reset(new Renderer{window_});
 }
-
-//----------------------------------------//
-
-Renderer::Renderer(Window* window)
-{
-    sfRenderWindow = window->Get_SF_RenderWindow();
-    sfColor = To_SF_Color(DEFAULT_COLOR);
-    thickness = DEFAULT_THICKNESS;
-}
-
-//----------------------------------------//
 
 Renderer*
-Renderer::Get(Window* sfRenderWindow_)
+Renderer::Get()
 {
-    static std::unique_ptr<Renderer> renderer;
-
-    if(renderer.get() == nullptr)
-    {
-        if(sfRenderWindow_ == nullptr)
-            return nullptr;
-
-        renderer.reset(new Renderer(sfRenderWindow_));
-    }
-
     return renderer.get();
 }
 
-//----------------------------------------//
-
-sf::RenderWindow*
-Renderer::Get_SF_RenderWindow()
-{
-    return sfRenderWindow;
-}
-
-//----------------------------------------//
-
 void
-Renderer::SetColor(Color color)
+Renderer::SetColor(Color color_)
 {
-    sfColor = To_SF_Color(color);
+    sfColor = To_SF_Color(color_);
 }
-
-//----------------------------------------//
 
 void
 Renderer::SetThickness(float thickness_)
 {
     thickness = thickness_;
 }
-
-//----------------------------------------//
 
 void
 Renderer::DrawPixel(const Vec2i& pos)
@@ -71,8 +47,6 @@ Renderer::DrawPixel(const Vec2i& pos)
     pixel.move(static_cast<float>(pos.x), static_cast<float>(pos.y));
     sfRenderWindow->draw(pixel);
 }
-
-//----------------------------------------//
 
 void
 Renderer::DrawCircle(const Vec2i& center, int radius, size_t nPoints)
@@ -85,8 +59,6 @@ Renderer::DrawCircle(const Vec2i& center, int radius, size_t nPoints)
     sfRenderWindow->draw(circle);
 }
 
-//----------------------------------------//
-
 void
 Renderer::DrawThickLine(const Vec2i& point, float degreeAngle, float length)
 {
@@ -95,8 +67,6 @@ Renderer::DrawThickLine(const Vec2i& point, float degreeAngle, float length)
     line.rotate(degreeAngle);
     sfRenderWindow->draw(line);
 }
-
-//----------------------------------------//
 
 void
 Renderer::DrawThickLineSlow(const Vec2i& p1, const Vec2i& p2)
@@ -113,8 +83,6 @@ Renderer::DrawThickLineSlow(const Vec2i& p1, const Vec2i& p2)
     sfRenderWindow->draw(line);
 }
 
-//----------------------------------------//
-
 void
 Renderer::DrawLine(const Vec2i& p1, const Vec2i& p2)
 {
@@ -128,8 +96,6 @@ Renderer::DrawLine(const Vec2i& p1, const Vec2i& p2)
     sfRenderWindow->draw(line, 2, sf::Lines);
 }
 
-//----------------------------------------//
-
 void
 Renderer::DrawRect(const RectInt& rect)
 {
@@ -140,28 +106,34 @@ Renderer::DrawRect(const RectInt& rect)
     sfRenderWindow->draw(rect_);
 }
 
-//----------------------------------------//
-
 void
-Renderer::DrawTexture(const Texture& src, const RectInt& dstRect)
+Renderer::DrawTexture(Texture& src, const RectInt& dstRect)
 {
-    sf::Sprite sprite{src.Get_SF_Texture()};
-    sprite.setTextureRect(src.Get_SF_TextureRect());
-    sprite.setScale(dstRect.width  / sprite.getLocalBounds().width,
-                    dstRect.height / sprite.getLocalBounds().height);
-    sprite.move(dstRect.left, dstRect.top);
-    sfRenderWindow->draw(sprite);
+    if(!src.sfSrcTexture)
+    {
+        sfColor = src.sfSprite.getColor();
+        DrawRect(dstRect);
+        return;
+    }
+    
+    src.sfSprite.setPosition(static_cast<float>(dstRect.left),
+                             static_cast<float>(dstRect.top));
+
+    sf::Vector2f newScale = {
+        dstRect.width  / src.sfSprite.getLocalBounds().width,
+        dstRect.height / src.sfSprite.getLocalBounds().height };
+
+    if(src.sfSprite.getScale() != newScale)
+        src.sfSprite.setScale(newScale);
+
+    sfRenderWindow->draw(src.sfSprite);
 }
 
-//----------------------------------------//
-
 void
-Renderer::DrawText(const Text& text_)
+Renderer::DrawText(Text& text_)
 {
-    sfRenderWindow->draw(text_.Get_SF_Text());
+    sfRenderWindow->draw(text_.sfText);
 }
-
-//----------------------------------------//
 
 bool
 Renderer::OnRender() const
@@ -169,23 +141,17 @@ Renderer::OnRender() const
     return sfRenderWindow->isOpen();
 }
 
-//----------------------------------------//
-
 void
 Renderer::Clear()
 {
     sfRenderWindow->clear(sfColor);
 }
 
-//----------------------------------------//
-
 void
 Renderer::Display()
 {
     sfRenderWindow->display();
 }
-
-//----------------------------------------//
 
 void
 Renderer::Close()

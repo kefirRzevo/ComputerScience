@@ -1,198 +1,23 @@
 #include "widget.hpp"
 
 
-Border::Border(Widget* widget_, int thickness_, Color color_):
-widget(widget_), thickness(thickness_), color(color_)
-{}
-
-const Widget*
-Border::GetWidget() const
-{
-    return widget;
-}
-
-Color
-Border::GetColor() const
-{
-    return color;
-}
-
-int
-Border::GetThickness() const
-{
-    return thickness;
-}
-
-void
-Border::SetWidget(Widget* widget_)
-{
-    widget = widget_;
-}
-
-void
-Border::SetColor(Color color_)
-{
-    color = color_;
-}
-
-void
-Border::SetThickness(int thickness_)
-{
-    thickness = thickness_;
-}
-
-bool
-Border::IsInside(Vec2i pos_) const
-{
-    const RectInt& rect = widget->GetLocation();
-
-    RectInt borderCol = {rect.left - thickness, rect.top    -     thickness,
-                                     thickness, rect.height + 2 * thickness};
-
-    if(borderCol.IsInside(pos_))
-        return true;
-
-    borderCol.left += rect.width + thickness;
-
-    if(borderCol.IsInside(pos_))
-        return true;
-
-    RectInt borderRow = {rect.left,  rect.top - thickness,
-                         rect.width,            thickness};
-
-    if(borderRow.IsInside(pos_))
-        return true;
-
-    borderRow.top += rect.height + thickness;
-
-    if(borderRow.IsInside(pos_))
-        return true;
-
-    return false;
-}
-
-void
-Border::OnRender() const
-{
-    const RectInt& rect = widget->GetLocation();
-
-    Renderer* rend = Renderer::Get();
-    rend->SetColor(color);
-    rend->SetThickness(thickness);
-
-    RectInt borderCol = {rect.left - thickness, rect.top, 
-                                     thickness, rect.height};
-    rend->DrawRect(borderCol);
-    borderCol.left += rect.width + thickness;
-    rend->DrawRect(borderCol);
-
-    RectInt borderRow = {rect.left, rect.top - thickness, 
-                         rect.width,           thickness};
-    rend->DrawRect(borderRow);
-    borderRow.top += rect.height + thickness;
-    rend->DrawRect(borderRow);
-
-    int nPoints = thickness * 4;
-
-    rend->DrawCircle({rect.left,              rect.top              }, thickness, nPoints);
-    rend->DrawCircle({rect.left + rect.width, rect.top              }, thickness, nPoints);
-    rend->DrawCircle({rect.left,              rect.top + rect.height}, thickness, nPoints);
-    rend->DrawCircle({rect.left + rect.width, rect.top + rect.height}, thickness, nPoints);
-}
-
-RectInt
-Border::OnResize(Vec2i pos_, Vec2i delta_) const
-{
-    const RectInt& rect = widget->GetLocation();
-    RectInt newLocation = rect;
-
-    RectInt borderCol = {rect.left - thickness, rect.top, 
-                                     thickness, rect.height};
-    if(borderCol.IsInside(pos_))
-    {
-        newLocation.left  += delta_.x;
-        newLocation.width -= delta_.x;
-        return newLocation;
-    }
-    borderCol.left += rect.width + thickness;
-    if(borderCol.IsInside(pos_))
-    {
-        newLocation.width += delta_.x;
-        return newLocation;
-    }
-
-    RectInt borderRow = {rect.left, rect.top - thickness, 
-                         rect.width,           thickness};
-    if(borderRow.IsInside(pos_))
-    {
-        newLocation.top    += delta_.y;
-        newLocation.height -= delta_.y;
-        return newLocation;
-    }
-    borderRow.top += rect.height + thickness;
-    if(borderRow.IsInside(pos_))
-    {
-        newLocation.height += delta_.y;
-        return newLocation;
-    }
-
-    RectInt corner = {rect.left - thickness, rect.top - thickness, 
-                                  thickness,            thickness};
-    if(corner.IsInside(pos_))
-    {
-        newLocation.left   += delta_.x;
-        newLocation.top    += delta_.y;
-        newLocation.width  -= delta_.x;
-        newLocation.height -= delta_.y;
-        return newLocation;
-    }
-    corner.left += rect.width + thickness;
-    if(corner.IsInside(pos_))
-    {
-        newLocation.top    += delta_.y;
-        newLocation.width  += delta_.x;
-        newLocation.height -= delta_.y;
-        return newLocation;
-    }
-    corner.top += rect.height + thickness;
-    if(corner.IsInside(pos_))
-    {
-        newLocation.width  += delta_.x;
-        newLocation.height += delta_.y;
-        return newLocation;
-    }
-    corner.left -= rect.width + thickness;
-    if(corner.IsInside(pos_))
-    {
-        newLocation.left   += delta_.x;
-        newLocation.width  -= delta_.x;
-        newLocation.height += delta_.y;
-        return newLocation;
-    }
-    return newLocation;
-}
-
 //----------------------------------------//
 
-Widget::Widget(const RectInt& location_, Texture* texture_, int thickness_, Color color_):
-location(location_), parent(nullptr), system(nullptr), activeChild(nullptr),
-texture(texture_), border(nullptr)
+Widget::Widget(const RectInt& location_, WidgetView* view_):
+location(location_), view(view_), parent(nullptr), system(nullptr)
 {
-    if(thickness_ > 0)
-        border = new Border(this, thickness_, color_);
+    view->SetWidget(this);
 }
 
-Widget::Widget(Vec2i size_, Texture* texture_, int thickness_, Color color_):
-location(size_), parent(nullptr), system(nullptr), activeChild(nullptr),
-texture(texture_), border(nullptr)
+Widget::Widget(Vec2i size_, WidgetView* view_):
+location(size_), view(view_), parent(nullptr), system(nullptr)
 {
-    if(thickness_ > 0)
-        border = new Border(this, color_, thickness_);
+    view->SetWidget(this);
 }
 
 Widget::~Widget()
 {
-    delete border;
+    delete view;
     parent->Detach(this);
 
     for(auto child: children)
@@ -205,6 +30,12 @@ Widget::GetLocation() const
     return location;
 }
 
+WidgetView*
+Widget::GetWidgetView()
+{
+    return view;
+}
+
 Widget*
 Widget::GetParent()
 {
@@ -215,18 +46,6 @@ WidgetSystem*
 Widget::GetWidgetSystem()
 {
     return system;
-}
-
-Widget*
-Widget::GetActiveChild()
-{
-    return activeChild;
-}
-
-Texture*
-Widget::GetTexture()
-{
-    return texture;
 }
 
 void
@@ -254,6 +73,12 @@ Widget::SetSize(Vec2i size_)
 }
 
 void
+Widget::SetWidgetView(WidgetView* view_)
+{
+    view = view_;
+}
+
+void
 Widget::SetParent(Widget* parent_)
 {
     parent = parent_;
@@ -266,19 +91,6 @@ Widget::SetWidgetSystem(WidgetSystem* system_)
 
     for(auto child: children)
          child->SetWidgetSystem(system_);
-}
-
-void
-Widget::SetActiveChild(Widget* child_)
-{
-    activeChild = child_;
-}
-
-void
-Widget::SetTexture(Texture* texture_)
-{
-    if(texture_)
-        texture = texture_;
 }
 
 void
@@ -333,22 +145,23 @@ Widget::OnEvent(const Event& event_)
     Vec2i delta = {};
 
     RectInt newLocation = location;
+    BorderView* border  = nullptr;
 
     switch (event_.type)
     {
         case mousePressed:
 
             system->Subscribe(this, mouseMoved);
-            system->Subscribe(this, mouseHovered);
             break;
 
         case mouseMoved:
 
             pos   = event_.mouse.pos;
             delta = event_.mouse.offset;
-            if(border)
+
+            if(border = dynamic_cast<BorderView*>(view))
             {
-                if(border->IsInside(pos))
+                if(border->IsInsideBorder(pos))
                 {
                     newLocation = border->OnResize(pos, delta);
                     SetPosition({newLocation.left, newLocation.top});
@@ -370,10 +183,7 @@ Widget::OnEvent(const Event& event_)
 void
 Widget::Render() const
 {
-    if(border)
-        border->OnRender();
-
-    Renderer::Get()->DrawTexture(*texture, location);
+    view->OnRender();
     for(auto it = children.end(); it != children.begin();)
     {
         --it;
@@ -382,16 +192,9 @@ Widget::Render() const
 }
 
 bool
-Widget::IsInside(Vec2i pos_)
+Widget::IsInside(Vec2i pos_) const
 {
-    if(location.IsInside(pos_))
-        return true;
-
-    if(border)
-        if(border->IsInside(pos_))
-            return true;
-
-    return false;
+    return view->IsInside(pos_);
 }
 
 //----------------------------------------//
@@ -433,7 +236,9 @@ WidgetSystem::ProcessEvent(const Event& event_)
 }
 
 void
-WidgetSystem::Render()
+WidgetSystem::Render() const
 {
     root->Render();
 }
+
+//----------------------------------------//

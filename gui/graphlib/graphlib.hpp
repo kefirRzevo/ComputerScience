@@ -5,4 +5,4 @@
 #include "event.hpp"
 #include "renderer.hpp"
 #include "texture.hpp"
-#include "config.hpp"
+#include "../config.hpp"

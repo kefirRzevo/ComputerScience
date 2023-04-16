@@ -3,7 +3,6 @@
 
 #include "widget.hpp"
 
-
 class ScrollBox;
 class ScrollBar;
 
@@ -37,7 +36,7 @@ class ScrollBox: public Widget
 
     public:
 
-        ScrollBox(Vec2i size_, Texture* texture_);
+        ScrollBox(Vec2i size_, WidgetView* view_);
 
         void
         SetScrollBar(ScrollBar* scrollBar_);
@@ -54,8 +53,8 @@ class ScrollBar: public Widget
 {
     protected:
 
-        std::unique_ptr<ScrollBarResponse>  responsePtr;
-        std::unique_ptr<ScrollBox>          boxPtr;
+        std::unique_ptr<ScrollBarResponse>  response;
+        std::unique_ptr<ScrollBox>          box;
 
         float minValue = 0.f;
         float maxValue = 1.f;
@@ -63,7 +62,7 @@ class ScrollBar: public Widget
 
     public:
 
-        ScrollBar(Vec2i size_, Texture* texture_,
+        ScrollBar(Vec2i size_, WidgetView* view_,
         ScrollBarResponse* responce_, ScrollBox* box_);
 
         virtual ~ScrollBar();
@@ -86,7 +85,7 @@ class HorScrollBar: public ScrollBar
  
     public:
 
-        HorScrollBar(Vec2i size_, Texture* texture_,
+        HorScrollBar(Vec2i size_, WidgetView* view_,
         ScrollBarResponse* responce_, ScrollBox* box_);
 
         void

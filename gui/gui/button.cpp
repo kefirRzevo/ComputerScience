@@ -1,5 +1,8 @@
 #include "button.hpp"
 
+
+//----------------------------------------//
+
 Command::~Command()
 {}
 
@@ -10,29 +13,29 @@ widget(widget_)
 void
 CloseCommand::Execute()
 {
-    widget->GetParent()->Detach(widget);
+    //widget->GetParent()->Detach(widget);
     fprintf(stderr, "press\n");
 }
 
 //----------------------------------------//
 
-Button::Button(Vec2i size_, Command* cmd_,
-Texture* onRelease_, Texture* onPress_, Texture* onHover_):
-Widget(size_, onRelease_), pressed(false),
-onRelease(onRelease_), onPress(onPress_), onHover(onHover_)
-{
-    cmdPtr.reset(cmd_);
-}
+Button::Button(Vec2i size_, Command* cmd_, ButtonView* view_):
+Widget(size_, view_), cmdPtr(cmd_), pressed(false)
+{}
 
 bool
 Button::ProcessListenerEvent(const Event& event_)
 {
+    ButtonView* buttonView = dynamic_cast<ButtonView*>(view);
+    if(!buttonView)
+        return false;
+
     if(event_.type == mouseReleased)
     {
         if(event_.IsMouseType() && !IsInside(event_.mouse.pos))
         {
             pressed = false;
-            texture = onRelease;
+            view->SetTexture(buttonView->GetReleaseTexture());
             return false;
         }
     }
@@ -40,7 +43,7 @@ Button::ProcessListenerEvent(const Event& event_)
     {
         system->Unsubscribe(mouseHovered);
         if(!pressed)
-            texture = onRelease;
+            view->SetTexture(buttonView->GetReleaseTexture());
         return false;
     }
     return OnEvent(event_);
@@ -52,6 +55,10 @@ Button::OnEvent(const Event& event_)
     if(event_.IsMouseType() && !IsInside(event_.mouse.pos))
         return false;
 
+    ButtonView* buttonView = dynamic_cast<ButtonView*>(view);
+    if(!buttonView)
+        return false;
+
     switch(event_.type)
     {
         case mousePressed:
@@ -60,13 +67,13 @@ Button::OnEvent(const Event& event_)
             system->Subscribe(this, mouseReleased);
 
             pressed = true;
-            texture = onPress;
+            view->SetTexture(buttonView->GetPressTexture());
             break;
 
         case mouseHovered:
 
             if(!pressed)
-                texture = onHover;
+                view->SetTexture(buttonView->GetHoverTexture());
 
             system->Subscribe(this, mouseHovered);
             break;
@@ -74,10 +81,10 @@ Button::OnEvent(const Event& event_)
         case mouseReleased:
 
             if(pressed)
-                cmdPtr.get()->Execute();
+                cmdPtr->Execute();
 
             pressed = false;
-            texture = onRelease;
+            view->SetTexture(buttonView->GetReleaseTexture());
             break;
 
         default:
@@ -100,21 +107,4 @@ Button::SetPressed(bool pressed_)
     pressed = pressed_;
 }
 
-
-Texture*
-Button::GetOnReleaseTexture()
-{
-    return onRelease;
-}
-
-Texture*
-Button::GetOnPressTexture()
-{
-    return onPress;
-}
-
-Texture*
-Button::GetOnHoverTexture()
-{
-    return onHover;
-}
+//----------------------------------------//

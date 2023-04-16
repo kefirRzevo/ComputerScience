@@ -13,8 +13,10 @@ ScrollBarResponseTest::OnResponse(float value_)
     fprintf(stderr, "%f\n", value_);
 }
 
-ScrollBox::ScrollBox(Vec2i size_, Texture* texture_):
-Widget(size_, texture_, 0), scrollBar(nullptr)
+//----------------------------------------//
+
+ScrollBox::ScrollBox(Vec2i size_, WidgetView* view_):
+Widget(size_, view_), scrollBar(nullptr)
 {}
 
 void
@@ -70,14 +72,14 @@ ScrollBox::OnEvent(const Event& event_)
     return true;
 }
 
-ScrollBar::ScrollBar(Vec2i size_, Texture* texture_,
+//----------------------------------------//
+
+ScrollBar::ScrollBar(Vec2i size_, WidgetView* view_,
 ScrollBarResponse* responce_, ScrollBox* box_):
-Widget(size_, texture_)
+Widget(size_, view_), response(responce_), box(box_)
 {
-    responsePtr.reset(responce_);
-    boxPtr.reset(box_);
-    boxPtr.get()->SetScrollBar(this);
-    Attach(boxPtr.get());
+    box->SetScrollBar(this);
+    Attach(box.get());
 }
 
 ScrollBar::~ScrollBar()
@@ -89,11 +91,13 @@ ScrollBar::GetValue() const
     return curValue;
 }
 
-HorScrollBar::HorScrollBar(Vec2i size_, Texture* texture_,
+//----------------------------------------//
+
+HorScrollBar::HorScrollBar(Vec2i size_, WidgetView* view_,
 ScrollBarResponse* responce_, ScrollBox* box_):
-ScrollBar(size_, texture_, responce_, box_)
+ScrollBar(size_, view_, responce_, box_)
 {
-    int halfBoxWidth = boxPtr.get()->GetLocation().width / 2;
+    int halfBoxWidth = box->GetLocation().width / 2;
     scaleBeginX = location.left + halfBoxWidth;
     scaleEndX   = location.left + location.width - halfBoxWidth;
 }
@@ -105,13 +109,13 @@ HorScrollBar::SetValue(Vec2i boxPos_)
     value = value > maxValue ? maxValue : value;
     value = value < minValue ? minValue : value;
 
-    responsePtr.get()->OnResponse(value);
+    response->OnResponse(value);
     curValue = value;
 
     int temp1 = static_cast<int>((value - minValue) / GetScaleStep());
-    int temp2 = scaleBeginX - boxPtr.get()->GetLocation().width / 2;
+    int temp2 = scaleBeginX - box->GetLocation().width / 2;
 
-    boxPtr.get()->SetPosition({temp1 + temp2, location.top});
+    box->SetPosition({temp1 + temp2, location.top});
 }
 
 float
@@ -150,3 +154,5 @@ HorScrollBar::GetEndX() const
 {
     return scaleEndX;
 }
+
+//----------------------------------------//

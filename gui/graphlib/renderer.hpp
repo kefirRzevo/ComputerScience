@@ -4,6 +4,8 @@
 #include "math.hpp"
 #include "texture.hpp"
 
+class EventManager;
+class Renderer;
 
 //----------------------------------------//
 
@@ -15,11 +17,9 @@ class Window
 
     public:
 
-        Window(const Vec2u& size, const char* name):
-            sfRenderWindow(sf::VideoMode(size.x, size.y), name) {}
+        Window(Vec2u size_, const std::string& name_);
 
-        sf::RenderWindow*
-        Get_SF_RenderWindow();
+    friend class Renderer;
 };
 
 //----------------------------------------//
@@ -28,24 +28,25 @@ class Renderer
 {
     private:
 
+        static std::unique_ptr<Renderer> renderer;
+
         sf::RenderWindow* sfRenderWindow;
 
         sf::Color sfColor;
-
         float thickness;
 
         Renderer(Window* window);
 
     public:
 
-        static Renderer*
-        Get(Window* sfRenderWindow_ = nullptr);
+        static void
+        Initialize(Window* window_);
 
-        sf::RenderWindow*
-        Get_SF_RenderWindow();
+        static Renderer*
+        Get();
 
         void
-        SetColor(Color color);
+        SetColor(Color color_);
         void
         SetThickness(float thickness_);
 
@@ -63,9 +64,9 @@ class Renderer
         DrawRect(const RectInt& RectInt);
 
         void
-        DrawTexture(const Texture& src, const RectInt& dstRectInt);
+        DrawTexture(Texture& src, const RectInt& dstRectInt);
         void
-        DrawText(const Text& text_);
+        DrawText(Text& text_);
 
         bool
         OnRender() const;
@@ -76,6 +77,8 @@ class Renderer
         Display();
         void
         Close();
+    
+    friend class EventManager;
 };
 
 //----------------------------------------//

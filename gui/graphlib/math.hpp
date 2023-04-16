@@ -123,6 +123,12 @@ class Rect
             return point.x >= left         && point.y >= top         &&
                    point.x <= left + width && point.y <= top + height;
         }
+
+        bool operator==(const Rect<T>& rhs)
+        {
+            return  left  == rhs.left  && top    == rhs.top &&
+                    width == rhs.width && height == rhs.height;
+        }
 };
 
 //----------------------------------------//

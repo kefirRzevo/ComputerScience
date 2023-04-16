@@ -29,7 +29,7 @@ EventManager::Get()
     static std::unique_ptr<EventManager> eventManager;
 
     if(eventManager.get() == nullptr)
-        eventManager.reset(new EventManager());
+        eventManager.reset(new EventManager{});
 
     return eventManager.get();
 }
@@ -53,7 +53,7 @@ EventManager::Poll_SF_Event()
     Vec2i lastPos = {};
     sf::Event sfEvent;
 
-    if(!Renderer::Get()->Get_SF_RenderWindow()->pollEvent(sfEvent))
+    if(!Renderer::Get()->sfRenderWindow->pollEvent(sfEvent))
         return false;
 
     switch (sfEvent.type)

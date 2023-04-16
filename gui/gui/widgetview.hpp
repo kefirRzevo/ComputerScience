@@ -1,5 +1,10 @@
+#pragma once
+
+
 #include "widget.hpp"
 
+class Widget;
+class WidgetView;
 
 //----------------------------------------//
 
@@ -7,27 +12,34 @@ class WidgetView
 {
     protected:
 
-        Widget* widget;
+        Widget*  widget;
+        Texture* texture;
 
     public:
+
+        WidgetView(Texture* texture_);
 
         virtual ~WidgetView();
 
         Widget*
         GetWidget();
+        Texture*
+        GetTexture();
 
         void
         SetWidget(Widget* widget_);
+        void
+        SetTexture(Texture* texture_);
 
         virtual bool
         IsInside(Vec2i pos_) const;
         virtual void
-        OnRender() const = 0;
+        OnRender() const;
 };
 
 //----------------------------------------//
 
-class BorderView: virtual public WidgetView
+class BorderView: public WidgetView
 {
     protected:
 
@@ -36,8 +48,10 @@ class BorderView: virtual public WidgetView
 
     public:
 
-        BorderView(int thickness_, Color color_);
-
+        BorderView(Texture* texture_,
+        int thickness_ = DEFAULT_BORDER_THICKNESS,
+        Color color_   = DEFAULT_BORDER_COLOR);
+        
         Color
         GetBorderColor() const;
         int
@@ -58,75 +72,29 @@ class BorderView: virtual public WidgetView
         void
         RenderBorder() const;
         void
-        OnRender() const = 0;
+        OnRender() const override;
 };
 
 //----------------------------------------//
 
-class TextureView: virtual public WidgetView
+class ButtonView: public WidgetView
 {
     protected:
 
-        Texture* texture;
+        Texture* onRelease;
+        Texture* onPress;
+        Texture* onHover;
 
     public:
 
-        TextureView(Texture* texture_);
+        ButtonView(Texture* onRelease_, Texture* onPress_, Texture* onHover_);
 
-        virtual Texture*
-        GetTexture();
-
-        virtual void
-        SetTexture(Texture* texture_);
-
-        void
-        OnRender() const override;
-};
-
-//----------------------------------------//
-
-class ColorView: virtual public WidgetView
-{
-    protected:
-
-        Color bgColor;
-
-    public:
-
-        ColorView(Color bgColor_);
-
-        Color
-        GetColor() const;
-
-        void
-        SetColor(Color bgColor_);
-
-        void
-        OnRender() const override;
-};
-
-//----------------------------------------//
-
-class BorderTextureView: public BorderView, virtual public TextureView
-{
-    public:
-
-        BorderTextureView(Texture* texture_, int thickness_, Color color_);
-
-        void
-        OnRender() const override;
-};
-
-//----------------------------------------//
-
-class BorderColorView: public BorderView, public ColorView
-{
-    public:
-
-        BorderColorView(Color bgColor_, int thickness_, Color color_);
-
-        void
-        OnRender() const override;
+        Texture*
+        GetReleaseTexture();
+        Texture*
+        GetPressTexture();
+        Texture*
+        GetHoverTexture();
 };
 
 //----------------------------------------//

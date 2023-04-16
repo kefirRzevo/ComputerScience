@@ -10,28 +10,15 @@ Font::Font(const char* path)
 
 //----------------------------------------//
 
-const sf::Font&
-Font::Get_SF_Font() const
-{
-    return sfFont;
-}
-
-//----------------------------------------//
-
-FontManager::FontManager()
-{
-    defaultFont = &GetFont(DEFAULT_FONT_PATH);
-}
-
-//----------------------------------------//
+FontManager::FontManager():
+defaultFont(GetFont(DEFAULT_FONT_PATH))
+{}
 
 FontManager::~FontManager()
 {
     for(auto i: fonts)
-        delete i.second;
+        delete &i.second;
 }
-
-//----------------------------------------//
 
 FontManager*
 FontManager::Get()
@@ -39,12 +26,10 @@ FontManager::Get()
     static std::unique_ptr<FontManager> fontManager;
 
     if(fontManager.get() == nullptr)
-        fontManager.reset(new FontManager());
+        fontManager.reset(new FontManager{});
 
     return fontManager.get();
 }
-
-//----------------------------------------//
 
 const Font&
 FontManager::GetFont(const char* path)
@@ -52,41 +37,30 @@ FontManager::GetFont(const char* path)
     auto fontIt = fonts.find(path);
 
     if(fontIt != fonts.end())
-        return *fontIt->second;
+        return fontIt->second;
 
-    Font* newFont = new Font(path);
-    fonts.insert({path, newFont});
+    Font* newFont = new Font{path};
+    fonts.insert({path, *newFont});
 
     return *newFont;
 }
 
-//----------------------------------------//
-
 const Font&
 FontManager::GetDefaultFont() const
 {
-    return *defaultFont;
+    return defaultFont;
 }
 
 //----------------------------------------//
 
-Text::Text(const Font& font, const char* text, Color color, size_t size)
+Text::Text(const std::string& string_,
+const Font& font_, Color color_, int size_)
 {
-    sfText.setFont(font.Get_SF_Font());
-    sfText.setFillColor(To_SF_Color(color));
-    sfText.setString(text);
-    sfText.setCharacterSize(size);
+    sfText.setString(string_);
+    sfText.setFont(font_.sfFont);
+    sfText.setFillColor(To_SF_Color(color_));
+    sfText.setCharacterSize(size_);
 }
-
-//----------------------------------------//
-
-const sf::Text&
-Text::Get_SF_Text() const
-{
-    return sfText;
-}
-
-//----------------------------------------//
 
 Vec2i
 Text::GetSize() const
@@ -95,8 +69,6 @@ Text::GetSize() const
             static_cast<int>(sfText.getLocalBounds().height)};
 }
 
-//----------------------------------------//
-
 Vec2i
 Text::GetPosition() const
 {
@@ -104,15 +76,17 @@ Text::GetPosition() const
             static_cast<int>(sfText.getPosition().y)};
 }
 
-//----------------------------------------//
+std::string
+Text::GetString() const
+{
+    return sfText.getString();
+}
 
 void
-Text::SetString(const char* string_)
+Text::SetString(const std::string& string_)
 {
     sfText.setString(string_);
 }
-
-//----------------------------------------//
 
 void
 Text::SetPosition(Vec2i pos_)
@@ -128,65 +102,53 @@ Text::Move(Vec2i delta_)
 
 //----------------------------------------//
 
-Texture::Texture(const Vec2i& size)
+Texture::Texture(Vec2i size_):
+isManagerOwner(false)
 {
-    isManagerOwner = false;
-    sf::Texture* temp = new sf::Texture();
-    temp->create(static_cast<unsigned int>(size.x), 
-                 static_cast<unsigned int>(size.y));
-    sfSrcTexture = temp;
-    sfTextureRect = {0, 0, size.x, size.y};
+    sf::Texture* temp = new sf::Texture{};
+    temp->create(static_cast<unsigned int>(size_.x), 
+                 static_cast<unsigned int>(size_.y));
+    sfSrcTexture  = temp;
+    sfTextureRect = {0, 0, size_.x, size_.y};
+    sfSprite = sf::Sprite{*sfSrcTexture};
 }
 
-//----------------------------------------//
-
-Texture::Texture(const char* path)
+Texture::Texture(Vec2i size_, Color color_):
+isManagerOwner(false)
 {
-    isManagerOwner = true;
-    sfSrcTexture = &TextureManager::Get()->GetTexture(path);
+    sfSrcTexture  = nullptr;
+    sfTextureRect = {0, 0, size_.x, size_.y};
+    sfSprite.setColor(To_SF_Color(color_));
+}
+
+Texture::Texture(const char* path):
+isManagerOwner(true)
+{
+    sfSrcTexture  = TextureManager::Get()->GetTexture(path);
     sfTextureRect = {0, 0, static_cast<int>(sfSrcTexture->getSize().x),
                            static_cast<int>(sfSrcTexture->getSize().y)};
+    sfSprite = sf::Sprite{*sfSrcTexture};
 }
 
-//----------------------------------------//
-
-Texture::Texture(const char* path, int i, int j, int w, int h)
+Texture::Texture(const char* path, int i, int j, int w, int h):
+isManagerOwner(true)
 {
-    isManagerOwner = true;
-    sfSrcTexture = &TextureManager::Get()->GetTexture(path);
+    sfSrcTexture  = TextureManager::Get()->GetTexture(path);
 
     int width  = static_cast<int>(sfSrcTexture->getSize().x);
     int height = static_cast<int>(sfSrcTexture->getSize().y);
 
     sfTextureRect = {width * i/w, height * j/h, width / h, height / h};
+    sfSprite = sf::Sprite{*sfSrcTexture, sfTextureRect};
 }
 
-//----------------------------------------//
-
-Texture::Texture(const char* path, const RectInt& rect)
+Texture::Texture(const char* path, const RectInt& rect):
+Texture(path)
 {
-    isManagerOwner = true;
-    sfSrcTexture = &TextureManager::Get()->GetTexture(path);
+    sfSrcTexture  = TextureManager::Get()->GetTexture(path);
     sfTextureRect = To_SF_Rect(rect);
+    sfSprite = sf::Sprite{*sfSrcTexture, sfTextureRect};
 }
-
-//----------------------------------------//
-
-const sf::Texture&
-Texture::Get_SF_Texture() const
-{
-    return *sfSrcTexture;
-}
-
-//----------------------------------------//
-
-const sf::IntRect&
-Texture::Get_SF_TextureRect() const
-{
-    return sfTextureRect;
-}
-
-//----------------------------------------//
 
 std::unique_ptr<Color>
 Texture::ToBuffer() const
@@ -206,8 +168,6 @@ Texture::ToBuffer() const
     return pixelsPtr;
 }
 
-//----------------------------------------//
-
 void
 Texture::FromBuffer(Color* pixels)
 {
@@ -219,14 +179,13 @@ Texture::FromBuffer(Color* pixels)
     else
     {
         isManagerOwner = false;
-        sf::Texture* temp = new sf::Texture();
+        sf::Texture* temp = new sf::Texture{};
         temp->create(sfSrcTexture->getSize().x, sfSrcTexture->getSize().y);
         temp->update(reinterpret_cast<sf::Uint8*>(pixels));
         sfSrcTexture = temp;
     }
+    sfSprite = sf::Sprite{*sfSrcTexture, sfTextureRect};
 }
-
-//----------------------------------------//
 
 void
 Texture::FromBuffer(Color* pixels, int w, int h, int x, int y)
@@ -239,14 +198,13 @@ Texture::FromBuffer(Color* pixels, int w, int h, int x, int y)
     else
     {
         isManagerOwner = false;
-        sf::Texture* temp = new sf::Texture();
+        sf::Texture* temp = new sf::Texture{};
         temp->create(sfSrcTexture->getSize().x, sfSrcTexture->getSize().y);
         temp->update(reinterpret_cast<sf::Uint8*>(pixels), w, h, x, y);
         sfSrcTexture = temp;
     }
+    sfSprite = sf::Sprite{*sfSrcTexture, sfTextureRect};
 }
-
-//----------------------------------------//
 
 Texture::~Texture()
 {
@@ -256,12 +214,9 @@ Texture::~Texture()
 
 //----------------------------------------//
 
-TextureManager::TextureManager()
-{
-    defaultSfSrcTexture = &GetTexture(DEFAULT_TEXTURE_PATH);
-}
-
-//----------------------------------------//
+TextureManager::TextureManager():
+defaultSfSrcTexture(GetTexture(DEFAULT_TEXTURE_PATH))
+{}
 
 TextureManager::~TextureManager()
 {
@@ -269,42 +224,36 @@ TextureManager::~TextureManager()
         delete i.second;
 }
 
-//----------------------------------------//
-
 TextureManager*
 TextureManager::Get()
 {
     static std::unique_ptr<TextureManager> textureManager;
 
     if(textureManager.get() == nullptr)
-        textureManager.reset(new TextureManager());
+        textureManager.reset(new TextureManager{});
 
     return textureManager.get();
 }
 
-//----------------------------------------//
-
-const sf::Texture&
+const sf::Texture*
 TextureManager::GetTexture(const char* path)
 {
     auto sfTextureIt = sfSrcTextures.find(path);
 
     if(sfTextureIt != sfSrcTextures.end())
-        return *sfTextureIt->second;
+        return sfTextureIt->second;
 
-    sf::Texture* newSfTexture = new sf::Texture();
+    sf::Texture* newSfTexture = new sf::Texture{};
     newSfTexture->loadFromFile(path);
     sfSrcTextures.insert({path, newSfTexture});
 
-    return *newSfTexture;
+    return newSfTexture;
 }
 
-//----------------------------------------//
-
-const sf::Texture&
+const sf::Texture*
 TextureManager::GetDefaultTexture() const
 {
-    return *defaultSfSrcTexture;
+    return defaultSfSrcTexture;
 }
 
 //----------------------------------------//
