@@ -1,4 +1,5 @@
 #include "texture.hpp"
+#include "../config.hpp"
 
 
 //----------------------------------------//
@@ -11,7 +12,7 @@ Font::Font(const char* path)
 //----------------------------------------//
 
 FontManager::FontManager():
-defaultFont(GetFont(DEFAULT_FONT_PATH))
+defaultFont(GetFont(Config::defFontPath))
 {}
 
 FontManager::~FontManager()
@@ -113,11 +114,9 @@ isManagerOwner(false)
     sfSprite = sf::Sprite{*sfSrcTexture};
 }
 
-Texture::Texture(Vec2i size_, Color color_):
-isManagerOwner(false)
+Texture::Texture(Color color_):
+isManagerOwner(false), sfSrcTexture(nullptr), sfTextureRect({})
 {
-    sfSrcTexture  = nullptr;
-    sfTextureRect = {0, 0, size_.x, size_.y};
     sfSprite.setColor(To_SF_Color(color_));
 }
 
@@ -215,7 +214,7 @@ Texture::~Texture()
 //----------------------------------------//
 
 TextureManager::TextureManager():
-defaultSfSrcTexture(GetTexture(DEFAULT_TEXTURE_PATH))
+defaultSfSrcTexture(GetTexture(Config::defTexturePath))
 {}
 
 TextureManager::~TextureManager()

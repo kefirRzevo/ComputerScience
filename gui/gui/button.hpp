@@ -42,9 +42,14 @@ class Button: public Widget
         std::unique_ptr<Command> cmdPtr;
         bool pressed;
 
+        Texture* onRelease;
+        Texture* onHover;
+        Texture* onPress;
+
     public:
 
-        Button(Vec2i size_, Command* cmd_, ButtonView* view_);
+        Button(Layout* layout_, Command* cmd_, Texture* onRelease_,
+        Texture* onHover_ = nullptr, Texture* onPress = nullptr);
 
         bool
         ProcessListenerEvent(const Event& event_) override;
@@ -53,8 +58,6 @@ class Button: public Widget
 
         bool
         GetPressed() const;
-        void
-        SetPressed(bool pressed_);
 };
 
 //----------------------------------------//

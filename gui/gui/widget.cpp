@@ -1,39 +1,64 @@
 #include "widget.hpp"
 
+static void
+RenderBorder(Layout* layout)
+{
+    const RectInt& rect = layout->GetRectangle();
+    int   thickness     = layout->GetBorder();
+
+    Renderer* rend = Renderer::Get();
+    rend->SetColor(Black);
+    rend->SetThickness(thickness);
+
+    RectInt borderCol = {rect.left - thickness, rect.top, 
+                                     thickness, rect.height};
+    rend->DrawRect(borderCol);
+    borderCol.left += rect.width + thickness;
+    rend->DrawRect(borderCol);
+
+    RectInt borderRow = {rect.left, rect.top - thickness, 
+                         rect.width,           thickness};
+    rend->DrawRect(borderRow);
+    borderRow.top += rect.height + thickness;
+    rend->DrawRect(borderRow);
+
+    int nPoints = thickness * 4;
+
+    rend->DrawCircle({rect.left,              rect.top              }, 
+                                                    thickness, nPoints);
+    rend->DrawCircle({rect.left + rect.width, rect.top              }, 
+                                                    thickness, nPoints);
+    rend->DrawCircle({rect.left,              rect.top + rect.height}, 
+                                                    thickness, nPoints);
+    rend->DrawCircle({rect.left + rect.width, rect.top + rect.height}, 
+                                                    thickness, nPoints);
+}
 
 //----------------------------------------//
 
-Widget::Widget(const RectInt& location_, WidgetView* view_):
-location(location_), view(view_), parent(nullptr), system(nullptr)
-{
-    view->SetWidget(this);
-}
-
-Widget::Widget(Vec2i size_, WidgetView* view_):
-location(size_), view(view_), parent(nullptr), system(nullptr)
-{
-    view->SetWidget(this);
-}
+Widget::Widget(Layout* layout_, Texture* texture_):
+layout(layout_), texture(texture_), parent(nullptr), system(nullptr)
+{}
 
 Widget::~Widget()
 {
-    delete view;
+    delete layout;
     parent->Detach(this);
 
     for(auto child: children)
         delete child;
 }
 
-const RectInt&
-Widget::GetLocation() const
+Layout*
+Widget::GetLayout()
 {
-    return location;
+    return layout;
 }
 
-WidgetView*
-Widget::GetWidgetView()
+Texture*
+Widget::GetTexture()
 {
-    return view;
+    return texture;
 }
 
 Widget*
@@ -49,33 +74,15 @@ Widget::GetWidgetSystem()
 }
 
 void
-Widget::Move(Vec2i delta_)
+Widget::SetLayout(Layout* layout_)
 {
-    location.left += delta_.x;
-    location.top  += delta_.y;
-
-    for(auto child: children)
-        child->Move(delta_);
+    layout = layout_;
 }
 
 void
-Widget::SetPosition(Vec2i pos_)
+Widget::SetTexture(Texture* texture_)
 {
-    location.left = pos_.x;
-    location.top  = pos_.y;
-}
-
-void
-Widget::SetSize(Vec2i size_)
-{
-    location.width  = size_.x;
-    location.height = size_.y;
-}
-
-void
-Widget::SetWidgetView(WidgetView* view_)
-{
-    view = view_;
+    texture = texture_;
 }
 
 void
@@ -96,18 +103,22 @@ Widget::SetWidgetSystem(WidgetSystem* system_)
 void
 Widget::Attach(Widget* child_)
 {
-    children.push_front(child_);
+    layout->Attach(child_->GetLayout());
     child_->SetParent(this);
     child_->SetWidgetSystem(system);
-    child_->Move({location.left, location.top});
+    children.push_front(child_);
 }
 
 void
 Widget::Detach(Widget* child_)
 {
-    auto itFound = std::find(children.begin(), children.end(), child_);
-    if(itFound != children.end())
-        children.erase(itFound);
+    auto found = std::find(children.begin(), children.end(), child_);
+    if(found != children.end())
+    {
+        (*found)->GetLayout()->Detach(layout);
+        child_->SetParent(nullptr);
+        children.erase(found);
+    }
 }
 
 bool
@@ -132,69 +143,41 @@ Widget::ProcessEvent(const Event& event_)
 bool
 Widget::ProcessListenerEvent(const Event& event_)
 {
+    layout->OnListenerEvent(event_);
+
+    if(event_.type == mouseReleased)
+    {
+        system->Unsubscribe(mouseMoved);
+        system->Unsubscribe(mouseReleased);
+    }
     return OnEvent(event_);
 }
 
 bool
 Widget::OnEvent(const Event& event_)
 {
-    if(event_.IsMouseType() && !IsInside(event_.mouse.pos))
-        return false;
-
-    Vec2i pos   = {};
-    Vec2i delta = {};
-
-    RectInt newLocation = location;
-    BorderView* border  = nullptr;
-
-    switch (event_.type)
+    if(layout->IsInside(event_.mouse.pos) && event_.type == mousePressed)
     {
-        case mousePressed:
-
-            system->Subscribe(this, mouseMoved);
-            break;
-
-        case mouseMoved:
-
-            pos   = event_.mouse.pos;
-            delta = event_.mouse.offset;
-
-            if(border = dynamic_cast<BorderView*>(view))
-            {
-                if(border->IsInsideBorder(pos))
-                {
-                    newLocation = border->OnResize(pos, delta);
-                    SetPosition({newLocation.left, newLocation.top});
-                    SetSize({newLocation.width, newLocation.height});
-                    break;
-                }
-            }
-            Move(delta);
-            break;
-
-        default:
-
-            break;
+        layout->OnEvent(event_);
+        system->Subscribe(this, mouseMoved);
+        system->Subscribe(this, mouseReleased);
+        return true;
     }
-
-    return true;
+    return false;
 }
 
 void
 Widget::Render() const
 {
-    view->OnRender();
+    if(layout->GetBorder())
+        RenderBorder(layout);
+
+    Renderer::Get()->DrawTexture(*texture, layout->GetRectangle());
     for(auto it = children.end(); it != children.begin();)
     {
         --it;
         (*it)->Render();
     }
-}
-
-bool
-Widget::IsInside(Vec2i pos_) const
-{
-    return view->IsInside(pos_);
 }
 
 //----------------------------------------//

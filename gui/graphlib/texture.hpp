@@ -66,7 +66,7 @@ class Text
 
         Text(const std::string& string_ = "",
         const Font& font = FontManager::Get()->GetDefaultFont(),
-        Color color = DEFAULT_TEXT_COLOR, int size = DEFAULT_TEXT_SIZE);
+        Color color = Config::defTextColor, int size = Config::defTextSize);
 
         Vec2i
         GetSize() const;
@@ -96,7 +96,7 @@ class Texture
     public:
 
         Texture(Vec2i size_);
-        Texture(Vec2i size_, Color color_);
+        Texture(Color color_);
         Texture(const char* path);
         Texture(const char* path, int i, int j, int w, int h);
         Texture(const char* path, const RectInt& textureRect);

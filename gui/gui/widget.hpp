@@ -2,7 +2,7 @@
 
 
 #include "../graphlib/graphlib.hpp"
-#include "widgetview.hpp"
+#include "widgetlayout.hpp"
 #include "../config.hpp"
 
 #include <list>
@@ -20,41 +20,39 @@ class Widget
 {
     protected:
 
-        RectInt     location;
-        WidgetView* view;
+        Layout*         layout;
+        Texture*        texture;
+        Widget*         parent;
+        WidgetSystem*   system;
 
         std::list<Widget*>  children;
-        Widget*             parent;
-        WidgetSystem*       system;
+
 
     public:
 
-        Widget           (             ) = default;
-        Widget           (const Widget&) = delete;
-        Widget& operator=(const Widget&) = delete;
+        Widget           (              ) = delete;
+        Widget           (const Widget& ) = delete;
+        Widget& operator=(const Widget& ) = delete;
+        Widget           (      Widget&&) = default;
+        Widget& operator=(      Widget&&) = default;
 
-        Widget(const RectInt& location_, WidgetView* view_);
-        Widget(      Vec2i    size_,     WidgetView* view_);
+        Widget(Layout* layout_, Texture* texture_);
 
         virtual ~Widget();
 
-        const RectInt&
-        GetLocation() const;
-        WidgetView*
-        GetWidgetView();
+        Layout*
+        GetLayout();
+        Texture*
+        GetTexture();
         Widget*
         GetParent();
         WidgetSystem*
         GetWidgetSystem();
 
-        virtual void
-        Move(Vec2i delta_);
-        virtual void
-        SetPosition(Vec2i pos_);
-        virtual void
-        SetSize(Vec2i size_);
         void
-        SetWidgetView(WidgetView* view_);
+        SetLayout(Layout* layout_);
+        void
+        SetTexture(Texture* texture_);
         void
         SetParent(Widget* parent_);
         void
@@ -74,8 +72,6 @@ class Widget
 
         virtual void
         Render() const;
-        virtual bool
-        IsInside(Vec2i pos_) const;
 };
 
 //----------------------------------------//

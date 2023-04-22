@@ -1,6 +1,6 @@
 #include "widget.hpp"
 
-class ListPanel: public Widget
+class DropDownList: public Widget
 {
     protected:
 
@@ -8,7 +8,7 @@ class ListPanel: public Widget
 
     public:
 
-        ListPanel();
+        DropDownList();
 
 
 };

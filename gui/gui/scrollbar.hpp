@@ -1,6 +1,6 @@
 #pragma once
 
-
+#if 0
 #include "widget.hpp"
 
 class ScrollBox;
@@ -28,25 +28,24 @@ class ScrollBarResponseTest: public ScrollBarResponse
         OnResponse(float value_) override;
 };
 
-class ScrollBox: public Widget
+class ScrollBox
 {
     protected:
 
+        Texture*   texture;
         ScrollBar* scrollBar;
 
     public:
 
-        ScrollBox(Vec2i size_, WidgetView* view_);
+        ScrollBox(Layout* layout_, Texture* texture_);
 
         void
         SetScrollBar(ScrollBar* scrollBar_);
-        void
-        SetPosition(Vec2i pos_) override;
 
         bool
         ProcessListenerEvent(const Event& event_) override;
         bool
-        OnEvent(const Event& event_) override; 
+        OnEvent(const Event& event_) override;
 };
 
 class ScrollBar: public Widget
@@ -62,7 +61,7 @@ class ScrollBar: public Widget
 
     public:
 
-        ScrollBar(Vec2i size_, WidgetView* view_,
+        ScrollBar(Layout* layout_, Texture* texture_,
         ScrollBarResponse* responce_, ScrollBox* box_);
 
         virtual ~ScrollBar();
@@ -82,18 +81,16 @@ class HorScrollBar: public ScrollBar
 
         int scaleBeginX;
         int scaleEndX;
- 
+
     public:
 
-        HorScrollBar(Vec2i size_, WidgetView* view_,
+        HorScrollBar(Layout* layout_, Texture* texture_,
         ScrollBarResponse* responce_, ScrollBox* box_);
 
         void
         SetValue(Vec2i boxPos_) override;
         float
         GetScaleStep() const override;
-        void
-        Move(Vec2i delta_) override;
         bool
         OnEvent(const Event& event_) override;
 
@@ -104,3 +101,4 @@ class HorScrollBar: public ScrollBar
 };
 
 //----------------------------------------//
+#endif

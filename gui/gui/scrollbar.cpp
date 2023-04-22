@@ -1,6 +1,6 @@
 #include "scrollbar.hpp"
 
-
+#if 0
 ScrollBarResponse::~ScrollBarResponse()
 {}
 
@@ -156,3 +156,4 @@ HorScrollBar::GetEndX() const
 }
 
 //----------------------------------------//
+#endif

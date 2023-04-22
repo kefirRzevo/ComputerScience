@@ -1,5 +1,5 @@
 #pragma once
-
+#if 0
 #include "widget.hpp"
 
 
@@ -93,3 +93,4 @@ class TextLabel: public Widget
 };
 
 //----------------------------------------//
+#endif

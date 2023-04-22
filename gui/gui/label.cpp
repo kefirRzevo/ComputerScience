@@ -1,6 +1,6 @@
 #include "label.hpp"
 
-
+#if 0
 //----------------------------------------//
 
 Icon::Icon(Vec2i size_, WidgetView* view_):
@@ -48,7 +48,7 @@ TextIcon::SetPosition(Vec2i pos_)
 void
 TextIcon::SetSize(Vec2i size_)
 {
-    location.width = size_.x;
+    location.width  = size_.x;
     location.height = size_.y;
 
     Vec2i textSize = text->GetSize();
@@ -117,7 +117,7 @@ TextLabel::SetPosition(Vec2i pos_)
 
     Vec2i textSize = text->GetSize();
     text->SetPosition({location.left + (location.width  - textSize.x) / 2,
-                      location.top   + (location.height - textSize.y) / 2});
+                       location.top  + (location.height - textSize.y) / 2});
 }
 
 void
@@ -165,7 +165,10 @@ TextLabel::ProcessListenerEvent(const Event& event_)
             text->SetString(newString);
         }
     }
-    return false;
+    Vec2i size = text->GetSize();
+    text->SetPosition({location.left + (location.width  - size.x) / 2,
+                       location.top  + (location.height - size.y) / 2});
+    return true;
 }
 
 bool
@@ -197,3 +200,4 @@ TextLabel::Render() const
 }
 
 //----------------------------------------//
+#endif
