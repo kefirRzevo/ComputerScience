@@ -1,6 +1,6 @@
 #include "scrollbar.hpp"
 
-#if 0
+
 ScrollBarResponse::~ScrollBarResponse()
 {}
 
@@ -15,9 +15,30 @@ ScrollBarResponseTest::OnResponse(float value_)
 
 //----------------------------------------//
 
-ScrollBox::ScrollBox(Vec2i size_, WidgetView* view_):
-Widget(size_, view_), scrollBar(nullptr)
-{}
+void
+ScrollBox::Move(Vec2i pos_)
+{
+    const RectInt& rect = layout->GetRectangle();
+    Vec2i delta = pos_ - Vec2i{rect.left, rect.top};
+    layout->OnMove(delta);
+}
+
+void
+ScrollBox::SetRectangle(RectInt rect_)
+{
+    layout->OnResize(rect_);
+}
+
+ScrollBox::ScrollBox(Layout* layout_,
+Texture* release_, Texture* hover_, Texture* move_):
+Widget(layout_, release_), release(release_), hover(hover_), move(move_),
+scrollBar(nullptr), pressed(false)
+{
+    if(!hover)
+        hover = release_;
+    if(!move)
+        move = release_;
+}
 
 void
 ScrollBox::SetScrollBar(ScrollBar* scrollBar_)
@@ -25,29 +46,57 @@ ScrollBox::SetScrollBar(ScrollBar* scrollBar_)
     scrollBar = scrollBar_;
 }
 
-void
-ScrollBox::SetPosition(Vec2i pos_)
-{
-    Vec2i delta = pos_ - Vec2i{location.left, location.top};
-    Move(delta);
-}
-
 bool
 ScrollBox::ProcessListenerEvent(const Event& event_)
 {
+    if(event_.type == mouseHovered)
+    {
+        system->Unsubscribe(mouseHovered);
+        if(!pressed)
+            texture = release;
+        return false;
+    }
+    else if(event_.type == mouseReleased)
+    {
+        system->Unsubscribe(mouseMoved);
+        system->Unsubscribe(mouseHovered);
+        system->Unsubscribe(mouseReleased);
+        pressed = false;
+        texture = release;
+        return true;
+    }
+    else if(event_.type == mouseMoved)
+    {
+        scrollBar->CalculateValue(initValue, event_.mouse.pos - clickPos);
+        return true;
+    }
+    return false;
+}
+
+bool
+ScrollBox::OnEvent(const Event& event_)
+{
+    if(event_.IsMouseType() && !layout->IsInside(event_.mouse.pos))
+        return false;
+
     switch(event_.type)
     {
         case mousePressed:
 
-        case mouseMoved:
-
-            scrollBar->SetValue(event_.mouse.pos);
+            system->Subscribe(this, mouseMoved);
+            system->Subscribe(this, mouseHovered);
+            system->Subscribe(this, mouseReleased);
+            clickPos  = event_.mouse.pos;
+            initValue = scrollBar->GetValue();
+            pressed  = true;
+            texture  = move;
             break;
 
-        case mouseReleased:
+        case mouseHovered:
 
-            system->Unsubscribe(mousePressed);
-            system->Unsubscribe(mouseMoved);
+            system->Subscribe(this, mouseHovered);
+            if(!pressed)
+                texture = hover;
             break;
 
         default:
@@ -57,103 +106,144 @@ ScrollBox::ProcessListenerEvent(const Event& event_)
     return true;
 }
 
-bool
-ScrollBox::OnEvent(const Event& event_)
-{
-    if(event_.IsMouseType() && !IsInside(event_.mouse.pos))
-        return false;
-
-    if(event_.type == mousePressed)
-    {
-        system->Subscribe(this, mouseMoved);
-        system->Subscribe(this, mouseReleased);
-    }
-
-    return true;
-}
-
 //----------------------------------------//
 
-ScrollBar::ScrollBar(Vec2i size_, WidgetView* view_,
-ScrollBarResponse* responce_, ScrollBox* box_):
-Widget(size_, view_), response(responce_), box(box_)
+ScrollBar::ScrollBar(Layout* layout_, Texture* texture_,
+ScrollBox* box_, ScrollBarResponse* responce_):
+Widget(layout_, texture_), response(responce_), box(box_), value(0.f)
 {
     box->SetScrollBar(this);
-    Attach(box.get());
+    Attach(box_);
 }
-
-ScrollBar::~ScrollBar()
-{}
 
 float
 ScrollBar::GetValue() const
 {
-    return curValue;
-}
-
-//----------------------------------------//
-
-HorScrollBar::HorScrollBar(Vec2i size_, WidgetView* view_,
-ScrollBarResponse* responce_, ScrollBox* box_):
-ScrollBar(size_, view_, responce_, box_)
-{
-    int halfBoxWidth = box->GetLocation().width / 2;
-    scaleBeginX = location.left + halfBoxWidth;
-    scaleEndX   = location.left + location.width - halfBoxWidth;
-}
-
-void
-HorScrollBar::SetValue(Vec2i boxPos_)
-{
-    float value = static_cast<float>(boxPos_.x - scaleBeginX) * GetScaleStep();
-    value = value > maxValue ? maxValue : value;
-    value = value < minValue ? minValue : value;
-
-    response->OnResponse(value);
-    curValue = value;
-
-    int temp1 = static_cast<int>((value - minValue) / GetScaleStep());
-    int temp2 = scaleBeginX - box->GetLocation().width / 2;
-
-    box->SetPosition({temp1 + temp2, location.top});
+    return value;
 }
 
 float
-HorScrollBar::GetScaleStep() const
+ScrollBar::GetScaleStep() const
 {
-    return (maxValue - minValue) / static_cast<float>(scaleEndX - scaleBeginX);
+    return scaleStep;
+}
+
+int
+ScrollBar::GetScaleLength() const
+{
+    return scaleLen;
 }
 
 void
-HorScrollBar::Move(Vec2i delta_)
+ScrollBar::OnLayoutMove()
 {
-    scaleBeginX += delta_.x;
-    scaleEndX   += delta_.x;
-
-    location.left += delta_.x;
-    location.top  += delta_.y;
-
-    for(auto child: children)
-        child->Move(delta_);
+    SetScaleParams();
 }
-
-bool
-HorScrollBar::OnEvent(const Event& event_)
+void
+ScrollBar::OnLayoutResize()
 {
-    return false;
-}
-
-int
-HorScrollBar::GetBeginX() const
-{
-    return scaleBeginX;
-}
-
-int
-HorScrollBar::GetEndX() const
-{
-    return scaleEndX;
+    SetScaleParams();
+    box->SetRectangle(GetBoxRectangle());
 }
 
 //----------------------------------------//
-#endif
+
+HorScrollBar::HorScrollBar(Layout* layout_, Texture* texture_,
+ScrollBox* box_, ScrollBarResponse* responce_):
+ScrollBar(layout_, texture_, box_, responce_)
+{
+    SetScaleParams();
+    box->SetRectangle(GetBoxRectangle());
+}
+
+void
+HorScrollBar::CalculateValue(float initValue_, Vec2i delta_)
+{
+    value = initValue_ + static_cast<float>(delta_.x) * scaleStep;
+    value = value > 1.f ? 1.f : value;
+    value = value < 0.f ? 0.f : value;
+
+    response->OnResponse(value);
+    
+    const RectInt& rect = layout->GetRectangle();
+    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int left = rect.left + boxIndent + static_cast<int>(value / scaleStep);
+    box->Move({left, box->GetLayout()->GetRectangle().top});
+}
+
+RectInt
+HorScrollBar::GetBoxRectangle()
+{
+    const RectInt& rect = layout->GetRectangle();
+    int boxIndent = box->GetLayout()->GetAddition() / 2;
+
+    int left = rect.left + boxIndent + static_cast<int>(value / scaleStep);
+    int top  = rect.top  + boxIndent;
+    int width  = box->GetLayout()->GetRectangle().width;
+    int height = rect.height - boxIndent * 2;
+
+    return RectInt{left, top, width, height};
+}
+
+void
+HorScrollBar::SetScaleParams()
+{
+    const RectInt& rect = layout->GetRectangle();
+    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int boxWidth  = box->GetLayout()->GetRectangle().width;
+
+    scaleLen   = rect.width - 2 * boxIndent - boxWidth;
+    scaleStep  = 1.f / static_cast<float>(scaleLen);
+}
+
+//----------------------------------------//
+
+VerScrollBar::VerScrollBar(Layout* layout_, Texture* texture_,
+ScrollBox* box_, ScrollBarResponse* responce_):
+ScrollBar(layout_, texture_, box_, responce_)
+{
+    SetScaleParams();
+    box->SetRectangle(GetBoxRectangle());
+}
+
+void
+VerScrollBar::CalculateValue(float initValue_, Vec2i delta_)
+{
+    value = initValue_ + static_cast<float>(delta_.y) * scaleStep;
+    value = value > 1.f ? 1.f : value;
+    value = value < 0.f ? 0.f : value;
+
+    response->OnResponse(value);
+    
+    const RectInt& rect = layout->GetRectangle();
+    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int top = rect.top + boxIndent + static_cast<int>(value / scaleStep);
+    box->Move({box->GetLayout()->GetRectangle().left, top});
+}
+
+RectInt
+VerScrollBar::GetBoxRectangle()
+{
+    const RectInt& rect = layout->GetRectangle();
+    int boxIndent = box->GetLayout()->GetAddition() / 2;
+
+    int left = rect.left + boxIndent;
+    int top  = rect.top  + boxIndent + static_cast<int>(value / scaleStep);
+    int width  = rect.width - boxIndent * 2;
+    int height = box->GetLayout()->GetRectangle().height;
+
+    return RectInt{left, top, width, height};
+}
+
+void
+VerScrollBar::SetScaleParams()
+{
+    const RectInt& rect = layout->GetRectangle();
+    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int boxHeight  = box->GetLayout()->GetRectangle().height;
+
+    scaleLen   = rect.height - 2 * boxIndent - boxHeight;
+    scaleStep  = 1.f / static_cast<float>(scaleLen);
+}
+
+//----------------------------------------//

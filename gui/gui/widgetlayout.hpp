@@ -2,14 +2,20 @@
 
 #include "../graphlib/graphlib.hpp"
 #include "../config.hpp"
+#include "widget.hpp"
+
 #include <list>
+
+class Widget;
 
 class Layout;
 class Container;
 class Row;
 class Column;
 
-enum class BorderPart
+class ScrollBox;
+
+enum class BorderPart: char
 {
     NoBorder,
     LeftSide,
@@ -40,6 +46,8 @@ class Layout
 
         virtual ~Layout() = default;
 
+        Widget*
+        GetWidget();
         const RectInt&
         GetRectangle() const;
         int
@@ -53,6 +61,8 @@ class Layout
         int
         GetAddition() const;
 
+        void
+        SetWidget(Widget* widget_);
         bool
         IsInside(Vec2i pos_) const;
         bool
@@ -71,7 +81,8 @@ class Layout
 
         std::vector<Layout*> children;
         Layout* parent;
-        
+        Widget* widget;
+
         RectInt rect;
         int     margin;
         int     border;
@@ -93,9 +104,11 @@ class Layout
         BorderPart
         GetBorderPart(Vec2i pos_);
 
+    friend class Container;
     friend class Row;
     friend class Column;
-    friend class Container;
+
+    friend class ScrollBox;
 };
 
 class Container: public Layout

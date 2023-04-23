@@ -1,5 +1,5 @@
 #pragma once
-#if 0
+
 #include "widget.hpp"
 
 
@@ -9,7 +9,7 @@ class Icon: public Widget
 {
     public:
 
-        Icon(Vec2i size_, WidgetView* view_);
+        Icon(Layout* layout_, Texture* texture_);
 
         bool
         OnEvent(const Event& event_) override;
@@ -20,17 +20,20 @@ class TextIcon: public Widget
     protected:
 
         std::unique_ptr<Text> text;
+        std::string fullString;
+        std::string curString;
 
     public:
 
-        TextIcon(Vec2i size_, WidgetView* view_, Text* text_);
+        TextIcon(Layout* layout_, Texture* texture_, Text* text_);
+
+        bool
+        CheckSize(Vec2i size_);
 
         void
-        Move(Vec2i delta_) override;
+        OnLayoutMove() override;
         void
-        SetPosition(Vec2i pos_) override;
-        void
-        SetSize(Vec2i size_) override;
+        OnLayoutResize() override;
 
         bool
         OnEvent(const Event& event_) override;
@@ -61,36 +64,21 @@ class TextLabelResponseTest: public TextLabelResponse
         OnResponse(const std::string& string) override;
 };
 
-class TextLabel: public Widget
+class TextLabel: public TextIcon
 {
     protected:
 
         std::unique_ptr<TextLabelResponse> responce;
-        std::unique_ptr<Text>              text;
 
     public:
 
-        TextLabel(Vec2i size_, WidgetView* view_,
+        TextLabel(Layout* layout_, Texture* texture_,
         TextLabelResponse* response_, Text* textStyle_);
 
         bool
-        CheckSize(Vec2i size_);
-
-        void
-        Move(Vec2i delta_) override;
-        void
-        SetPosition(Vec2i pos_) override;
-        void
-        SetSize(Vec2i size_) override;
-
-        bool
-        ProcessListenerEvent(const Event& event_);
+        ProcessListenerEvent(const Event& event_) override;
         bool
         OnEvent(const Event& event_) override;
-
-        void
-        Render() const override;
 };
 
 //----------------------------------------//
-#endif

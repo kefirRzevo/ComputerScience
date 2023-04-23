@@ -1,5 +1,8 @@
 #include "widgetlayout.hpp"
 
+
+//----------------------------------------//
+
 enum ChildType
 {
     Full,
@@ -67,7 +70,6 @@ Layout::GetNewRectangle(Vec2i pos)
 
             break;
     }
-
     return newRect;
 }
 
@@ -135,6 +137,12 @@ part(BorderPart::NoBorder), onResize(false), onMove(false)
     addition = 2 * margin + 2 * border;
 }
 
+Widget*
+Layout::GetWidget()
+{
+    return widget;
+}
+
 const RectInt&
 Layout::GetRectangle() const
 {
@@ -171,6 +179,12 @@ Layout::GetAddition() const
     return addition;
 }
 
+void
+Layout::SetWidget(Widget* widget_)
+{
+    widget = widget_;
+}
+
 bool
 Layout::IsInside(Vec2i pos_) const
 {
@@ -197,18 +211,14 @@ Layout::OnListenerEvent(const Event& event_)
 
     if(event_.type == mouseMoved)
     {
-
         if(onResize)
         {
             RectInt newRect = GetNewRectangle(event_.mouse.pos);
             if(newRect.width >= minSize.x && newRect.width <= maxSize.x)
-            {
                 OnResize({newRect.left, rect.top, newRect.width, rect.height});
-            }
+
             if(newRect.height >= minSize.y && newRect.height <= maxSize.y)
-            {
                 OnResize({rect.left, newRect.top, rect.width, newRect.height});
-            }
         }
         else if(onMove)
         {
@@ -229,16 +239,14 @@ Layout::OnEvent(const Event& event_)
     if(dynamic_cast<Container*>(parent))
         return;
 
-    const Vec2i& pos = event_.mouse.pos;
-
     if(event_.type == mousePressed)
     {
-        if(IsInsideBorder(pos))
+        if(IsInsideBorder(event_.mouse.pos))
         {
-            part     = GetBorderPart(pos);
+            part     = GetBorderPart(event_.mouse.pos);
             onResize = true;
         }
-        else if(rect.IsInside(pos))
+        else if(rect.IsInside(event_.mouse.pos))
         {
             onMove = true;
         }
@@ -272,12 +280,15 @@ Layout::OnMove(Vec2i delta_)
 
     for(auto child: children)
         child->OnMove(delta_);
+
+    widget->OnLayoutMove();
 }
 
 void
 Layout::OnResize(const RectInt& rect_)
 {
     rect = rect_;
+    widget->OnLayoutResize();
 }
 
 //----------------------------------------//
@@ -295,6 +306,7 @@ Container::OnResize(const RectInt& rect_)
 {
     rect = rect_;
     PlaceChildren();
+    widget->OnLayoutResize();
 }
 
 //----------------------------------------//
@@ -378,7 +390,7 @@ Row::PlaceChildren()
     if(!n)
         return;
 
-    int averageAdd     = (rect.width - minSize.x) / n;
+    int averageAdd     = (rect.width - minSize.x) / static_cast<int>(n);
     int sumWidthRemain =  rect.width;
     int nNormal        =  0;
     std::vector<ChildType> typedChildren{n};
@@ -509,7 +521,7 @@ Column::PlaceChildren()
     if(!n)
         return;
 
-    int averageAdd      = (rect.height - minSize.y) / n;
+    int averageAdd      = (rect.height - minSize.y) / static_cast<int>(n);
     int sumHeightRemain =  rect.height;
     int nNormal         =  0;
     std::vector<ChildType> typedChildren{n};

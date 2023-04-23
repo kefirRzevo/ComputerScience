@@ -21,13 +21,13 @@ CloseCommand::Execute()
 
 Button::Button(Layout* layout_, Command* cmd_,
 Texture* onRelease_, Texture* onHover_, Texture* onPress_):
-Widget(layout_, onRelease_), cmdPtr(cmd_),
+Widget(layout_, onRelease_), cmdPtr(cmd_), pressed(false),
 onRelease(onRelease_), onHover(onHover_), onPress(onPress_)
 {
     if(!onHover)
-        onHover = onRelease;
+        onHover = onRelease_;
     if(!onPress)
-        onPress = onPress_;
+        onPress = onRelease_;
 }
 
 bool
@@ -35,21 +35,24 @@ Button::ProcessListenerEvent(const Event& event_)
 {
     if(event_.type == mouseReleased)
     {
-        if(event_.IsMouseType() && !layout->IsInside(event_.mouse.pos))
-        {
-            pressed = false;
-            texture = onRelease;
-            return false;
-        }
+        pressed = false;
+        texture = onRelease;
+        system->Unsubscribe(mouseReleased); 
+
+        if(layout->IsInside(event_.mouse.pos))
+            if(pressed)
+                cmdPtr->Execute();
+
+        return true;
     }
-    if(event_.type == mouseHovered)
+    else if(event_.type == mouseHovered)
     {
         system->Unsubscribe(mouseHovered);
         if(!pressed)
             texture = onRelease;
         return false;
     }
-    return OnEvent(event_);
+    return false;
 }
 
 bool
@@ -75,19 +78,10 @@ Button::OnEvent(const Event& event_)
                 texture = onHover;
             break;
 
-        case mouseReleased:
-
-            if(pressed)
-                cmdPtr->Execute();
-            pressed = false;
-            texture = onRelease;
-            break;
-
         default:
 
             break;
     }
-
     return true;
 }
 

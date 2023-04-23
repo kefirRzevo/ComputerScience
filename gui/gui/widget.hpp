@@ -2,11 +2,12 @@
 
 
 #include "../graphlib/graphlib.hpp"
-#include "widgetlayout.hpp"
 #include "../config.hpp"
+#include "widgetlayout.hpp"
 
 #include <list>
 
+class Layout;
 
 class Widget;
 class WidgetView;
@@ -26,7 +27,6 @@ class Widget
         WidgetSystem*   system;
 
         std::list<Widget*>  children;
-
 
     public:
 
@@ -69,9 +69,15 @@ class Widget
         ProcessListenerEvent(const Event& event_);
         virtual bool
         OnEvent(const Event& event_);
+        virtual void
+        OnLayoutMove();
+        virtual void
+        OnLayoutResize();
 
         virtual void
         Render() const;
+        virtual void
+        RenderBorder() const;
 };
 
 //----------------------------------------//

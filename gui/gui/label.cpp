@@ -1,10 +1,10 @@
 #include "label.hpp"
 
-#if 0
+
 //----------------------------------------//
 
-Icon::Icon(Vec2i size_, WidgetView* view_):
-Widget(size_, view_)
+Icon::Icon(Layout* layout_, Texture* texture_):
+Widget(layout_, texture_)
 {}
 
 bool
@@ -15,45 +15,39 @@ Icon::OnEvent(const Event& event_)
 
 //----------------------------------------//
 
-TextIcon::TextIcon(Vec2i size_, WidgetView* view_, Text* text_):
-Widget(size_, view_), text(text_)
+TextIcon::TextIcon(Layout* layout_, Texture* texture_, Text* text_):
+Widget(layout_, texture_), text(text_), fullString(text->GetString())
 {
-    Vec2i textSize = text->GetSize();
-    text->SetPosition({location.left + (location.width  - textSize.x) / 2,
-                       location.top  + (location.height - textSize.y) / 2});
+    OnLayoutResize();
+}
+
+bool
+TextIcon::CheckSize(Vec2i size_)
+{
+    return size_.x < layout->GetRectangle().width &&
+           size_.y < layout->GetRectangle().height;
 }
 
 void
-TextIcon::Move(Vec2i delta_)
+TextIcon::OnLayoutMove()
 {
-    location.left += delta_.x;
-    location.top  += delta_.y;
-    text->Move(delta_);
-
-    for(auto child: children)
-        child->Move(delta_);
+    const RectInt& rect = layout->GetRectangle();
+    Vec2i textSize = text->GetSize();
+    text->SetPosition({rect.left + (rect.width  - textSize.x) / 2,
+                       rect.top  + (rect.height - textSize.y) / 2});
 }
 
 void
-TextIcon::SetPosition(Vec2i pos_)
+TextIcon::OnLayoutResize()
 {
-    location.left = pos_.x;
-    location.top  = pos_.y;
-
-    Vec2i textSize = text->GetSize();
-    text->SetPosition({location.left + (location.width  - textSize.x) / 2,
-                       location.top  + (location.height - textSize.y) / 2});
-}
-
-void
-TextIcon::SetSize(Vec2i size_)
-{
-    location.width  = size_.x;
-    location.height = size_.y;
-
-    Vec2i textSize = text->GetSize();
-    text->SetPosition({location.left + (size_.x - textSize.x) / 2,
-                       location.top  + (size_.y - textSize.y) / 2});
+    curString = fullString;
+    text->SetString(curString);
+    while(!CheckSize(text->GetSize()))
+    {
+        curString.pop_back();
+        text->SetString(curString);
+    }
+    OnLayoutMove();
 }
 
 bool
@@ -65,7 +59,16 @@ TextIcon::OnEvent(const Event& event_)
 void
 TextIcon::Render() const
 {
-    view->OnRender();
+    if(layout->GetBorder())
+        RenderBorder();
+
+    Renderer::Get()->DrawTexture(*texture, layout->GetRectangle());
+    for(auto it = children.end(); it != children.begin();)
+    {
+        --it;
+        (*it)->Render();
+    }
+
     Renderer::Get()->DrawText(*text);
 }
 
@@ -83,98 +86,39 @@ TextLabelResponseTest::OnResponse(const std::string& string_)
     fprintf(stderr, "%s\n", string_.c_str());
 }
 
-TextLabel::TextLabel(Vec2i size_, WidgetView* view_,
+TextLabel::TextLabel(Layout* layout_, Texture* texture_,
 TextLabelResponse* response_, Text* textStyle_):
-Widget(size_, view_), responce(response_), text(textStyle_)
-{
-    Vec2i textSize = text->GetSize();
-    text->SetPosition({location.left + (location.width  - textSize.x) / 2,
-                       location.top  + (location.height - textSize.y) / 2});
-}
-
-bool
-TextLabel::CheckSize(Vec2i size_)
-{
-    return size_.x < location.width && size_.y < location.height;
-}
-
-void
-TextLabel::Move(Vec2i delta_)
-{
-    location.left += delta_.x;
-    location.top  += delta_.y;
-    text->Move(delta_);
-
-    for(auto child: children)
-        child->Move(delta_);
-}
-
-void
-TextLabel::SetPosition(Vec2i pos_)
-{
-    location.left = pos_.x;
-    location.top  = pos_.y;
-
-    Vec2i textSize = text->GetSize();
-    text->SetPosition({location.left + (location.width  - textSize.x) / 2,
-                       location.top  + (location.height - textSize.y) / 2});
-}
-
-void
-TextLabel::SetSize(Vec2i size_)
-{
-    Vec2i textSize = text->GetSize();
-
-    if(!CheckSize(textSize))
-    {
-        assert(0);
-        return;
-    }
-
-    location.width  = size_.x;
-    location.height = size_.y;
-
-    text->SetPosition({location.left + (location.width  - textSize.x) / 2,
-                       location.top  + (location.height - textSize.y) / 2});   
-}
+TextIcon(layout_, texture_, textStyle_), responce(response_)
+{}
 
 bool
 TextLabel::ProcessListenerEvent(const Event& event_)
 {
-    std::string newString = text->GetString();
+    curString = text->GetString();
     if(event_.type == textEntered)
     {
         if(event_.key.key < '1' || event_.key.key > 'z')
             return false;
 
         char symbol = static_cast<char>(event_.key.key);
-        newString.push_back(symbol);
-        text->SetString(newString);
-
-        if(!CheckSize(text->GetSize()))
-        {
-            newString.pop_back();
-            text->SetString(newString);
-        }
+        fullString.push_back(symbol);
     }
     else if(event_.type == keyPressed)
     {
+        if(event_.key.key == sf::Keyboard::Space)
+            fullString.push_back(' ');
+
         if(event_.key.key == sf::Keyboard::Backspace)
-        {
-            newString.pop_back();
-            text->SetString(newString);
-        }
+            fullString.pop_back();
     }
-    Vec2i size = text->GetSize();
-    text->SetPosition({location.left + (location.width  - size.x) / 2,
-                       location.top  + (location.height - size.y) / 2});
+    OnLayoutResize();
     return true;
 }
 
 bool
 TextLabel::OnEvent(const Event& event_)
 {
-    if(event_.IsMouseType() && !IsInside(event_.mouse.pos))
+    if(event_.IsMouseType() && !layout->IsInside(event_.mouse.pos))
         return false;
 
     switch(event_.type)
@@ -192,12 +136,4 @@ TextLabel::OnEvent(const Event& event_)
     return true;
 }
 
-void
-TextLabel::Render() const
-{
-    view->OnRender();
-    Renderer::Get()->DrawText(*text);
-}
-
 //----------------------------------------//
-#endif
