@@ -12,7 +12,7 @@ sfRenderWindow(sf::VideoMode(size_.x, size_.y), name_)
 //----------------------------------------//
 
 Renderer::Renderer(Window* window):
-sfRenderWindow(&window->sfRenderWindow)
+sfRenderWindow(&window->sfRenderWindow), sfRenderTarget(sfRenderWindow)
 {}
 
 void
@@ -34,42 +34,81 @@ Renderer::SetColor(Color color_)
 }
 
 void
-Renderer::SetThickness(float thickness_)
-{
-    thickness = thickness_;
-}
-
-void
-Renderer::DrawPixel(const Vec2i& pos)
+Renderer::DrawPixel(Vec2i pos)
 {
     sf::CircleShape pixel{1.f};
     pixel.setFillColor(sfColor);
     pixel.move(static_cast<float>(pos.x), static_cast<float>(pos.y));
-    sfRenderWindow->draw(pixel);
+    sfRenderTarget->draw(pixel);
 }
 
 void
-Renderer::DrawCircle(const Vec2i& center, int radius, size_t nPoints)
+Renderer::DrawPixel(Texture* src, Vec2i pos)
+{
+    sf::RenderTexture sfRenderTexture{};
+    sfRenderTexture.create(src->GetWidth(), src->GetHeight());
+    sf::Sprite srcSfSprite{src->sfSrcTexture};
+    sfRenderTexture.draw(srcSfSprite);
+
+    sfRenderTarget = &sfRenderTexture;
+    DrawPixel(pos);
+    sfRenderTarget = sfRenderWindow;
+
+    src->sfSrcTexture = sfRenderTexture.getTexture();
+}
+
+void
+Renderer::DrawCircle(Vec2i center, int radius)
 {
     sf::CircleShape circle{static_cast<float>(radius)};
-    circle.setPointCount(nPoints);
+    circle.setPointCount(static_cast<size_t>(4 * radius));
     circle.setFillColor(sfColor);
     circle.move(static_cast<float>(center.x - radius),
                 static_cast<float>(center.y - radius));
-    sfRenderWindow->draw(circle);
+    sfRenderTarget->draw(circle);
 }
 
 void
-Renderer::DrawThickLine(const Vec2i& point, float degreeAngle, float length)
+Renderer::DrawCircle(Texture* src, Vec2i center, int radius)
 {
-    sf::RectangleShape line{{length, thickness}};
+    sf::RenderTexture sfRenderTexture{};
+    sfRenderTexture.create(src->GetWidth(), src->GetHeight());
+    sf::Sprite srcSfSprite{src->sfSrcTexture};
+    sfRenderTexture.draw(srcSfSprite);
+
+    sfRenderTarget = &sfRenderTexture;
+    DrawCircle(center, radius);
+    sfRenderTarget = sfRenderWindow;
+
+    src->sfSrcTexture = sfRenderTexture.getTexture();
+}
+
+void
+Renderer::DrawThickLine(Vec2i point, float degreeAngle, float length, int thickness)
+{
+    sf::RectangleShape line{{length, static_cast<float>(thickness)}};
     line.move(static_cast<float>(point.x), static_cast<float>(point.y));
     line.rotate(degreeAngle);
-    sfRenderWindow->draw(line);
+    sfRenderTarget->draw(line);
 }
 
 void
-Renderer::DrawThickLineSlow(const Vec2i& p1, const Vec2i& p2)
+Renderer::DrawThickLine(Texture* src, Vec2i point, float degreeAngle, float length, int thickness)
+{
+    sf::RenderTexture sfRenderTexture{};
+    sfRenderTexture.create(src->GetWidth(), src->GetHeight());
+    sf::Sprite srcSfSprite{src->sfSrcTexture};
+    sfRenderTexture.draw(srcSfSprite);
+
+    sfRenderTarget = &sfRenderTexture;
+    DrawThickLine(point, degreeAngle, length, thickness);
+    sfRenderTarget = sfRenderWindow;
+
+    src->sfSrcTexture = sfRenderTexture.getTexture();
+}
+
+void
+Renderer::DrawThickLineSlow(Vec2i p1, Vec2i p2, int thickness)
 {
     float x1 = static_cast<float>(p1.x);
     float y1 = static_cast<float>(p1.y);
@@ -77,14 +116,29 @@ Renderer::DrawThickLineSlow(const Vec2i& p1, const Vec2i& p2)
     float y2 = static_cast<float>(p2.y);
     
     float length = std::sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-    sf::RectangleShape line{{length, thickness}};
+    sf::RectangleShape line{{length, static_cast<float>(thickness)}};
     line.move(x1, y1);
     line.rotate(180 / PI * atan((y1 - y2) / (x1 - x2)));
-    sfRenderWindow->draw(line);
+    sfRenderTarget->draw(line);
 }
 
 void
-Renderer::DrawLine(const Vec2i& p1, const Vec2i& p2)
+Renderer::DrawThickLineSlow(Texture* src, Vec2i p1, Vec2i p2, int thickness)
+{
+    sf::RenderTexture sfRenderTexture{};
+    sfRenderTexture.create(src->GetWidth(), src->GetHeight());
+    sf::Sprite srcSfSprite{src->sfSrcTexture};
+    sfRenderTexture.draw(srcSfSprite);
+
+    sfRenderTarget = &sfRenderTexture;
+    DrawThickLineSlow(p1, p2, thickness);
+    sfRenderTarget = sfRenderWindow;
+
+    src->sfSrcTexture = sfRenderTexture.getTexture();
+}
+
+void
+Renderer::DrawLine(Vec2i p1, Vec2i p2)
 {
     sf::Vertex line[] =
     {
@@ -93,7 +147,22 @@ Renderer::DrawLine(const Vec2i& p1, const Vec2i& p2)
         sf::Vertex{sf::Vector2f{static_cast<float>(p2.x),
                                 static_cast<float>(p2.y)}, sfColor}
     };
-    sfRenderWindow->draw(line, 2, sf::Lines);
+    sfRenderTarget->draw(line, 2, sf::Lines);
+}
+
+void
+Renderer::DrawLine(Texture* src, Vec2i p1, Vec2i p2)
+{
+    sf::RenderTexture sfRenderTexture{};
+    sfRenderTexture.create(src->GetWidth(), src->GetHeight());
+    sf::Sprite srcSfSprite{src->sfSrcTexture};
+    sfRenderTexture.draw(srcSfSprite);
+
+    sfRenderTarget = &sfRenderTexture;
+    DrawLine(p1, p2);
+    sfRenderTarget = sfRenderWindow;
+
+    src->sfSrcTexture = sfRenderTexture.getTexture();
 }
 
 void
@@ -103,36 +172,78 @@ Renderer::DrawRect(const RectInt& rect)
                               static_cast<float>(rect.height)}};
     rect_.move(static_cast<float>(rect.left), static_cast<float>(rect.top));
     rect_.setFillColor(sfColor);
-    sfRenderWindow->draw(rect_);
+    sfRenderTarget->draw(rect_);
 }
 
 void
-Renderer::DrawTexture(Texture& src, const RectInt& dstRect)
+Renderer::DrawRect(Texture* src, const RectInt& rect)
 {
-    if(!src.sfSrcTexture)
+    sf::RenderTexture sfRenderTexture{};
+    sfRenderTexture.create(src->GetWidth(), src->GetHeight());
+    sf::Sprite srcSfSprite{src->sfSrcTexture};
+    sfRenderTexture.draw(srcSfSprite);
+
+    sfRenderTarget = &sfRenderTexture;
+    DrawRect(rect);
+    sfRenderTarget = sfRenderWindow;
+
+    src->sfSrcTexture = sfRenderTexture.getTexture();
+}
+
+void
+Renderer::DrawTexture(const Texture* dst, const RectInt& dstRect)
+{
+    if(dst->color)
     {
-        sfColor = src.sfSprite.getColor();
+        sfColor = To_SF_Color(dst->color);
         DrawRect(dstRect);
         return;
     }
     
-    src.sfSprite.setPosition(static_cast<float>(dstRect.left),
-                             static_cast<float>(dstRect.top));
+    sf::Sprite sfSprite{dst->sfSrcTexture};
+    sfSprite.setPosition(static_cast<float>(dstRect.left),
+                         static_cast<float>(dstRect.top));
+    sf::Vector2f newScale = {dstRect.width  / sfSprite.getLocalBounds().width,
+                             dstRect.height / sfSprite.getLocalBounds().height};
+    sfSprite.setScale(newScale);
 
-    sf::Vector2f newScale = {
-        dstRect.width  / src.sfSprite.getLocalBounds().width,
-        dstRect.height / src.sfSprite.getLocalBounds().height };
-
-    if(src.sfSprite.getScale() != newScale)
-        src.sfSprite.setScale(newScale);
-
-    sfRenderWindow->draw(src.sfSprite);
+    sfRenderTarget->draw(sfSprite);
 }
 
 void
-Renderer::DrawText(Text& text_)
+Renderer::DrawTexture(Texture* src, const Texture* dst, const RectInt& dstRect)
 {
-    sfRenderWindow->draw(text_.sfText);
+    sf::RenderTexture sfRenderTexture{};
+    sfRenderTexture.create(src->GetWidth(), src->GetHeight());
+    sf::Sprite srcSfSprite{src->sfSrcTexture};
+    sfRenderTexture.draw(srcSfSprite);
+fprintf(stderr, "%d %d\n", src->GetWidth(), src->GetHeight());
+    sfRenderTarget = &sfRenderTexture;
+    DrawTexture(dst, dstRect);
+    sfRenderTarget = sfRenderWindow;
+
+    src->sfSrcTexture = sfRenderTexture.getTexture();
+}
+
+void
+Renderer::DrawText(const Text* text)
+{
+    sfRenderTarget->draw(text->sfText);
+}
+
+void
+Renderer::DrawText(Texture* src, const Text* text)
+{
+    sf::RenderTexture sfRenderTexture{};
+    sfRenderTexture.create(src->GetWidth(), src->GetHeight());
+    sf::Sprite srcSfSprite{src->sfSrcTexture};
+    sfRenderTexture.draw(srcSfSprite);
+
+    sfRenderTarget = &sfRenderTexture;
+    DrawText(text);
+    sfRenderTarget = sfRenderWindow;
+
+    src->sfSrcTexture = sfRenderTexture.getTexture();
 }
 
 bool
@@ -144,7 +255,22 @@ Renderer::OnRender() const
 void
 Renderer::Clear()
 {
-    sfRenderWindow->clear(sfColor);
+    sfRenderTarget->clear(sfColor);
+}
+
+void
+Renderer::Clear(Texture* src)
+{
+    sf::RenderTexture sfRenderTexture{};
+    sfRenderTexture.create(src->GetWidth(), src->GetHeight());
+    sf::Sprite srcSfSprite{src->sfSrcTexture};
+    sfRenderTexture.draw(srcSfSprite);
+
+    sfRenderTarget = &sfRenderTexture;
+    Clear();
+    sfRenderTarget = sfRenderWindow;
+
+    src->sfSrcTexture = sfRenderTexture.getTexture();
 }
 
 void

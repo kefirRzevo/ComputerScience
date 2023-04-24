@@ -4,7 +4,8 @@
 //----------------------------------------//
 
 Widget::Widget(Layout* layout_, Texture* texture_):
-layout(layout_), texture(texture_), parent(nullptr), system(nullptr)
+layout(layout_), texture(texture_),
+parent(nullptr), system(nullptr), borderColor(Black)
 {
     layout->SetWidget(this);
 }
@@ -42,6 +43,12 @@ Widget::GetWidgetSystem()
     return system;
 }
 
+Color
+Widget::GetBorderColor() const
+{
+    return borderColor;
+}
+
 void
 Widget::SetLayout(Layout* layout_)
 {
@@ -67,6 +74,12 @@ Widget::SetWidgetSystem(WidgetSystem* system_)
 
     for(auto child: children)
          child->SetWidgetSystem(system_);
+}
+
+void
+Widget::SetBorderColor(Color borderColor_)
+{
+    borderColor = borderColor_;
 }
 
 void
@@ -146,12 +159,39 @@ Widget::Render() const
     if(layout->GetBorder())
         RenderBorder();
 
-    Renderer::Get()->DrawTexture(*texture, layout->GetRectangle());
+    Renderer::Get()->DrawTexture(texture, layout->GetRectangle());
     for(auto it = children.end(); it != children.begin();)
     {
         --it;
         (*it)->Render();
     }
+}
+
+void
+Widget::RenderBorder() const
+{
+    const RectInt& rect = layout->GetRectangle();
+    int thickness       = layout->GetBorder();
+
+    Renderer* rend = Renderer::Get();
+    rend->SetColor(Black);
+
+    RectInt borderCol = {rect.left - thickness, rect.top, thickness, rect.height};
+
+    rend->DrawRect(borderCol);
+    borderCol.left += rect.width + thickness;
+    rend->DrawRect(borderCol);
+
+    RectInt borderRow = {rect.left, rect.top - thickness, rect.width, thickness};
+
+    rend->DrawRect(borderRow);
+    borderRow.top += rect.height + thickness;
+    rend->DrawRect(borderRow);
+
+    rend->DrawCircle({rect.left, rect.top}, thickness);
+    rend->DrawCircle({rect.left + rect.width, rect.top}, thickness);
+    rend->DrawCircle({rect.left, rect.top + rect.height}, thickness);
+    rend->DrawCircle({rect.left + rect.width, rect.top + rect.height}, thickness);
 }
 
 void
@@ -204,40 +244,6 @@ void
 WidgetSystem::Render() const
 {
     root->Render();
-}
-
-void
-Widget::RenderBorder() const
-{
-    const RectInt& rect = layout->GetRectangle();
-    int   thickness     = layout->GetBorder();
-
-    Renderer* rend = Renderer::Get();
-    rend->SetColor(Black);
-    rend->SetThickness(thickness);
-
-    RectInt borderCol = {rect.left - thickness, rect.top, 
-                                     thickness, rect.height};
-    rend->DrawRect(borderCol);
-    borderCol.left += rect.width + thickness;
-    rend->DrawRect(borderCol);
-
-    RectInt borderRow = {rect.left, rect.top - thickness, 
-                         rect.width,           thickness};
-    rend->DrawRect(borderRow);
-    borderRow.top += rect.height + thickness;
-    rend->DrawRect(borderRow);
-
-    size_t nPoints = static_cast<size_t>(thickness) * 4;
-
-    rend->DrawCircle({rect.left,              rect.top              }, 
-                                                    thickness, nPoints);
-    rend->DrawCircle({rect.left + rect.width, rect.top              }, 
-                                                    thickness, nPoints);
-    rend->DrawCircle({rect.left,              rect.top + rect.height}, 
-                                                    thickness, nPoints);
-    rend->DrawCircle({rect.left + rect.width, rect.top + rect.height}, 
-                                                    thickness, nPoints);
 }
 
 //----------------------------------------//

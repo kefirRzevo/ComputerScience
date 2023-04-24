@@ -6,7 +6,6 @@
 
 class Command;
 class Button;
-class ButtonView;
 
 //----------------------------------------//
 
@@ -22,7 +21,7 @@ class Command
 
 class CloseCommand: public Command
 {
-    protected:
+    private:
 
         Widget* widget;
 
@@ -30,7 +29,8 @@ class CloseCommand: public Command
 
         CloseCommand(Widget* widget_);
 
-        void Execute() override;
+        void
+        Execute() override;
 };
 
 //----------------------------------------//

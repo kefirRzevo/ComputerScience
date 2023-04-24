@@ -31,6 +31,7 @@ class Renderer
         static std::unique_ptr<Renderer> renderer;
 
         sf::RenderWindow* sfRenderWindow;
+        sf::RenderTarget* sfRenderTarget;
 
         sf::Color sfColor;
         float thickness;
@@ -41,42 +42,57 @@ class Renderer
 
         static void
         Initialize(Window* window_);
-
         static Renderer*
         Get();
 
         void
         SetColor(Color color_);
-        void
-        SetThickness(float thickness_);
 
         void
-        DrawPixel(const Vec2i& pos);
+        DrawPixel(Vec2i pos);
         void
-        DrawCircle(const Vec2i& center, int radius, size_t nPoints = 100);
+        DrawPixel(Texture* src, Vec2i pos);
         void
-        DrawThickLine(const Vec2i& point, float degreeAngle, float length);
+        DrawCircle(Vec2i center, int radius);
         void
-        DrawThickLineSlow(const Vec2i& p1, const Vec2i& p2);
+        DrawCircle(Texture* src, Vec2i center, int radius);
+
         void
-        DrawLine(const Vec2i& p1, const Vec2i& p2);
+        DrawThickLine(Vec2i point, float degreeAngle, float length, int thickness);
+        void
+        DrawThickLine(Texture* src, Vec2i point, float degreeAngle, float length, int thickness);
+        void
+        DrawThickLineSlow(Vec2i p1, Vec2i p2, int thickness);
+        void
+        DrawThickLineSlow(Texture* src, Vec2i p1, Vec2i p2, int thickness);
+        void
+        DrawLine(Vec2i p1, Vec2i p2);
+        void
+        DrawLine(Texture* src, Vec2i p1, Vec2i p2);
+
         void
         DrawRect(const RectInt& RectInt);
-
         void
-        DrawTexture(Texture& src, const RectInt& dstRectInt);
+        DrawRect(Texture* src, const RectInt& rect);
         void
-        DrawText(Text& text_);
-
-        bool
-        OnRender() const;
-
+        DrawTexture(const Texture* dst, const RectInt& dstRectInt);
+        void
+        DrawTexture(Texture* src, const Texture* dst, const RectInt& dstRect);
+        void
+        DrawText(const Text* text);
+        void
+        DrawText(Texture* src, const Text* text);
         void
         Clear();
         void
-        Display();
+        Clear(Texture* src);
+
         void
         Close();
+        void
+        Display();
+        bool
+        OnRender() const;
     
     friend class EventManager;
 };

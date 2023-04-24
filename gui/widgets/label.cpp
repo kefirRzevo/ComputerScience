@@ -10,6 +10,7 @@ Widget(layout_, texture_)
 bool
 Icon::OnEvent(const Event& event_)
 {
+    assert(&event_);
     return false;
 }
 
@@ -53,23 +54,16 @@ TextIcon::OnLayoutResize()
 bool
 TextIcon::OnEvent(const Event& event_)
 {
+    assert(&event_);
     return false;
 }
 
 void
 TextIcon::Render() const
 {
-    if(layout->GetBorder())
-        RenderBorder();
+    Widget::Render();
 
-    Renderer::Get()->DrawTexture(*texture, layout->GetRectangle());
-    for(auto it = children.end(); it != children.begin();)
-    {
-        --it;
-        (*it)->Render();
-    }
-
-    Renderer::Get()->DrawText(*text);
+    Renderer::Get()->DrawText(text.get());
 }
 
 //----------------------------------------//

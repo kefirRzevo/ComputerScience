@@ -1,6 +1,18 @@
+#include <sstream>
+
 #include "texture.hpp"
 #include "../config.hpp"
 
+std::unique_ptr<FontManager>    FontManager::fontManager;
+std::unique_ptr<TextureManager> TextureManager::textureManager;
+
+std::string
+SF_RectToString(const sf::IntRect& rect)
+{
+    std::ostringstream string;
+    string << rect.left << " " << rect.top << " " << rect.width << " " << rect.height;
+    return string.str();
+}
 
 //----------------------------------------//
 
@@ -24,8 +36,6 @@ FontManager::~FontManager()
 FontManager*
 FontManager::Get()
 {
-    static std::unique_ptr<FontManager> fontManager;
-
     if(fontManager.get() == nullptr)
         fontManager.reset(new FontManager{});
 
@@ -103,156 +113,177 @@ Text::Move(Vec2i delta_)
 
 //----------------------------------------//
 
-Texture::Texture(Vec2i size_):
-isManagerOwner(false)
+Texture::Texture(const char* path_):
+managerOwners(false), color(0)
 {
-    sf::Texture* temp = new sf::Texture{};
-    temp->create(static_cast<unsigned int>(size_.x), 
-                 static_cast<unsigned int>(size_.y));
-    sfSrcTexture  = temp;
-    sfTextureRect = {0, 0, size_.x, size_.y};
-    sfSprite = sf::Sprite{*sfSrcTexture};
+    if(!sfSrcTexture.loadFromFile(path_))
+        assert(0);
+
+    sfSrcTexture.loadFromFile(path_);
+    sfSrcRect = {{}, static_cast<sf::Vector2i>(sfSrcTexture.getSize())};
 }
 
-Texture::Texture(Color color_):
-isManagerOwner(false), sfSrcTexture(nullptr), sfTextureRect({})
+Texture::Texture(const char* path_, int i, int j, int w, int h):
+managerOwners(false), color(0)
 {
-    sfSprite.setColor(To_SF_Color(color_));
+    if(!sfSrcTexture.loadFromFile(path_))
+        assert(0);
+
+    int width  = static_cast<int>(sfSrcTexture.getSize().x);
+    int height = static_cast<int>(sfSrcTexture.getSize().y);
+    sfSrcRect = {width * i / w, height * j / h, width / h, height / h};
+
+    sfSrcTexture.loadFromFile(path_, sfSrcRect);
 }
 
-Texture::Texture(const char* path):
-isManagerOwner(true)
+Texture::Texture(const char* path_, const RectInt& rect):
+managerOwners(false), color(0)
 {
-    sfSrcTexture  = TextureManager::Get()->GetTexture(path);
-    sfTextureRect = {0, 0, static_cast<int>(sfSrcTexture->getSize().x),
-                           static_cast<int>(sfSrcTexture->getSize().y)};
-    sfSprite = sf::Sprite{*sfSrcTexture};
+    sfSrcRect = {rect.left, rect.top, rect.width, rect.height};
+    sfSrcTexture.loadFromFile(path_, sfSrcRect);
 }
 
-Texture::Texture(const char* path, int i, int j, int w, int h):
-isManagerOwner(true)
+Texture::Texture(Vec2i size_, Color color_):
+managerOwners(false), sfSrcRect(0, 0, size_.x, size_.y), color(color_)
 {
-    sfSrcTexture  = TextureManager::Get()->GetTexture(path);
-
-    int width  = static_cast<int>(sfSrcTexture->getSize().x);
-    int height = static_cast<int>(sfSrcTexture->getSize().y);
-
-    sfTextureRect = {width * i/w, height * j/h, width / h, height / h};
-    sfSprite = sf::Sprite{*sfSrcTexture, sfTextureRect};
+    sfSrcTexture.create(static_cast<unsigned int>(size_.x),
+                        static_cast<unsigned int>(size_.y));
 }
 
-Texture::Texture(const char* path, const RectInt& rect):
-Texture(path)
+int
+Texture::GetWidth() const
 {
-    sfSrcTexture  = TextureManager::Get()->GetTexture(path);
-    sfTextureRect = To_SF_Rect(rect);
-    sfSprite = sf::Sprite{*sfSrcTexture, sfTextureRect};
+    return sfSrcRect.width;
+}
+
+int
+Texture::GetHeight() const
+{
+    return sfSrcRect.height;
+}
+
+bool
+Texture::ManagerOwners() const
+{
+    return managerOwners;
 }
 
 std::unique_ptr<Color>
 Texture::ToBuffer() const
 {
-    sf::Image sfImage = sfSrcTexture->copyToImage();
+    sf::Image sfImage = sfSrcTexture.copyToImage();
     unsigned int numberPixels = sfImage.getSize().x * sfImage.getSize().y;
 
-    const Color* oldPixels = reinterpret_cast<const Color*>
-    ((sfImage.getPixelsPtr()), numberPixels);
+    const Color* oldPixels = reinterpret_cast<const Color*>(sfImage.getPixelsPtr());
 
     Color* newPixels = new Color[numberPixels];
     std::memcpy(newPixels, oldPixels, numberPixels);
 
-    std::unique_ptr<Color> pixelsPtr = std::make_unique<Color>();
-    pixelsPtr.reset(newPixels);
+    std::unique_ptr<Color> newPixelsPtr = std::make_unique<Color>();
+    newPixelsPtr.reset(newPixels);
 
-    return pixelsPtr;
+    return newPixelsPtr;
 }
 
 void
 Texture::FromBuffer(Color* pixels)
 {
-    if(!isManagerOwner)
-    {
-        const_cast<sf::Texture*>(sfSrcTexture)->
-        update(reinterpret_cast<sf::Uint8*>(pixels));
-    }
-    else
-    {
-        isManagerOwner = false;
-        sf::Texture* temp = new sf::Texture{};
-        temp->create(sfSrcTexture->getSize().x, sfSrcTexture->getSize().y);
-        temp->update(reinterpret_cast<sf::Uint8*>(pixels));
-        sfSrcTexture = temp;
-    }
-    sfSprite = sf::Sprite{*sfSrcTexture, sfTextureRect};
+    sfSrcTexture.update(reinterpret_cast<sf::Uint8*>(pixels));
 }
 
 void
 Texture::FromBuffer(Color* pixels, int w, int h, int x, int y)
 {
-    if(!isManagerOwner)
-    {
-        const_cast<sf::Texture*>(sfSrcTexture)->
-        update(reinterpret_cast<sf::Uint8*>(pixels), w, h, x, y);
-    }
-    else
-    {
-        isManagerOwner = false;
-        sf::Texture* temp = new sf::Texture{};
-        temp->create(sfSrcTexture->getSize().x, sfSrcTexture->getSize().y);
-        temp->update(reinterpret_cast<sf::Uint8*>(pixels), w, h, x, y);
-        sfSrcTexture = temp;
-    }
-    sfSprite = sf::Sprite{*sfSrcTexture, sfTextureRect};
-}
-
-Texture::~Texture()
-{
-    if(!isManagerOwner)
-        delete sfSrcTexture;
+    sfSrcTexture.update(reinterpret_cast<sf::Uint8*>(pixels), w, h, x, y);
 }
 
 //----------------------------------------//
 
 TextureManager::TextureManager():
-defaultSfSrcTexture(GetTexture(Config::defTexturePath))
+defaultTexture(GetTexture(Config::defTexturePath))
 {}
 
 TextureManager::~TextureManager()
 {
-    for(auto i: sfSrcTextures)
+    for(auto i: textures)
         delete i.second;
 }
 
 TextureManager*
 TextureManager::Get()
 {
-    static std::unique_ptr<TextureManager> textureManager;
-
     if(textureManager.get() == nullptr)
         textureManager.reset(new TextureManager{});
 
     return textureManager.get();
 }
 
-const sf::Texture*
-TextureManager::GetTexture(const char* path)
+Texture*
+TextureManager::GetTexture(const char* path_)
 {
-    auto sfTextureIt = sfSrcTextures.find(path);
+    sf::Texture temp{};
+    if(!temp.loadFromFile(path_))
+        return nullptr;
 
-    if(sfTextureIt != sfSrcTextures.end())
-        return sfTextureIt->second;
+    sf::IntRect sfRect = sf::IntRect{{}, static_cast<sf::Vector2i>(temp.getSize())};
+    std::string key = path_ + SF_RectToString(sfRect);
 
-    sf::Texture* newSfTexture = new sf::Texture{};
-    newSfTexture->loadFromFile(path);
-    sfSrcTextures.insert({path, newSfTexture});
+    auto textureIt = textures.find(key);
+    if(textureIt != textures.end())
+        return textureIt->second;
 
-    return newSfTexture;
+    Texture* newTexture = new Texture{path_};
+    textures.insert({key, newTexture});
+
+    return newTexture;
 }
 
-const sf::Texture*
-TextureManager::GetDefaultTexture() const
+Texture*
+TextureManager::GetTexture(const char* path_, const RectInt& rect_)
 {
-    return defaultSfSrcTexture;
+    sf::Texture temp{};
+    if(!temp.loadFromFile(path_))
+        return nullptr;
+
+    sf::IntRect sfRect = sf::IntRect{rect_.left, rect_.top, rect_.width, rect_.height};
+    std::string key = path_ + SF_RectToString(sfRect);
+
+    auto textureIt = textures.find(key);
+    if(textureIt != textures.end())
+        return textureIt->second;
+
+    Texture* newTexture = new Texture{path_, rect_};
+    textures.insert({key, newTexture});
+
+    return newTexture;
+}
+
+Texture*
+TextureManager::GetTexture(const char* path_, int i, int j, int w, int h)
+{
+    sf::Texture temp{};
+    if(!temp.loadFromFile(path_))
+        return nullptr;
+
+    int width  = static_cast<int>(temp.getSize().x);
+    int height = static_cast<int>(temp.getSize().y);
+    sf::IntRect sfRect = sf::IntRect{width * i / w, height * j / h, width / h, height / h};
+    std::string key = path_ + SF_RectToString(sfRect);
+
+    auto textureIt = textures.find(key);
+    if(textureIt != textures.end())
+        return textureIt->second;
+
+    Texture* newTexture = new Texture{path_, i, j, w, h};
+    textures.insert({key, newTexture});
+
+    return newTexture;
+}
+
+Texture*
+TextureManager::GetDefaultTexture()
+{
+    return defaultTexture;
 }
 
 //----------------------------------------//

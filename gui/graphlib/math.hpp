@@ -106,8 +106,7 @@ class Rect
         T width;
         T height;
 
-        Rect()
-            {}
+        Rect() = default;
 
         Rect(const Vec2<T>& begin_, const Vec2<T>& size_):
             left(begin_.x), top(begin_.y), width(size_.x), height(size_.y) {}

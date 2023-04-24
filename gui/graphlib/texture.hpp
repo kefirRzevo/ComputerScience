@@ -37,6 +37,7 @@ class FontManager
 {
     private:
 
+        static std::unique_ptr<FontManager> fontManager;
         std::unordered_map<const char*, const Font&> fonts;
         const Font& defaultFont;
 
@@ -54,8 +55,6 @@ class FontManager
 
         const Font&
         GetDefaultFont() const;
-    
-    friend class Renderer;
 };
 
 //----------------------------------------//
@@ -93,18 +92,32 @@ class Text
 
 class Texture
 {
-    public:
+    private:
 
-        Texture(Vec2i size_);
-        Texture(Color color_);
         Texture(const char* path);
         Texture(const char* path, int i, int j, int w, int h);
         Texture(const char* path, const RectInt& textureRect);
-        ~Texture();
+
+    public:
+
+        Texture           (              ) = delete;
+        Texture           (const Texture&) = delete;
+        Texture& operator=(const Texture&) = delete;
+        Texture           (Texture&&) = default;
+        Texture& operator=(Texture&&) = default;
+        ~Texture() = default;
+
+        Texture(Vec2i size_, Color color_ = 0);
+
+        int
+        GetWidth() const;
+        int
+        GetHeight() const;
+        bool
+        ManagerOwners() const;
 
         std::unique_ptr<Color>
         ToBuffer() const;
-
         void
         FromBuffer(Color* pixels);
         void
@@ -112,12 +125,13 @@ class Texture
 
     private:
 
-        bool isManagerOwner;
+        bool managerOwners;
 
-        const sf::Texture* sfSrcTexture;
-        sf::IntRect  sfTextureRect;
-        sf::Sprite   sfSprite;
+        sf::Texture sfSrcTexture;
+        sf::IntRect sfSrcRect;
+        Color       color;
 
+    friend class TextureManager;
     friend class Renderer;
 };
 
@@ -127,8 +141,9 @@ class TextureManager
 {
     private:
 
-        std::unordered_map<const char*, const sf::Texture*> sfSrcTextures;
-        const sf::Texture* defaultSfSrcTexture;
+        static std::unique_ptr<TextureManager> textureManager;
+        std::unordered_map<std::string, Texture*> textures;
+        Texture* defaultTexture;
 
     public:
 
@@ -139,13 +154,15 @@ class TextureManager
         static TextureManager*
         Get();
 
-        const sf::Texture*
-        GetTexture(const char* path);
+        Texture*
+        GetTexture(const char* path_);
+        Texture*
+        GetTexture(const char* path_, const RectInt& rect_);
+        Texture*
+        GetTexture(const char* path_, int i, int j, int w, int h);
 
-        const sf::Texture*
-        GetDefaultTexture() const;
-
-    friend class Renderer;
+        Texture*
+        GetDefaultTexture();
 };
 
 //----------------------------------------//

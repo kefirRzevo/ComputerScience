@@ -27,6 +27,7 @@ class Widget
         WidgetSystem*   system;
 
         std::list<Widget*>  children;
+        Color borderColor;
 
     public:
 
@@ -48,6 +49,8 @@ class Widget
         GetParent();
         WidgetSystem*
         GetWidgetSystem();
+        Color
+        GetBorderColor() const;
 
         void
         SetLayout(Layout* layout_);
@@ -57,10 +60,12 @@ class Widget
         SetParent(Widget* parent_);
         void
         SetWidgetSystem(WidgetSystem* system_);
+        void
+        SetBorderColor(Color borderColor_);
 
-        void
+        virtual void
         Attach(Widget* child_);
-        void
+        virtual void
         Detach(Widget* child_);
 
         virtual bool

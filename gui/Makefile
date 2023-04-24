@@ -1,7 +1,7 @@
 CC  = gcc
-CXX = g++ -std=c++14
+CXX = g++ -std=c++17
 
-CXXFLAGS = -I inc -Wall -Wextra -g -std=c++14 #-Wall -Wextra \
+CXXFLAGS = -I inc -Wall -Wextra -g -std=c++17 -Wall -Wextra \
 -Weffc++ -Wc++0x-compat \
 -Wc++11-compat -Wc++14-compat -Wcast-qual \
 -Wchar-subscripts   \
@@ -40,9 +40,9 @@ CXXFLAGS = -I inc -Wall -Wextra -g -std=c++14 #-Wall -Wextra \
 DBGFLAGS = -fsanitize=address -ggdb3
 
 TARGET = app
-SRCDIR = application/ graphlib/ gui/
+SRCDIR = application/ graphlib/ widgets/
 OBJDIR = build/
-INCDIR = application/ graphlib/ gui/
+INCDIR = application/ graphlib/ widgets/ ./
 
 SOURCES = main.cpp $(foreach SRC, $(SRCDIR), $(wildcard $(SRC)*.cpp))
 OBJECTS = $(foreach SRC, $(SOURCES), $(basename $(OBJDIR)$(SRC)).o)

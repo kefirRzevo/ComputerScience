@@ -35,13 +35,13 @@ Button::ProcessListenerEvent(const Event& event_)
 {
     if(event_.type == mouseReleased)
     {
-        pressed = false;
-        texture = onRelease;
-        system->Unsubscribe(mouseReleased); 
-
         if(layout->IsInside(event_.mouse.pos))
             if(pressed)
                 cmdPtr->Execute();
+
+        pressed = false;
+        texture = onRelease;
+        system->Unsubscribe(mouseReleased); 
 
         return true;
     }
