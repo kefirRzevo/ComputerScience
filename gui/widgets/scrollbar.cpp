@@ -118,12 +118,6 @@ Widget(layout_, texture_), response(responce_), box(box_), value(0.f)
     Attach(box_);
 }
 
-void
-ScrollBar::CalculateValue(float initValue_, Vec2i delta_)
-{
-
-}
-
 float
 ScrollBar::GetValue() const
 {

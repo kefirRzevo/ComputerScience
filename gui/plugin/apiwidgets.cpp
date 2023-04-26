@@ -141,9 +141,9 @@ APIWidgetFactory::CreateLabel
 IPreferencesPanel*
 APIWidgetFactory::CreateDefaultPreferencesPanel()
 {
+    Column*  column  = new Column{};
     Texture* texture = new Texture{Config::defPanelColor};
-    Column* column   = new Column{};
-    return new APIPreferencesPanel{new PreferencesPanel{column, texture}};
+    return new APIPreferencesPanel{new PropertiesPanel{column, texture}};
 }
 
 //----------------------------------------//
@@ -165,7 +165,7 @@ APIClickCallback::OnResponse()
 }
 
 APISliderCallback::APISliderCallback(ISliderCallback* callback_):
-APISliderCallback(callback_)
+callback(callback_)
 {}
 
 void
@@ -246,6 +246,12 @@ APISlider::SetValue(float value)
     scrollBar->SetValue(value);
 }
 
+void
+APISlider::SetSliderCallback(ISliderCallback* callback_)
+{
+    callback->SetCallback(callback_);
+}
+
 //----------------------------------------//
 
 APILabel::APILabel(TextIcon* textIcon_):
@@ -278,7 +284,7 @@ APILabel::GetHeight()
 
 //----------------------------------------//
 
-APIPreferencesPanel::APIPreferencesPanel(PreferencesPanel* panel_):
+APIPreferencesPanel::APIPreferencesPanel(PropertiesPanel* panel_):
 panel(panel_)
 {}
 

@@ -3,7 +3,7 @@
 #include "../widgets/button.hpp"
 #include "../widgets/scrollbar.hpp"
 #include "../widgets/label.hpp"
-#include "../gui/preferencepanel.hpp"
+#include "../gui/properties_panel.hpp"
 #include "plugin.hpp"
 
 using namespace plugin;
@@ -128,7 +128,7 @@ class APISlider: public ISlider, public APIWidget
         void
         SetValue(float value) override;
         void
-        SetSliderCallback(ISliderCallback* callback) override;
+        SetSliderCallback(ISliderCallback* callback_) override;
 
     private:
 
@@ -161,7 +161,7 @@ class APIPreferencesPanel: public IPreferencesPanel, public APIWidget
 {
     public:
 
-        APIPreferencesPanel(PreferencesPanel* panel_);
+        APIPreferencesPanel(PropertiesPanel* panel_);
 
         Widget*
         GetBasicWidget() override;
@@ -175,5 +175,5 @@ class APIPreferencesPanel: public IPreferencesPanel, public APIWidget
 
     private:
 
-        PreferencesPanel* panel;
+        PropertiesPanel* panel;
 };
