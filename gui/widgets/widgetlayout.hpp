@@ -115,8 +115,7 @@ class Container: public Layout
 {
     public:
 
-        Container(const RectInt& rect_,
-        int margin_ = Config::defMargin,
+        Container(int margin_ = Config::defMargin,
         int border_ = Config::defBorder);
 
         void
@@ -125,8 +124,6 @@ class Container: public Layout
         Detach(Layout* child_) override = 0;
 
     protected:
-
-        RectInt startRect;
         
         void
         OnResize(const RectInt& rect_) override;
@@ -139,8 +136,7 @@ class Row: public Container
 {
     public:
 
-        Row(const RectInt& rect_,
-        int margin_ = Config::defMargin,
+        Row(int margin_ = Config::defMargin,
         int border_ = Config::defBorder);
 
         void
@@ -158,8 +154,7 @@ class Column: public Container
 {
     public:
 
-        Column(const RectInt& rect_,
-        int margin_ = Config::defMargin,
+        Column(int margin_ = Config::defMargin,
         int border_ = Config::defBorder);
 
         void

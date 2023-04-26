@@ -8,7 +8,7 @@ class DropDownList;
 
 //----------------------------------------//
 
-class ListOpenerCommand: public Command
+class ListOpenerCommand: public ButtonResponse
 {
     private:
 
@@ -19,7 +19,7 @@ class ListOpenerCommand: public Command
         ListOpenerCommand(DropDownList* list_);
 
         void
-        Execute() override;
+        OnResponse() override;
 };
 
 //----------------------------------------//

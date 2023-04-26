@@ -21,13 +21,13 @@ class Widget
 {
     protected:
 
-        Layout*         layout;
-        Texture*        texture;
-        Widget*         parent;
-        WidgetSystem*   system;
+        Layout*  layout;
+        Texture* texture;
+        Color    borderColor;
 
-        std::list<Widget*>  children;
-        Color borderColor;
+        std::list<Widget*> children;
+        Widget*            parent;
+        WidgetSystem*      system;
 
     public:
 

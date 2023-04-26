@@ -6,13 +6,13 @@
 
 namespace plugin {
 
-typedef uint Color; // RGBA8888
+typedef unsigned int Color;
     
 class ITexture;
 
 struct Buffer
 {
-    std::unique_ptr<Color> pixels;
+    Color* pixels;
     ITexture* texture;
 };
 
@@ -52,7 +52,7 @@ class IClickCallback
 {
     public:
 
-        virtual ~IClickCallback() {}
+        virtual ~IClickCallback() = default;
 
         virtual void RespondOnClick() = 0;
 };
@@ -73,7 +73,7 @@ class IWidget
 
         virtual ~IWidget() = default;
 
-        virtual int GetWidth() = 0;
+        virtual int GetWidth()  = 0;
         virtual int GetHeight() = 0;
 };
 
@@ -93,8 +93,8 @@ class ISlider : public IWidget
 
         virtual void SetSliderCallback(ISliderCallback* callback) = 0;
 
-        virtual float GetValue() = 0;  //const
-        virtual void SetValue(float value) = 0;
+        virtual float GetValue() = 0;
+        virtual void  SetValue(float value) = 0;
 };
 
 class ILabel : public IWidget
@@ -181,8 +181,8 @@ class IPlugin
         virtual std::list<IFilter*> GetFilters() const = 0;
         virtual std::list<ITool*>   GetTools  () const = 0;
 };
-    
-typedef IPlugin* (*CreateFunction) (IAPI* api);
+
+typedef IPlugin* (*CreateFunction )(IAPI* api);
 typedef void     (*DestroyFunction)(IPlugin* plugin);
 
 } // namespace plugin

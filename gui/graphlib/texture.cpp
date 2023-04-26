@@ -24,13 +24,13 @@ Font::Font(const char* path)
 //----------------------------------------//
 
 FontManager::FontManager():
-defaultFont(GetFont(Config::defFontPath))
+defaultFont(GetFont(Config::defTextFontPath))
 {}
 
 FontManager::~FontManager()
 {
     for(auto i: fonts)
-        delete &i.second;
+        delete i.second;
 }
 
 FontManager*
@@ -42,7 +42,7 @@ FontManager::Get()
     return fontManager.get();
 }
 
-const Font&
+Font*
 FontManager::GetFont(const char* path)
 {
     auto fontIt = fonts.find(path);
@@ -51,13 +51,13 @@ FontManager::GetFont(const char* path)
         return fontIt->second;
 
     Font* newFont = new Font{path};
-    fonts.insert({path, *newFont});
+    fonts.insert({path, newFont});
 
-    return *newFont;
+    return newFont;
 }
 
-const Font&
-FontManager::GetDefaultFont() const
+Font*
+FontManager::GetDefaultFont()
 {
     return defaultFont;
 }
@@ -65,10 +65,10 @@ FontManager::GetDefaultFont() const
 //----------------------------------------//
 
 Text::Text(const std::string& string_,
-const Font& font_, Color color_, int size_)
+Font* font_, Color color_, int size_)
 {
     sfText.setString(string_);
-    sfText.setFont(font_.sfFont);
+    sfText.setFont(font_->sfFont);
     sfText.setFillColor(To_SF_Color(color_));
     sfText.setCharacterSize(size_);
 }
@@ -143,12 +143,16 @@ managerOwners(false), color(0)
     sfSrcTexture.loadFromFile(path_, sfSrcRect);
 }
 
-Texture::Texture(Vec2i size_, Color color_):
-managerOwners(false), sfSrcRect(0, 0, size_.x, size_.y), color(color_)
+Texture::Texture(Vec2i size_):
+managerOwners(false), sfSrcRect(0, 0, size_.x, size_.y), color(0)
 {
     sfSrcTexture.create(static_cast<unsigned int>(size_.x),
                         static_cast<unsigned int>(size_.y));
 }
+
+Texture::Texture(Color color_):
+managerOwners(false), sfSrcRect(), color(color_)
+{}
 
 int
 Texture::GetWidth() const
@@ -168,7 +172,7 @@ Texture::ManagerOwners() const
     return managerOwners;
 }
 
-std::unique_ptr<Color>
+Color*
 Texture::ToBuffer() const
 {
     sf::Image sfImage = sfSrcTexture.copyToImage();
@@ -178,11 +182,7 @@ Texture::ToBuffer() const
 
     Color* newPixels = new Color[numberPixels];
     std::memcpy(newPixels, oldPixels, numberPixels);
-
-    std::unique_ptr<Color> newPixelsPtr = std::make_unique<Color>();
-    newPixelsPtr.reset(newPixels);
-
-    return newPixelsPtr;
+    return newPixels;
 }
 
 void
@@ -200,7 +200,7 @@ Texture::FromBuffer(Color* pixels, int w, int h, int x, int y)
 //----------------------------------------//
 
 TextureManager::TextureManager():
-defaultTexture(GetTexture(Config::defTexturePath))
+defaultTexture(GetTexture(Config::defIconTexturePath))
 {}
 
 TextureManager::~TextureManager()

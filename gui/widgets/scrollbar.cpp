@@ -1,6 +1,8 @@
 #include "scrollbar.hpp"
 
 
+//----------------------------------------//
+
 ScrollBarResponse::~ScrollBarResponse()
 {}
 
@@ -116,6 +118,12 @@ Widget(layout_, texture_), response(responce_), box(box_), value(0.f)
     Attach(box_);
 }
 
+void
+ScrollBar::CalculateValue(float initValue_, Vec2i delta_)
+{
+
+}
+
 float
 ScrollBar::GetValue() const
 {
@@ -196,6 +204,21 @@ HorScrollBar::SetScaleParams()
     scaleStep  = 1.f / static_cast<float>(scaleLen);
 }
 
+void
+HorScrollBar::SetValue(float value_)
+{
+    value = value_;
+    value = value > 1.f ? 1.f : value;
+    value = value < 0.f ? 0.f : value;
+
+    response->OnResponse(value);
+    
+    const RectInt& rect = layout->GetRectangle();
+    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int left = rect.left + boxIndent + static_cast<int>(value / scaleStep);
+    box->Move({left, box->GetLayout()->GetRectangle().top});
+}
+
 //----------------------------------------//
 
 VerScrollBar::VerScrollBar(Layout* layout_, Texture* texture_,
@@ -244,6 +267,21 @@ VerScrollBar::SetScaleParams()
 
     scaleLen   = rect.height - 2 * boxIndent - boxHeight;
     scaleStep  = 1.f / static_cast<float>(scaleLen);
+}
+
+void
+VerScrollBar::SetValue(float value_)
+{
+    value = value_;
+    value = value > 1.f ? 1.f : value;
+    value = value < 0.f ? 0.f : value;
+
+    response->OnResponse(value);
+    
+    const RectInt& rect = layout->GetRectangle();
+    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int top = rect.top + boxIndent + static_cast<int>(value / scaleStep);
+    box->Move({box->GetLayout()->GetRectangle().left, top});
 }
 
 //----------------------------------------//

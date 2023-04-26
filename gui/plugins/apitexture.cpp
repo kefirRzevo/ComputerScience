@@ -37,7 +37,7 @@ APITexture::ReadBuffer()
 void
 APITexture::LoadBuffer(Buffer buffer)
 {
-    texture->FromBuffer(buffer.pixels.get());
+    texture->FromBuffer(buffer.pixels);
 }
 
 void

@@ -4,22 +4,22 @@
 #include "widget.hpp"
 
 
-class Command;
+class ButtonResponse;
 class Button;
 
 //----------------------------------------//
 
-class Command
+class ButtonResponse
 {
     public:
 
-        virtual ~Command();
+        virtual ~ButtonResponse() = default;
 
         virtual void
-        Execute() = 0;
+        OnResponse() = 0;
 };
 
-class CloseCommand: public Command
+class CloseCommand: public ButtonResponse
 {
     private:
 
@@ -30,7 +30,7 @@ class CloseCommand: public Command
         CloseCommand(Widget* widget_);
 
         void
-        Execute() override;
+        OnResponse() override;
 };
 
 //----------------------------------------//
@@ -39,7 +39,7 @@ class Button: public Widget
 {
     protected:
 
-        std::unique_ptr<Command> cmdPtr;
+        std::shared_ptr<ButtonResponse> response;
         bool pressed;
 
         Texture* onRelease;
@@ -48,9 +48,11 @@ class Button: public Widget
 
     public:
 
-        Button(Layout* layout_, Command* cmd_, Texture* onRelease_,
+        Button(Layout* layout_, ButtonResponse* response_, Texture* onRelease_,
         Texture* onHover_ = nullptr, Texture* onPress = nullptr);
 
+        void
+        SetButtonResponse(ButtonResponse* response_);
         bool
         ProcessListenerEvent(const Event& event_) override;
         bool

@@ -16,9 +16,12 @@ Icon::OnEvent(const Event& event_)
 
 //----------------------------------------//
 
-TextIcon::TextIcon(Layout* layout_, Texture* texture_, Text* text_):
-Widget(layout_, texture_), text(text_), fullString(text->GetString())
+TextIcon::TextIcon(Layout* layout_, Texture* texture_,Text* text_,
+int maxSize_):
+Widget(layout_, texture_), text(text_), fullString(text->GetString()), maxSize(maxSize_)
 {
+    if(fullString.size() > maxSize)
+        fullString.erase(maxSize, fullString.size());
     OnLayoutResize();
 }
 
@@ -27,6 +30,14 @@ TextIcon::CheckSize(Vec2i size_)
 {
     return size_.x < layout->GetRectangle().width &&
            size_.y < layout->GetRectangle().height;
+}
+
+void
+TextIcon::SetString(const char* string)
+{
+    fullString = string;
+    if(fullString.size() > maxSize)
+        fullString.erase(maxSize, fullString.size());
 }
 
 void
@@ -41,6 +52,9 @@ TextIcon::OnLayoutMove()
 void
 TextIcon::OnLayoutResize()
 {
+    if(fullString.size() > maxSize)
+        fullString.erase(maxSize, fullString.size());
+
     curString = fullString;
     text->SetString(curString);
     while(!CheckSize(text->GetSize()))
@@ -81,8 +95,8 @@ TextLabelResponseTest::OnResponse(const std::string& string_)
 }
 
 TextLabel::TextLabel(Layout* layout_, Texture* texture_,
-TextLabelResponse* response_, Text* textStyle_):
-TextIcon(layout_, texture_, textStyle_), responce(response_)
+TextLabelResponse* response_, Text* textStyle_, int maxSize_):
+TextIcon(layout_, texture_, textStyle_, maxSize_), responce(response_)
 {}
 
 bool

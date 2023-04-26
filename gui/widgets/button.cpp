@@ -3,31 +3,38 @@
 
 //----------------------------------------//
 
-Command::~Command()
-{}
-
 CloseCommand::CloseCommand(Widget* widget_):
 widget(widget_)
 {}
 
 void
-CloseCommand::Execute()
+CloseCommand::OnResponse()
 {
+    assert(widget);
     //widget->GetParent()->Detach(widget);
     fprintf(stderr, "press\n");
 }
 
 //----------------------------------------//
 
-Button::Button(Layout* layout_, Command* cmd_,
+Button::Button(Layout* layout_, ButtonResponse* response_,
 Texture* onRelease_, Texture* onHover_, Texture* onPress_):
-Widget(layout_, onRelease_), cmdPtr(cmd_), pressed(false),
+Widget(layout_, onRelease_), response(response_), pressed(false),
 onRelease(onRelease_), onHover(onHover_), onPress(onPress_)
 {
     if(!onHover)
         onHover = onRelease_;
     if(!onPress)
         onPress = onRelease_;
+}
+
+void
+Button::SetButtonResponse(ButtonResponse* response_)
+{
+    if(response.unique())
+        delete response.get();
+
+    response.reset(response_);
 }
 
 bool
@@ -37,7 +44,7 @@ Button::ProcessListenerEvent(const Event& event_)
     {
         if(layout->IsInside(event_.mouse.pos))
             if(pressed)
-                cmdPtr->Execute();
+                response->OnResponse();
 
         pressed = false;
         texture = onRelease;

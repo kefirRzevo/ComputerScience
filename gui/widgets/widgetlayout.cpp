@@ -199,7 +199,7 @@ Layout::IsInsideBorder(Vec2i pos_) const
 
     RectInt borderRect = {rect.left  -     border, rect.top    -     border,
                           rect.width + 2 * border, rect.height + 2 * border};
-                        
+
     return borderRect.IsInside(pos_) && !rect.IsInside(pos_);
 }
 
@@ -293,9 +293,8 @@ Layout::OnResize(const RectInt& rect_)
 
 //----------------------------------------//
 
-Container::Container(const RectInt& rect_,
-int margin_, int border_):
-Layout(rect_, margin_, border_), startRect(rect_)
+Container::Container(int margin_, int border_):
+Layout({}, margin_, border_)
 {
     minSize = {};
     maxSize = {};
@@ -311,8 +310,8 @@ Container::OnResize(const RectInt& rect_)
 
 //----------------------------------------//
 
-Row::Row(const RectInt& rect_, int margin_, int border_):
-Container(rect_, margin_, border_)
+Row::Row(int margin_, int border_):
+Container(margin_, border_)
 {}
 
 void
@@ -320,6 +319,9 @@ Row::Attach(Layout* child_)
 {
     child_->parent = this;
     children.push_back(child_);
+
+    rect.width  += child_->GetRectangle().width  + child_->GetAddition();
+    rect.height += child_->GetRectangle().height + child_->GetAddition();
 
     minSize.x += child_->GetMinSize().x + child_->GetAddition();
     maxSize.x += child_->GetMaxSize().x + child_->GetAddition();
@@ -442,8 +444,8 @@ Row::PlaceChildren()
 
 //----------------------------------------//
 
-Column::Column(const RectInt& rect_, int margin_, int border_):
-Container(rect_, margin_, border_)
+Column::Column(int margin_, int border_):
+Container(margin_, border_)
 {}
 
 void
@@ -452,6 +454,9 @@ Column::Attach(Layout* child_)
     child_->parent = this;
     children.push_back(child_);
 
+    rect.width  += child_->GetRectangle().width  + child_->GetAddition();
+    rect.height += child_->GetRectangle().height + child_->GetAddition();
+    
     minSize.y += child_->GetMinSize().y + child_->GetAddition();
     maxSize.y += child_->GetMaxSize().y + child_->GetAddition();
 

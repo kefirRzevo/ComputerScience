@@ -4,8 +4,8 @@
 //----------------------------------------//
 
 Widget::Widget(Layout* layout_, Texture* texture_):
-layout(layout_), texture(texture_),
-parent(nullptr), system(nullptr), borderColor(Black)
+layout(layout_), texture(texture_), borderColor(Config::defBorderColor),
+parent(nullptr), system(nullptr)
 {
     layout->SetWidget(this);
 }
@@ -174,7 +174,7 @@ Widget::RenderBorder() const
     int thickness       = layout->GetBorder();
 
     Renderer* rend = Renderer::Get();
-    rend->SetColor(Black);
+    rend->SetColor(borderColor);
 
     RectInt borderCol = {rect.left - thickness, rect.top, thickness, rect.height};
 

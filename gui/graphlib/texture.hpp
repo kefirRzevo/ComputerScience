@@ -20,14 +20,13 @@ class Renderer;
 
 class Font
 {
-    public:
+    private:
 
         Font(const char* path);
 
-    private:
-
         sf::Font sfFont;
 
+    friend class FontManager;
     friend class Text;
 };
 
@@ -38,8 +37,8 @@ class FontManager
     private:
 
         static std::unique_ptr<FontManager> fontManager;
-        std::unordered_map<const char*, const Font&> fonts;
-        const Font& defaultFont;
+        std::unordered_map<const char*, Font*> fonts;
+        Font* defaultFont;
 
         FontManager();
 
@@ -50,11 +49,11 @@ class FontManager
         static FontManager*
         Get();
 
-        const Font&
+        Font*
         GetFont(const char* path_);
 
-        const Font&
-        GetDefaultFont() const;
+        Font*
+        GetDefaultFont();
 };
 
 //----------------------------------------//
@@ -64,7 +63,7 @@ class Text
     public:
 
         Text(const std::string& string_ = "",
-        const Font& font = FontManager::Get()->GetDefaultFont(),
+        Font* font  = FontManager::Get()->GetDefaultFont(),
         Color color = Config::defTextColor, int size = Config::defTextSize);
 
         Vec2i
@@ -107,7 +106,8 @@ class Texture
         Texture& operator=(Texture&&) = default;
         ~Texture() = default;
 
-        Texture(Vec2i size_, Color color_ = 0);
+        Texture(Vec2i size_);
+        Texture(Color color_);
 
         int
         GetWidth() const;
@@ -116,7 +116,7 @@ class Texture
         bool
         ManagerOwners() const;
 
-        std::unique_ptr<Color>
+        Color*
         ToBuffer() const;
         void
         FromBuffer(Color* pixels);

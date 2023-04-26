@@ -22,13 +22,18 @@ class TextIcon: public Widget
         std::unique_ptr<Text> text;
         std::string fullString;
         std::string curString;
-
-    public:
-
-        TextIcon(Layout* layout_, Texture* texture_, Text* text_);
+        unsigned int maxSize;
 
         bool
         CheckSize(Vec2i size_);
+
+    public:
+
+        TextIcon(Layout* layout_, Texture* texture_, Text* text_,
+        int maxSize_ = Config::defTextMaxCapacity);
+
+        void
+        SetString(const char* string);
 
         void
         OnLayoutMove() override;
@@ -73,7 +78,8 @@ class TextLabel: public TextIcon
     public:
 
         TextLabel(Layout* layout_, Texture* texture_,
-        TextLabelResponse* response_, Text* textStyle_);
+        TextLabelResponse* response_, Text* textStyle_,
+        int maxSize_ = Config::defTextMaxCapacity);
 
         bool
         ProcessListenerEvent(const Event& event_) override;

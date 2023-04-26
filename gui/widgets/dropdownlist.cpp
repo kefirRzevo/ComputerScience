@@ -8,7 +8,7 @@ list(list_)
 {}
 
 void
-ListOpenerCommand::Execute()
+ListOpenerCommand::OnResponse()
 {
     list->ChangeVisibility();
 }
