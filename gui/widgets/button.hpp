@@ -49,7 +49,7 @@ class Button: public Widget
     public:
 
         Button(Layout* layout_, ButtonResponse* response_, Texture* onRelease_,
-        Texture* onHover_ = nullptr, Texture* onPress = nullptr);
+        Texture* onHover_ = nullptr, Texture* onPres_ = nullptr);
 
         void
         SetButtonResponse(ButtonResponse* response_);

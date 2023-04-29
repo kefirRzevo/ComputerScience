@@ -85,6 +85,7 @@ ScrollBox::OnEvent(const Event& event_)
     {
         case mousePressed:
 
+            system->Reset();
             system->Subscribe(this, mouseMoved);
             system->Subscribe(this, mouseHovered);
             system->Subscribe(this, mouseReleased);

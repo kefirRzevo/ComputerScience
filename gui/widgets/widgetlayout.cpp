@@ -576,3 +576,5 @@ Column::PlaceChildren()
         sumTop += children[i]->GetRectangle().height + topIndent;
     }
 }
+
+//----------------------------------------//

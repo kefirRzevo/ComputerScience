@@ -16,6 +16,9 @@ class Plugin final
 
         ~Plugin();
 
+        const std::string&
+        GetName() const;
+
         IPlugin* GetIPlugin();
 
     private:
@@ -26,6 +29,7 @@ class Plugin final
         CreateFunction  create;
         DestroyFunction destroy;
 
+        std::string name;
         IPlugin* iPlugin;
         void* handle;
 };

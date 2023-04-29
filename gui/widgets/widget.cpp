@@ -85,10 +85,14 @@ Widget::SetBorderColor(Color borderColor_)
 void
 Widget::Attach(Widget* child_)
 {
-    layout->Attach(child_->GetLayout());
-    child_->SetParent(this);
-    child_->SetWidgetSystem(system);
-    children.push_front(child_);
+    auto found = std::find(children.begin(), children.end(), child_);
+    if(found == children.end())
+    {
+        layout->Attach(child_->GetLayout());
+        child_->SetParent(this);
+        child_->SetWidgetSystem(system);
+        children.push_front(child_);
+    }
 }
 
 void
@@ -125,18 +129,7 @@ Widget::ProcessEvent(const Event& event_)
 bool
 Widget::ProcessListenerEvent(const Event& event_)
 {
-    layout->OnListenerEvent(event_);
-
-    if(event_.type == mouseReleased)
-    {
-        system->Unsubscribe(mouseMoved);
-        system->Unsubscribe(mouseReleased);
-        return true;
-    }
-    else if(event_.type == mouseMoved)
-    {
-        return true;
-    }
+    assert(&event_);
     return false;
 }
 
@@ -145,11 +138,10 @@ Widget::OnEvent(const Event& event_)
 {
     if(layout->IsInside(event_.mouse.pos) && event_.type == mousePressed)
     {
-        layout->OnEvent(event_);
-        system->Subscribe(this, mouseMoved);
-        system->Subscribe(this, mouseReleased);
+        system->Reset();
         return true;
     }
+
     return false;
 }
 

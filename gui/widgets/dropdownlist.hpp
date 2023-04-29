@@ -4,6 +4,7 @@
 #include "button.hpp"
 
 
+class ListOpenerCommand;
 class DropDownList;
 
 //----------------------------------------//
@@ -24,20 +25,43 @@ class ListOpenerCommand: public ButtonResponse
 
 //----------------------------------------//
 
+class ButtonListOpener: public Button
+{   
+    protected:
+
+        DropDownList* list;
+    
+    public:
+
+        ButtonListOpener(Layout* layout_, DropDownList* list_,
+        Texture* onRelease_, Texture* onHover_ = nullptr,
+        Texture* onPress_ = nullptr);
+
+        void
+        Attach(Widget* child_) override;
+        void
+        Detach(Widget* child_) override;
+
+        void
+        OnLayoutMove() override;
+        void
+        OnLayoutResize() override;
+};
+
+//----------------------------------------//
+
 class DropDownList: public Widget
 {
     protected:
 
-        bool visible;
+        bool  visible;
         
     public:
 
         DropDownList(Column* layout_, Texture* texture_);
 
-        //void
-        //Attach(Widget* child_) override;
-        //void
-        //Detach(Widget* child_) override;
+        void
+        UpdateDropPoint();
 
         bool
         ProcessEvent(const Event& event_) override;

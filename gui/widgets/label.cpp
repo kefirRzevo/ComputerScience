@@ -133,6 +133,7 @@ TextLabel::OnEvent(const Event& event_)
     {
         case mousePressed:
 
+            system->Reset();
             system->Subscribe(this, textEntered);
             system->Subscribe(this, keyPressed);
             break;

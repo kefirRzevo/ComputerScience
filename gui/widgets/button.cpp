@@ -23,9 +23,9 @@ Widget(layout_, onRelease_), response(response_), pressed(false),
 onRelease(onRelease_), onHover(onHover_), onPress(onPress_)
 {
     if(!onHover)
-        onHover = onRelease_;
+        onHover = onRelease;
     if(!onPress)
-        onPress = onRelease_;
+        onPress = onRelease;
 }
 
 void
@@ -72,6 +72,7 @@ Button::OnEvent(const Event& event_)
     {
         case mousePressed:
 
+            system->Reset();
             system->Subscribe(this, mouseHovered);
             system->Subscribe(this, mouseReleased);
             pressed = true;

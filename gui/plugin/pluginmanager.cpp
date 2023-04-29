@@ -11,7 +11,8 @@ std::unique_ptr<PluginManager> PluginManager::pluginManager;
 //----------------------------------------//
 
 Plugin::Plugin(const char* pluginPath, IAPI* iApi):
-create(nullptr), destroy(nullptr), iPlugin(nullptr), handle(nullptr)
+create(nullptr), destroy(nullptr), name(pluginPath),
+iPlugin(nullptr), handle(nullptr)
 {
     handle = dlopen(pluginPath, RTLD_NOW);
     if(!handle)
@@ -50,6 +51,12 @@ Plugin::~Plugin()
     
     if(handle)
         dlclose(handle);
+}
+
+const std::string&
+Plugin::GetName() const
+{
+    return name;
 }
 
 IPlugin*

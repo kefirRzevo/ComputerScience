@@ -14,6 +14,7 @@ class Row;
 class Column;
 
 class ScrollBox;
+class DropDownList;
 
 enum class BorderPart: char
 {
@@ -109,6 +110,7 @@ class Layout
     friend class Column;
 
     friend class ScrollBox;
+    friend class DropDownList;
 };
 
 class Container: public Layout
