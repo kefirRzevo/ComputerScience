@@ -47,6 +47,8 @@ class Layout
 
         virtual ~Layout() = default;
 
+        Layout*
+        GetParent();
         Widget*
         GetWidget();
         const RectInt&
@@ -69,14 +71,14 @@ class Layout
         bool
         IsInsideBorder(Vec2i pos_) const;
         void
-        OnListenerEvent(const Event& event_);
-        void
         OnEvent(const Event& event_);
 
         virtual void
         Attach(Layout* child_);
         virtual void
         Detach(Layout* child_);
+        void
+        OnMove(Vec2i delta_);
 
     protected:
 
@@ -96,8 +98,6 @@ class Layout
         bool       onResize;
         bool       onMove;
 
-        void
-        OnMove(Vec2i delta_);
         virtual void
         OnResize(const RectInt& rect_);
         RectInt

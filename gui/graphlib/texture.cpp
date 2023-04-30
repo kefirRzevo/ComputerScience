@@ -6,11 +6,24 @@
 std::unique_ptr<FontManager>    FontManager::fontManager;
 std::unique_ptr<TextureManager> TextureManager::textureManager;
 
+
+//----------------------------------------//
+
 std::string
 SF_RectToString(const sf::IntRect& rect)
 {
     std::ostringstream string;
     string << rect.left << " " << rect.top << " " << rect.width << " " << rect.height;
+    return string.str();
+}
+
+//----------------------------------------//
+
+std::string
+ColorToString(Color color)
+{
+    std::ostringstream string;
+    string << color;
     return string.str();
 }
 
@@ -151,8 +164,12 @@ managerOwners(false), sfSrcRect(0, 0, size_.x, size_.y), color(0)
 }
 
 Texture::Texture(Color color_):
-managerOwners(false), sfSrcRect(), color(color_)
-{}
+managerOwners(false), sfSrcRect(0, 0, Config::defWidth, Config::defHeight),
+color(color_)
+{
+    sfSrcTexture.create(static_cast<unsigned int>(sfSrcRect.width),
+                        static_cast<unsigned int>(sfSrcRect.height));
+}
 
 int
 Texture::GetWidth() const
@@ -200,7 +217,7 @@ Texture::FromBuffer(Color* pixels, int w, int h, int x, int y)
 //----------------------------------------//
 
 TextureManager::TextureManager():
-defaultTexture(GetTexture(Config::defIconTexturePath))
+defaultTexture(GetTexture(Config::defColor))
 {}
 
 TextureManager::~TextureManager()
@@ -233,6 +250,7 @@ TextureManager::GetTexture(const char* path_)
         return textureIt->second;
 
     Texture* newTexture = new Texture{path_};
+    newTexture->managerOwners = true;
     textures.insert({key, newTexture});
 
     return newTexture;
@@ -241,6 +259,9 @@ TextureManager::GetTexture(const char* path_)
 Texture*
 TextureManager::GetTexture(const char* path_, const RectInt& rect_)
 {
+    if(!rect_.operator bool())
+        return GetTexture(path_);
+
     sf::Texture temp{};
     if(!temp.loadFromFile(path_))
         return nullptr;
@@ -253,6 +274,7 @@ TextureManager::GetTexture(const char* path_, const RectInt& rect_)
         return textureIt->second;
 
     Texture* newTexture = new Texture{path_, rect_};
+    newTexture->managerOwners = true;
     textures.insert({key, newTexture});
 
     return newTexture;
@@ -261,6 +283,9 @@ TextureManager::GetTexture(const char* path_, const RectInt& rect_)
 Texture*
 TextureManager::GetTexture(const char* path_, int i, int j, int w, int h)
 {
+    if(!(w && h))
+        return GetTexture(path_);
+
     sf::Texture temp{};
     if(!temp.loadFromFile(path_))
         return nullptr;
@@ -275,6 +300,23 @@ TextureManager::GetTexture(const char* path_, int i, int j, int w, int h)
         return textureIt->second;
 
     Texture* newTexture = new Texture{path_, i, j, w, h};
+    newTexture->managerOwners = true;
+    textures.insert({key, newTexture});
+
+    return newTexture;
+}
+
+Texture*
+TextureManager::GetTexture(Color color_)
+{
+    std::string key = ColorToString(color_);
+
+    auto textureIt = textures.find(key);
+    if(textureIt != textures.end())
+        return textureIt->second;
+
+    Texture* newTexture = new Texture{color_};
+    newTexture->managerOwners = true;
     textures.insert({key, newTexture});
 
     return newTexture;

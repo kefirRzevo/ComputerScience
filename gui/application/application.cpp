@@ -3,7 +3,13 @@
 #include "../widgets/label.hpp"
 #include "../widgets/scrollbar.hpp"
 #include "../widgets/dropdownlist.hpp"
+
 #include "../graphlib/graphlib.hpp"
+
+#include "../gui/canvas.hpp"
+#include "../gui/properties_panel.hpp"
+#include "../gui/root.hpp"
+
 #include "application.hpp"
 
 #include "../plugin/pluginmanager.hpp"
@@ -28,7 +34,7 @@ class ButtonTest2: public ButtonResponse
 void
 App::Run()
 {
-    Window window{{1024, 1024}, "hi"};
+    Window window{{Config::windowWidth, Config::windowHeight}, "hi"};
     Renderer::Initialize(&window);
     Renderer* rend = Renderer::Get();
     bool active = true;
@@ -39,14 +45,15 @@ App::Run()
     Texture* btn2t = TextureManager::Get()->GetTexture("res/btns.jpg", {40, 120, 120, 120});
     Texture* btn3t = TextureManager::Get()->GetTexture("res/btns.jpg", {40, 240, 120, 120});
 
+    Widget* widget1 = new Widget{new Layout{{50, 50, 100, 100}}, text1};
+
     DropDownList* list1 = new DropDownList{new Column{}, text1};
+    ListOpenerButton* listbtn = new ListOpenerButton{new Layout{{50, 50, 100, 100}}, list1, btn1t, btn2t, btn3t};
     //const Font& font1 = FontManager::Get()->GetFont("res/TimesNewRoman.ttf");
 
-    Widget* widget1 = new Widget{new Layout{{50, 50, 100, 100}}, text1};
-    //Widget* widget2 = new Widget{new Column{{40, 40, 120, 80}, {10, 10}, 3}, text1};
     Widget* widget3 = new Widget{new Layout{{{60, 60}}, 2, 4, {60, 60}, {300, 150}}, text1};
     
-    PluginManager::Get()->GetPlugins();
+    //PluginManager::Get()->GetPlugins();
 
     list1->Attach(widget3);
     //Widget* widget2 = new Widget{new Layout{{{50, 50}}}, text1};
@@ -89,14 +96,19 @@ App::Run()
     //widget1->Attach(lab1);
     //widget1->Attach(bar1);
     //widget1->Attach(bar2);
-    widget1->Attach(btn1);
-    widget1->Attach(list1);
+    //widget1->Attach(btn1);
+    //widget1->Attach(listbtn);
+    CanvasWidget* canv1 = new CanvasWidget{{Config::defHorScrollBarWidth, Config::defVerScrollBarHeight}, {151, 400}};
+    widget1->Attach(canv1);
     //widget1->Attach(list1);
     //widget1->Attach(txticon1);
     //widget1->Attach(txtlabel1);
-    fprintf(stderr, "%d %d %d %d\n", widget1->GetLayout()->GetMinSize().x, widget1->GetLayout()->GetMinSize().y, widget1->GetLayout()->GetMaxSize().x, widget1->GetLayout()->GetMaxSize().y);
+    //fprintf(stderr, "%d %d %d %d\n", widget1->GetLayout()->GetMinSize().x, widget1->GetLayout()->GetMinSize().y, widget1->GetLayout()->GetMaxSize().x, widget1->GetLayout()->GetMaxSize().y);
     //widget1->Attach(btn1);
+    //fprintf(stderr, "test %p\n", listbtn->GetParent());
+    //fprintf(stderr, "addres %p %p %p\n", widget1, listbtn, list1);
     WidgetSystem* syst1 = new WidgetSystem{widget1};
+    widget1->GetLayout()->OnMove({});
 
     while(active)
     {

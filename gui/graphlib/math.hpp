@@ -14,12 +14,6 @@ using Vec2f = Vec2<float>;
 using RectInt = Rect<int>;
 using Color = unsigned int;
 
-const Color White = 0xFF'FF'FF'FF;
-const Color Black = 0x00'00'00'FF;
-const Color Red   = 0xFF'00'00'FF;
-const Color Green = 0x00'FF'00'FF;
-const Color Blue  = 0x00'00'FF'FF;
-
 sf::Color
 To_SF_Color(Color color);
 
@@ -123,10 +117,15 @@ class Rect
                    point.x <= left + width && point.y <= top + height;
         }
 
-        bool operator==(const Rect<T>& rhs)
+        bool operator==(const Rect<T>& rhs) const
         {
             return  left  == rhs.left  && top    == rhs.top &&
                     width == rhs.width && height == rhs.height;
+        }
+
+        operator bool() const
+        {
+            return width && height;
         }
 };
 

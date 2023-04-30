@@ -28,6 +28,12 @@ onRelease(onRelease_), onHover(onHover_), onPress(onPress_)
         onPress = onRelease;
 }
 
+bool
+Button::GetPressed() const
+{
+    return pressed;
+}
+
 void
 Button::SetButtonResponse(ButtonResponse* response_)
 {
@@ -48,7 +54,7 @@ Button::ProcessListenerEvent(const Event& event_)
 
         pressed = false;
         texture = onRelease;
-        system->Unsubscribe(mouseReleased); 
+        system->Unsubscribe(mouseReleased);
 
         return true;
     }
@@ -57,7 +63,6 @@ Button::ProcessListenerEvent(const Event& event_)
         system->Unsubscribe(mouseHovered);
         if(!pressed)
             texture = onRelease;
-        return false;
     }
     return false;
 }
@@ -71,32 +76,35 @@ Button::OnEvent(const Event& event_)
     switch(event_.type)
     {
         case mousePressed:
-
+        {
             system->Reset();
             system->Subscribe(this, mouseHovered);
             system->Subscribe(this, mouseReleased);
             pressed = true;
             texture = onPress;
             break;
-
+        }
         case mouseHovered:
-
+        {
             system->Subscribe(this, mouseHovered);
             if(!pressed)
                 texture = onHover;
             break;
-
+        }
         default:
-
+        {
             break;
+        }
     }
     return true;
 }
 
-bool
-Button::GetPressed() const
-{
-    return pressed;
-}
+//----------------------------------------//
+
+CloseButton::CloseButton(Layout* layout_, Widget* toClose_,
+Texture* onRelease_, Texture* onHover_, Texture* onPres_):
+Button(layout_, new CloseCommand{toClose_},
+onRelease_, onHover_, onPres_)
+{}
 
 //----------------------------------------//

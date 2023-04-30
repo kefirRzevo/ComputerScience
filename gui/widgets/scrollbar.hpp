@@ -97,6 +97,8 @@ class ScrollBar: public Widget
         GetScaleLength() const;
 
         virtual void
+        SetBoxLength(int length_) = 0;
+        virtual void
         SetValue(float value_) = 0;
         void
         OnLayoutMove() override;
@@ -123,6 +125,8 @@ class HorScrollBar: public ScrollBar
         ScrollBox* box_, ScrollBarResponse* responce_);
 
         void
+        SetBoxLength(int length_) override;
+        void
         SetValue(float value_) override;
 
     friend class ScrollBox;
@@ -144,6 +148,8 @@ class VerScrollBar: public ScrollBar
         VerScrollBar(Layout* layout_, Texture* texture_,
         ScrollBox* box_, ScrollBarResponse* responce_);
 
+        void
+        SetBoxLength(int length_) override;
         void
         SetValue(float value_) override;
 

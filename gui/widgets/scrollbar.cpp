@@ -84,7 +84,7 @@ ScrollBox::OnEvent(const Event& event_)
     switch(event_.type)
     {
         case mousePressed:
-
+        {
             system->Reset();
             system->Subscribe(this, mouseMoved);
             system->Subscribe(this, mouseHovered);
@@ -94,17 +94,18 @@ ScrollBox::OnEvent(const Event& event_)
             pressed  = true;
             texture  = move;
             break;
-
+        }
         case mouseHovered:
-
+        {
             system->Subscribe(this, mouseHovered);
             if(!pressed)
                 texture = hover;
             break;
-
+        }
         default:
-
+        {
             break;
+        }
     }
     return true;
 }
@@ -196,7 +197,18 @@ HorScrollBar::SetScaleParams()
     int boxWidth  = box->GetLayout()->GetRectangle().width;
 
     scaleLen   = rect.width - 2 * boxIndent - boxWidth;
-    scaleStep  = 1.f / static_cast<float>(scaleLen);
+    if(scaleLen <= 0)
+        scaleStep = static_cast<float>(rect.width);
+    else
+        scaleStep  = 1.f / static_cast<float>(scaleLen);
+}
+
+void
+HorScrollBar::SetBoxLength(int length_)
+{
+    const RectInt& rect = box->GetLayout()->GetRectangle();
+    box->SetRectangle({rect.left, rect.top, length_, rect.height});
+    SetScaleParams();
 }
 
 void
@@ -261,7 +273,18 @@ VerScrollBar::SetScaleParams()
     int boxHeight  = box->GetLayout()->GetRectangle().height;
 
     scaleLen   = rect.height - 2 * boxIndent - boxHeight;
-    scaleStep  = 1.f / static_cast<float>(scaleLen);
+    if(scaleLen <= 0)
+        scaleStep = static_cast<float>(rect.height);
+    else
+        scaleStep  = 1.f / static_cast<float>(scaleLen);
+}
+
+void
+VerScrollBar::SetBoxLength(int length_)
+{
+    const RectInt& rect = box->GetLayout()->GetRectangle();
+    box->SetRectangle({rect.left, rect.top, rect.width, length_});
+    SetScaleParams();
 }
 
 void

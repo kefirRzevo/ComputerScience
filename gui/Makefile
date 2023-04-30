@@ -1,7 +1,7 @@
 CC  = gcc
 CXX = g++ -std=c++17
 
-CXXFLAGS = -I inc -Wall -Wextra -g -std=c++17 -Wall -Wextra \
+CXXFLAGS = -I inc -Wall -Wextra -g -std=c++17 #-Wall -Wextra \
 -Weffc++ -Wc++0x-compat \
 -Wc++11-compat -Wc++14-compat -Wcast-qual \
 -Wchar-subscripts   \
@@ -37,54 +37,49 @@ CXXFLAGS = -I inc -Wall -Wextra -g -std=c++17 -Wall -Wextra \
 -fsanitize=unreachable \
 -fsanitize=vla-bound \
 -fsanitize=vptr
+
 DBGFLAGS = -fsanitize=address -ggdb3
+LDFLAGS  = -ldl
 
 TARGET = app
-SRCDIR = application/ graphlib/ widgets/
-OBJDIR = build/
-INCDIR = application/ graphlib/ widgets/ ./
 
-SOURCES = main.cpp $(foreach SRC, $(SRCDIR), $(wildcard $(SRC)*.cpp))
+
+SRCDIR = ./ application/ graphlib/ widgets/ plugin/ gui/
+OBJDIR = build/
+INCDIR = application/ graphlib/ widgets/ plugin/ gui/
+LIBDIR = plugins/
+
+SOURCES = $(foreach SRC, $(SRCDIR), $(wildcard $(SRC)*.cpp))
 OBJECTS = $(foreach SRC, $(SOURCES), $(basename $(OBJDIR)$(SRC)).o)
 DEPENDS = $(patsubst %.o, %.d, $(OBJECTS))
+LIB     = $(patsubst %.cpp, $(OBJDIR)%.so, $(wildcard $(LIBDIR)*.cpp))
 
-# .PHONY means these rules get executed even if
-# files of those names exist.
 
-all: build #dirs
+all: dirs plugins build
 
-build: $(TARGET)
+clean:
+	$(RM) $(OBJECTS) $(DEPENDS) $(TARGET) $(OBJDIR)$(LIB)
 
-.PHONY: clean dirs
+
+plugins: $(LIB)
+
+$(OBJDIR)%.so: %.cpp
+	$(CXX) -shared -fPIC -o $@ $<
+
+.PHONY: clean dirs plugins
 
 dirs:
 	@ mkdir -p $(OBJDIR)
-	@ mkdir -p $(SRCDIR)
-	@ mkdir -p $(INCDIR)
+	@ mkdir -p $(addprefix $(OBJDIR), $(SRCDIR))
+	@ mkdir -p $(addprefix $(OBJDIR), $(INCDIR))
+	@ mkdir -p $(addprefix $(OBJDIR), $(LIBDIR))
 
-clean:
-	$(RM) $(OBJECTS) $(DEPENDS) $(TARGET)
+build: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -o $@ -lsfml-graphics -lsfml-window -lsfml-system
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ -lsfml-graphics -lsfml-window -lsfml-system
 
 -include $(DEPENDS)
 
-$(OBJDIR)main.o: main.cpp
-	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
-
 $(OBJDIR)%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
-
-
-#define BuildRule =
-#$(OBJDIR)$(basename $(notdir $(1))).o: $(1)
-#	echo $@
-#	$(CXX) $< -c -o $@ $(CXXFLAGS)
-#endef
-
-#-include depends
-
-#$(eval $(call BuildRule,main))
-
-#$(foreach SRC, $(SOURCES), $(eval $(call BuildRule, $(SRC))))

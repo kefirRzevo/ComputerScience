@@ -10,26 +10,23 @@ list(list_)
 void
 ListOpenerCommand::OnResponse()
 {
-    fprintf(stderr, "co\n");
     list->ChangeVisibility();
-    fprintf(stderr, "%d %d %d %d\n", list->GetLayout()->GetRectangle().left,list->GetLayout()->GetRectangle().top, list->GetLayout()->GetRectangle().width, list->GetLayout()->GetRectangle().height);
 }
 
 //----------------------------------------//
 
-ButtonListOpener::ButtonListOpener(Layout* layout_, DropDownList* list_,
+ListOpenerButton::ListOpenerButton(Layout* layout_, DropDownList* list_,
 Texture* onRelease_, Texture* onHover_, Texture* onPress_):
 Button(layout_, new ListOpenerCommand{list_}, onRelease_, onHover_, onPress_),
 list(list_)
 {
-    fprintf(stderr, "%p %p %p\n", onRelease_, onHover_, onPress_);
     list->SetParent(this);
     list->SetWidgetSystem(system);
     children.push_back(list);
 }
 
 void
-ButtonListOpener::Attach(Widget* child_)
+ListOpenerButton::Attach(Widget* child_)
 {
     if(child_ == list)
         return;
@@ -38,7 +35,7 @@ ButtonListOpener::Attach(Widget* child_)
 }
 
 void
-ButtonListOpener::Detach(Widget* child_)
+ListOpenerButton::Detach(Widget* child_)
 {
     if(child_ == list)
         return;
@@ -47,13 +44,13 @@ ButtonListOpener::Detach(Widget* child_)
 }
 
 void
-ButtonListOpener::OnLayoutMove()
+ListOpenerButton::OnLayoutMove()
 {
     list->UpdateDropPoint();
 }
 
 void
-ButtonListOpener::OnLayoutResize()
+ListOpenerButton::OnLayoutResize()
 {
     list->UpdateDropPoint();
 }
@@ -70,39 +67,50 @@ DropDownList::UpdateDropPoint()
     if(!parent)
         return;
 
-    Widget* widget = parent->GetParent();
+    Widget* widget = parent;
     RectInt container = widget->GetLayout()->GetRectangle();
-    while(widget && dynamic_cast<Container*>(widget->GetLayout()))
+    while(widget->GetParent() && dynamic_cast<Container*>(widget->GetParent()->GetLayout()))
     {
-        container = widget->GetLayout()->GetRectangle();
         widget = widget->GetParent();
+        container = widget->GetLayout()->GetRectangle();
     }
+
+    int contAdd = widget->GetLayout()->GetAddition() / 2;
+    RectInt contRect = {container.left - contAdd, container.top - contAdd,
+                        container.width + 2 * contAdd, container.height + 2 * contAdd};
 
     const RectInt& rect = layout->GetRectangle();
+    int add = layout->GetAddition() / 2;
+    RectInt marginRect = {rect.left  -     add, rect.top    -     add,
+                          rect.width + 2 * add, rect.height + 2 * add};
+
     RectInt newRect = rect;
 
-    if(container.left + rect.width < Config::windowWidth &&
-        container.top + container.height + rect.height < Config::windowHeight)
+    int width  = static_cast<int>(Config::windowWidth);
+    int height = static_cast<int>(Config::windowHeight);
+
+    if(contRect.left + marginRect.width < width &&
+        contRect.top + contRect.height + marginRect.height < height)
     {
-        newRect.left = container.left;
-        newRect.top  = container.top + container.height;
+        newRect.left = contRect.left;
+        newRect.top  = contRect.top + contRect.height;
     }
-    else if(container.left + container.width + rect.width < Config::windowWidth &&
-    container.top + rect.height < Config::windowHeight)
+    else if(contRect.left + contRect.width + marginRect.width < width &&
+    contRect.top + marginRect.height < height)
     {
-        newRect.left = container.left + container.width;
-        newRect.top = container.top;
+        newRect.left = contRect.left + contRect.width;
+        newRect.top = contRect.top;
     }
-    else if(container.left + rect.width < Config::windowWidth &&
-    container.top - rect.height > 0)
+    else if(contRect.left + marginRect.width < width &&
+    contRect.top - marginRect.height > 0)
     {
-        newRect.left = container.left;
-        newRect.top = container.top - rect.height;
+        newRect.left = contRect.left;
+        newRect.top = contRect.top - marginRect.height;
     }
     else
     {
-        newRect.left = container.left - rect.width;
-        newRect.top = rect.top;
+        newRect.left = contRect.left - marginRect.width;
+        newRect.top = marginRect.top;
     }
     layout->OnResize(newRect);
 }

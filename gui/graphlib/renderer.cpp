@@ -217,7 +217,7 @@ Renderer::DrawTexture(Texture* src, const Texture* dst, const RectInt& dstRect)
     sfRenderTexture.create(src->GetWidth(), src->GetHeight());
     sf::Sprite srcSfSprite{src->sfSrcTexture};
     sfRenderTexture.draw(srcSfSprite);
-fprintf(stderr, "%d %d\n", src->GetWidth(), src->GetHeight());
+
     sfRenderTarget = &sfRenderTexture;
     DrawTexture(dst, dstRect);
     sfRenderTarget = sfRenderWindow;

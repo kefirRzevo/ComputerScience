@@ -16,7 +16,7 @@ Icon::OnEvent(const Event& event_)
 
 //----------------------------------------//
 
-TextIcon::TextIcon(Layout* layout_, Texture* texture_,Text* text_,
+TextIcon::TextIcon(Layout* layout_, Texture* texture_, Text* text_,
 int maxSize_):
 Widget(layout_, texture_), text(text_), fullString(text->GetString()), maxSize(maxSize_)
 {
@@ -132,15 +132,16 @@ TextLabel::OnEvent(const Event& event_)
     switch(event_.type)
     {
         case mousePressed:
-
+        {
             system->Reset();
             system->Subscribe(this, textEntered);
             system->Subscribe(this, keyPressed);
             break;
-        
+        }
         default:
-
+        {
             break;
+        }
     }
     return true;
 }

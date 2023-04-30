@@ -15,7 +15,8 @@ bool
 Event::IsMouseType() const
 {
     if(type == mousePressed  || type == mouseReleased ||
-       type == mouseHovered  || type == mouseMoved )
+       type == mouseHovered  || type == mouseMoved    ||
+       type == rightButtonPress)
         return true;
 
     return false;
@@ -50,7 +51,6 @@ EventManager::Poll_SF_Event()
     static bool pressed = false;
     static Vec2i prevPos;
 
-    Vec2i lastPos = {};
     sf::Event sfEvent;
 
     if(!Renderer::Get()->sfRenderWindow->pollEvent(sfEvent))
@@ -59,40 +59,46 @@ EventManager::Poll_SF_Event()
     switch (sfEvent.type)
     {
         case sf::Event::Closed:
-
+        {
             events.push({quit});
             return true;
-
+        }
         case sf::Event::KeyPressed:
-
+        {
             events.push({keyPressed, {sfEvent.key.code}});
             return true;
-
+        }
         case sf::Event::TextEntered:
+        {
             events.push({textEntered, {static_cast<int>(sfEvent.text.unicode)}});
             return true;
-
-        case sf::Event::MouseButtonPressed:pressed = true;
-            lastPos = {sfEvent.mouseButton.x, sfEvent.mouseButton.y};
+        }
+        case sf::Event::MouseButtonPressed:
+        {
+            pressed = true;
+            Vec2i lastPos = {sfEvent.mouseButton.x, sfEvent.mouseButton.y};
             prevPos = lastPos;
-            if(sfEvent.mouseButton.button != sf::Mouse::Left)
+
+            if(sfEvent.mouseButton.button == sf::Mouse::Left)
+                events.push({mousePressed, {lastPos}});
+            else if(sfEvent.mouseButton.button == sf::Mouse::Right)
+                events.push({rightButtonPress, {lastPos}});
+            else
                 break;
-            events.push({mousePressed, {lastPos}});
             return true;
-
+        }
         case sf::Event::MouseButtonReleased:
-
+        {
             pressed = false;
-            lastPos = {sfEvent.mouseButton.x, sfEvent.mouseButton.y};
-            if(sfEvent.mouseButton.button != sf::Mouse::Left)
-                break;
+            Vec2i lastPos = {sfEvent.mouseButton.x, sfEvent.mouseButton.y};
+
             events.push({mouseReleased, {lastPos}});
             events.push({mouseHovered,  {lastPos}});
             return true;
-
+        }
         case sf::Event::MouseMoved:
-
-            lastPos = {sfEvent.mouseMove.x, sfEvent.mouseMove.y};
+        {
+            Vec2i lastPos = {sfEvent.mouseMove.x, sfEvent.mouseMove.y};
             if(pressed)
             {
                 events.push({mouseMoved, {prevPos, lastPos - prevPos}});
@@ -100,11 +106,12 @@ EventManager::Poll_SF_Event()
             }
             events.push({mouseHovered, {lastPos}});
             return true;
-
+        }
         default:
+        {
             break;
+        }
     }
-
     return false;
 }
 
@@ -122,34 +129,47 @@ EventManager::PollEvent(Event& event)
 /*
     switch (event.type)
     {
-        case Event::keyPressed:
+        case keyPressed:
+        {
             fout << "keyPressed ";
             fout << event.key.key;
             break;
-        
-        case Event::mousePressed:
+        }
+        case mousePressed:
+        {
             fout << "mousePressed ";
             fout << event.mouse.pos.x << " " << event.mouse.pos.y;
             break;
-
-        case Event::mouseReleased:
+        }
+        case mouseReleased:
+        {
             fout << "mouseReleased ";
             fout << event.mouse.pos.x << " " << event.mouse.pos.y;
             break;
-
-        case Event::mouseMoved:
+        }
+        case mouseMoved:
+        {
             fout << "mouseMoved ";
             fout << event.mouse.pos.x << " " << event.mouse.pos.y << " & " << event.mouse.offset.x << " " << event.mouse.offset.y;
             break;
-
-        case Event::mouseHovered:
+        }
+        case mouseHovered:
+        {
             fout << "mouseHovered ";
             fout << event.mouse.pos.x << " " << event.mouse.pos.y;
             break;
-        
+        }
+        case rightButtonPress:
+        {
+            fout << "rightButtonPress ";
+            fout << event.mouse.pos.x << " " << event.mouse.pos.y;
+            break;
+        }
         default:
+        {
             fout << "WTF";
             break;
+        }
     }
     fout << "\n" << std::flush;
 */

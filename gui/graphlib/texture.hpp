@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include "math.hpp"
 #include "../config.hpp"
+#include "math.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <unordered_map>
@@ -160,6 +160,8 @@ class TextureManager
         GetTexture(const char* path_, const RectInt& rect_);
         Texture*
         GetTexture(const char* path_, int i, int j, int w, int h);
+        Texture*
+        GetTexture(Color color_);
 
         Texture*
         GetDefaultTexture();

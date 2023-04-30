@@ -136,13 +136,10 @@ Widget::ProcessListenerEvent(const Event& event_)
 bool
 Widget::OnEvent(const Event& event_)
 {
-    if(layout->IsInside(event_.mouse.pos) && event_.type == mousePressed)
-    {
-        system->Reset();
-        return true;
-    }
+    if(event_.IsMouseType() && !layout->IsInside(event_.mouse.pos))
+        return false;
 
-    return false;
+    return true;
 }
 
 void

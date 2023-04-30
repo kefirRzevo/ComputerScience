@@ -25,7 +25,7 @@ class ListOpenerCommand: public ButtonResponse
 
 //----------------------------------------//
 
-class ButtonListOpener: public Button
+class ListOpenerButton: public Button
 {   
     protected:
 
@@ -33,7 +33,7 @@ class ButtonListOpener: public Button
     
     public:
 
-        ButtonListOpener(Layout* layout_, DropDownList* list_,
+        ListOpenerButton(Layout* layout_, DropDownList* list_,
         Texture* onRelease_, Texture* onHover_ = nullptr,
         Texture* onPress_ = nullptr);
 

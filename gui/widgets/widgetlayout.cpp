@@ -17,58 +17,59 @@ Layout::GetNewRectangle(Vec2i pos)
     switch(part)
     {
         case BorderPart::LeftSide:
-
+        {
             newRect.left = pos.x;
             newRect.width = rect.left + rect.width - pos.x;
             break;
-
+        }
         case BorderPart::RightSide:
-
+        {
             newRect.width = pos.x - rect.left;
             break;
-
+        }
         case BorderPart::TopSide:
-
+        {
             newRect.top = pos.y;
             newRect.height = rect.top + rect.height - pos.y;
             break;
-
+        }
         case BorderPart::BottomSide:
-
+        {
             newRect.height = pos.y - rect.top;
             break;
-
+        }
         case BorderPart::TopLeftCorner:
-
+        {
             newRect.width = rect.left + rect.width - pos.x;
             newRect.height = rect.top + rect.height - pos.y;
             newRect.left = pos.x;
             newRect.top = pos.y;
             break;
-
+        }
         case BorderPart::TopRightCorner:
-
+        {
             newRect.top = pos.y;
             newRect.width = pos.x - rect.left;
             newRect.height = rect.top + rect.height - pos.y;
             break;
-
+        }
         case BorderPart::BottomRightCorner:
-
+        {
             newRect.width = pos.x - rect.left;
             newRect.height = pos.y - rect.top;
             break;
-
+        }
         case BorderPart::BottomLeftCorner:
-
+        {
             newRect.left = pos.x;
             newRect.width  = rect.left + rect.width - pos.x;
             newRect.height = pos.y - rect.top;
             break;
-            
+        }
         default:
-
+        {
             break;
+        }
     }
     return newRect;
 }
@@ -135,6 +136,12 @@ minSize(minSize_), maxSize(maxSize_),
 part(BorderPart::NoBorder), onResize(false), onMove(false)
 {
     addition = 2 * margin + 2 * border;
+}
+
+Layout*
+Layout::GetParent()
+{
+    return parent;
 }
 
 Widget*
@@ -204,12 +211,24 @@ Layout::IsInsideBorder(Vec2i pos_) const
 }
 
 void
-Layout::OnListenerEvent(const Event& event_)
+Layout::OnEvent(const Event& event_)
 {
     if(dynamic_cast<Container*>(parent))
         return;
 
-    if(event_.type == mouseMoved)
+    if(event_.type == mousePressed)
+    {
+        if(IsInsideBorder(event_.mouse.pos))
+        {
+            part     = GetBorderPart(event_.mouse.pos);
+            onResize = true;
+        }
+        else if(rect.IsInside(event_.mouse.pos))
+        {
+            onMove = true;
+        }
+    }
+    else if(event_.type == mouseMoved)
     {
         if(onResize)
         {
@@ -230,26 +249,6 @@ Layout::OnListenerEvent(const Event& event_)
         onMove   = false;
         onResize = false;
         part     = BorderPart::NoBorder;
-    }
-}
-
-void
-Layout::OnEvent(const Event& event_)
-{
-    if(dynamic_cast<Container*>(parent))
-        return;
-
-    if(event_.type == mousePressed)
-    {
-        if(IsInsideBorder(event_.mouse.pos))
-        {
-            part     = GetBorderPart(event_.mouse.pos);
-            onResize = true;
-        }
-        else if(rect.IsInside(event_.mouse.pos))
-        {
-            onMove = true;
-        }
     }
 }
 
@@ -321,7 +320,8 @@ Row::Attach(Layout* child_)
     children.push_back(child_);
 
     rect.width  += child_->GetRectangle().width  + child_->GetAddition();
-    rect.height += child_->GetRectangle().height + child_->GetAddition();
+    if(child_->GetRectangle().height + child_->GetAddition() > rect.height)
+        rect.height = child_->GetRectangle().height + child_->GetAddition();
 
     minSize.x += child_->GetMinSize().x + child_->GetAddition();
     maxSize.x += child_->GetMaxSize().x + child_->GetAddition();
@@ -330,6 +330,9 @@ Row::Attach(Layout* child_)
     {
         minSize.y = child_->GetMinSize().y + child_->GetAddition();
         maxSize.y = child_->GetMaxSize().y + child_->GetAddition();
+
+        rect.width  = child_->GetRectangle().width  + child_->GetAddition();
+        rect.height = child_->GetRectangle().height + child_->GetAddition();
     }
 
     if(child_->GetMinSize().y + child_->GetAddition() > minSize.y)
@@ -454,7 +457,8 @@ Column::Attach(Layout* child_)
     child_->parent = this;
     children.push_back(child_);
 
-    rect.width  += child_->GetRectangle().width  + child_->GetAddition();
+    if(child_->GetRectangle().width + child_->GetAddition() > rect.width)
+        rect.width = child_->GetRectangle().width + child_->GetAddition();
     rect.height += child_->GetRectangle().height + child_->GetAddition();
     
     minSize.y += child_->GetMinSize().y + child_->GetAddition();
@@ -464,6 +468,9 @@ Column::Attach(Layout* child_)
     {
         minSize.x = child_->GetMinSize().x + child_->GetAddition();
         maxSize.x = child_->GetMaxSize().x + child_->GetAddition();
+
+        rect.width  = child_->GetRectangle().width  + child_->GetAddition();
+        rect.height = child_->GetRectangle().height + child_->GetAddition();
     }
 
     if(child_->GetMinSize().x + child_->GetAddition() > minSize.x)

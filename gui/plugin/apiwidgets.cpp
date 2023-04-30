@@ -85,10 +85,9 @@ APIWidgetFactory::CreateSlider
 (int width, int height, float boxWidth, float boxHeight, float min, float max)
 {
     assert(min > 0 && max > 0);
-    TextureManager* manager = TextureManager::Get();
 
-    Texture* boxTexture = manager->GetTexture(Config::defScrollBoxPath);
-    Texture* barTexture = manager->GetTexture(Config::defScrollBarPath);
+    Texture* boxTexture = Config::pluginScrollBox;
+    Texture* barTexture = Config::pluginScrollBar;
 
     Vec2i boxSize = {static_cast<int>(boxWidth), static_cast<int>(boxHeight)};
     Vec2i defBarSize = {width, height};

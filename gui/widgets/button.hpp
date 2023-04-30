@@ -19,22 +19,6 @@ class ButtonResponse
         OnResponse() = 0;
 };
 
-class CloseCommand: public ButtonResponse
-{
-    private:
-
-        Widget* widget;
-
-    public:
-
-        CloseCommand(Widget* widget_);
-
-        void
-        OnResponse() override;
-};
-
-//----------------------------------------//
-
 class Button: public Widget
 {
     protected:
@@ -51,15 +35,39 @@ class Button: public Widget
         Button(Layout* layout_, ButtonResponse* response_, Texture* onRelease_,
         Texture* onHover_ = nullptr, Texture* onPres_ = nullptr);
 
+        bool
+        GetPressed() const;
+
         void
         SetButtonResponse(ButtonResponse* response_);
         bool
         ProcessListenerEvent(const Event& event_) override;
         bool
         OnEvent(const Event& event_) override;
+};
 
-        bool
-        GetPressed() const;
+//----------------------------------------//
+
+class CloseCommand: public ButtonResponse
+{
+    private:
+
+        Widget* widget;
+
+    public:
+
+        CloseCommand(Widget* widget_);
+
+        void
+        OnResponse() override;
+};
+
+class CloseButton: public Button
+{
+    public:
+
+        CloseButton(Layout* layout_, Widget* toClose_, Texture* onRelease_,
+        Texture* onHover_ = nullptr, Texture* onPres_ = nullptr);
 };
 
 //----------------------------------------//

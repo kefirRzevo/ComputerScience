@@ -14,6 +14,7 @@ enum EventType
     keyPressed,
     textEntered,
     mousePressed,
+    rightButtonPress,
     mouseReleased,
     mouseHovered,
     mouseMoved,
