@@ -40,10 +40,10 @@ class Layout
         Layout           (      Layout&&) = default;
         Layout& operator=(      Layout&&) = default;
 
-        Layout(const RectInt& rect_,
-        int margin_ = Config::defMargin, int border_ = Config::defBorder,
-        Vec2i minSize_ = {Config::minWidth, Config::minHeight},
-        Vec2i maxSize_ = {Config::maxWidth, Config::maxHeight});
+        Layout(const RectInt& rect_, int margin_, int border_,
+        Vec2i minSize_, Vec2i maxSize_);
+        Layout(const RectInt& rect_, int margin_ = 0, int border_ = 0);
+        Layout(Vec2i size, int margin_ = 0, int border_ = 0);
 
         virtual ~Layout() = default;
 
@@ -61,8 +61,6 @@ class Layout
         GetMinSize() const;
         Vec2i
         GetMaxSize() const;
-        int
-        GetAddition() const;
 
         void
         SetWidget(Widget* widget_);
@@ -93,7 +91,6 @@ class Layout
         Vec2i   minSize;
         Vec2i   maxSize;
 
-        int        addition;
         BorderPart part;
         bool       onResize;
         bool       onMove;
@@ -111,14 +108,18 @@ class Layout
 
     friend class ScrollBox;
     friend class DropDownList;
+
+    public:
+
+        mutable int addition;
+        mutable int indent;
 };
 
 class Container: public Layout
 {
     public:
 
-        Container(int margin_ = Config::defMargin,
-        int border_ = Config::defBorder);
+        Container(int margin_ = 0, int border_ = 0);
 
         void
         Attach(Layout* child_) override = 0;
@@ -138,8 +139,7 @@ class Row: public Container
 {
     public:
 
-        Row(int margin_ = Config::defMargin,
-        int border_ = Config::defBorder);
+        Row(int margin_ = 0, int border_ = 0);
 
         void
         Attach(Layout* child_) override;
@@ -156,8 +156,7 @@ class Column: public Container
 {
     public:
 
-        Column(int margin_ = Config::defMargin,
-        int border_ = Config::defBorder);
+        Column(int margin_ = 0, int border_ = 0);
 
         void
         Attach(Layout* child_) override;

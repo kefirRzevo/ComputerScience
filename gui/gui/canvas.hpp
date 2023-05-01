@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../widgets/widget.hpp"
+#include "../widgets/scrollbar.hpp"
 
 class Canvas;
 
@@ -17,7 +18,7 @@ class CanvasWidget: public Widget
 
     public:
 
-        CanvasWidget(Vec2i canvasSize, Vec2i fullTextureSize);
+        CanvasWidget(const std::string& name, Vec2i fullTextureSize);
 
         bool
         ProcessListenerEvent(const Event& event_) override;

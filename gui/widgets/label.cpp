@@ -7,6 +7,13 @@ Icon::Icon(Layout* layout_, Texture* texture_):
 Widget(layout_, texture_)
 {}
 
+Icon*
+Icon::GetDefault(Texture* texture_)
+{
+    Layout* layout = new Layout{{Config::defIconWidth, Config::defIconHeight}};
+    return new Icon{layout, texture_};
+}
+
 bool
 Icon::OnEvent(const Event& event_)
 {
@@ -16,13 +23,24 @@ Icon::OnEvent(const Event& event_)
 
 //----------------------------------------//
 
-TextIcon::TextIcon(Layout* layout_, Texture* texture_, Text* text_,
-int maxSize_):
-Widget(layout_, texture_), text(text_), fullString(text->GetString()), maxSize(maxSize_)
+TextIcon::TextIcon(Layout* layout_, Text* text_, Texture* texture_,
+int textMaxSize_):
+Widget(layout_, texture_), text(text_), fullString(text->GetString()),
+textMaxSize(textMaxSize_)
 {
-    if(fullString.size() > maxSize)
-        fullString.erase(maxSize, fullString.size());
+    if(fullString.size() > textMaxSize)
+        fullString.erase(textMaxSize, fullString.size());
     OnLayoutResize();
+}
+
+TextIcon*
+TextIcon::GetDefault(const std::string& string)
+{
+    Vec2i def = {Config::defTextIconWidth,    Config::defTextIconHeight};
+    Vec2i min = {Config::defMinTextIconWidth, Config::defTextIconHeight};
+    Vec2i max = {Config::defMaxTextIconWidth, Config::defTextIconHeight};
+    Layout* layout = new Layout{{def}, 0, 0, min, max};
+    return new TextIcon{layout, new Text{string}, nullptr};
 }
 
 bool
@@ -36,8 +54,8 @@ void
 TextIcon::SetString(const char* string)
 {
     fullString = string;
-    if(fullString.size() > maxSize)
-        fullString.erase(maxSize, fullString.size());
+    if(fullString.size() > textMaxSize)
+        fullString.erase(textMaxSize, fullString.size());
 }
 
 void
@@ -52,8 +70,8 @@ TextIcon::OnLayoutMove()
 void
 TextIcon::OnLayoutResize()
 {
-    if(fullString.size() > maxSize)
-        fullString.erase(maxSize, fullString.size());
+    if(fullString.size() > textMaxSize)
+        fullString.erase(textMaxSize, fullString.size());
 
     curString = fullString;
     text->SetString(curString);
@@ -75,7 +93,8 @@ TextIcon::OnEvent(const Event& event_)
 void
 TextIcon::Render() const
 {
-    Widget::Render();
+    if(texture)
+        Widget::Render();
 
     Renderer::Get()->DrawText(text.get());
 }
@@ -95,8 +114,8 @@ TextLabelResponseTest::OnResponse(const std::string& string_)
 }
 
 TextLabel::TextLabel(Layout* layout_, Texture* texture_,
-TextLabelResponse* response_, Text* textStyle_, int maxSize_):
-TextIcon(layout_, texture_, textStyle_, maxSize_), responce(response_)
+TextLabelResponse* response_, Text* textStyle_, int textMaxSize_):
+TextIcon(layout_, textStyle_, texture_, textMaxSize_), responce(response_)
 {}
 
 bool

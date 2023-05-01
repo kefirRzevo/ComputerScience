@@ -37,6 +37,16 @@ class ListOpenerButton: public Button
         Texture* onRelease_, Texture* onHover_ = nullptr,
         Texture* onPress_ = nullptr);
 
+        static ListOpenerButton*
+        GetDefault(const std::string& string_, DropDownList* list_);
+        bool
+        GetListVisibility() const;
+
+        void
+        HideList();
+        void
+        ShowList();
+
         void
         Attach(Widget* child_) override;
         void
@@ -54,11 +64,17 @@ class DropDownList: public Widget
 {
     protected:
 
-        bool  visible;
+        OptionButton* activeChild;
+        bool visible;
         
     public:
 
-        DropDownList(Column* layout_, Texture* texture_);
+        DropDownList(Texture* texture_);
+
+        static DropDownList*
+        GetDefault();
+        bool
+        GetVisibility() const;
 
         void
         UpdateDropPoint();
@@ -69,6 +85,9 @@ class DropDownList: public Widget
         ProcessListenerEvent(const Event& event_) override;
         bool
         OnEvent(const Event& event_) override;
+
+        void
+        Clear();
 
         void
         Render() const override;

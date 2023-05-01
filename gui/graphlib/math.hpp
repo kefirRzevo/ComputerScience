@@ -74,6 +74,11 @@ class Vec2
             y /= k;
             return *this;
         }
+
+        operator bool() const
+        {
+            return x && y;
+        }
 };
 
 template <typename T>

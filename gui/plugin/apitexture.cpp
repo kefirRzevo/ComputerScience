@@ -44,39 +44,39 @@ void
 APITexture::Clear(Color color)
 {
     Renderer::Get()->SetColor(color);
-    Renderer::Get()->Clear(texture.get());
+    Renderer::Get()->Clear(texture);
 }
 
 void
 APITexture::DrawLine(int x0, int y0, int x1, int y1, Color color)
 {
     Renderer::Get()->SetColor(color);
-    Renderer::Get()->DrawLine(texture.get(), {x0, y0}, {x1, y1});
+    Renderer::Get()->DrawLine(texture, {x0, y0}, {x1, y1});
 }
 void
 APITexture::DrawThickLine(int x0, int y0, int x1, int y1, int thickness, Color color)
 {
     Renderer::Get()->SetColor(color);
-    Renderer::Get()->DrawThickLineSlow(texture.get(), {x0, y0}, {x1, y1}, thickness);
+    Renderer::Get()->DrawThickLineSlow(texture, {x0, y0}, {x1, y1}, thickness);
 }
 
 void
 APITexture::DrawCircle(int x, int y, int radius, Color color)
 {
     Renderer::Get()->SetColor(color);
-    Renderer::Get()->DrawCircle(texture.get(), {x, y}, radius);
+    Renderer::Get()->DrawCircle(texture, {x, y}, radius);
 }
 
 void
 APITexture::DrawRect(int x, int y, int width, int height, Color color)
 {
     Renderer::Get()->SetColor(color);
-    Renderer::Get()->DrawRect(texture.get(), {x, y, width, height});
+    Renderer::Get()->DrawRect(texture, {x, y, width, height});
 }
 
 void
 APITexture::CopyTexture(ITexture* iTexture, int x, int y, int width, int height)
 {
     APITexture* dst = static_cast<APITexture*>(iTexture);
-    Renderer::Get()->DrawTexture(texture.get(), dst->texture.get(), {x, y, width, height});
+    Renderer::Get()->DrawTexture(texture, dst->texture, {x, y, width, height});
 }

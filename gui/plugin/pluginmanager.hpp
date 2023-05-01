@@ -12,12 +12,18 @@ class Plugin final
 {
     public:
 
-        Plugin(const char* pluginPath, IAPI* iApi);
+        Plugin(const char* pluginPath_, IAPI* iAPI_);
 
         ~Plugin();
 
+        void
+        Load();
+
         const std::string&
         GetName() const;
+
+        bool
+        GetLoadStatus() const;
 
         IPlugin* GetIPlugin();
 
@@ -30,6 +36,8 @@ class Plugin final
         DestroyFunction destroy;
 
         std::string name;
+        bool loaded;
+
         IPlugin* iPlugin;
         void* handle;
 };
@@ -53,7 +61,7 @@ class PluginManager
     private:
 
         std::vector<Plugin*> loadedPlugins;
-        IAPI* iApi;
+        IAPI* iAPI;
 
         static std::unique_ptr<PluginManager> pluginManager;
 };

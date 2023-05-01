@@ -1,4 +1,5 @@
 #include "dropdownlist.hpp"
+#include "label.hpp"
 
 
 //----------------------------------------//
@@ -23,6 +24,36 @@ list(list_)
     list->SetParent(this);
     list->SetWidgetSystem(system);
     children.push_back(list);
+}
+
+ListOpenerButton*
+ListOpenerButton::GetDefault(const std::string& string_, DropDownList* list_)
+{
+    Texture* rel   = Config::defUpReleaseTexture;
+    Texture* hov   = Config::defUpHoverTexture;
+    Texture* press = Config::defUpPressTexture;
+
+    ListOpenerButton* btn = new ListOpenerButton{new Row{}, list_, rel, hov, press};
+    btn->Attach(TextIcon::GetDefault(string_));
+    return btn;
+}
+
+bool
+ListOpenerButton::GetListVisibility() const
+{
+    return list->GetVisibility();
+}
+
+void
+ListOpenerButton::HideList()
+{
+    list->Hide();
+}
+
+void
+ListOpenerButton::ShowList()
+{
+    list->Show();
 }
 
 void
@@ -57,9 +88,21 @@ ListOpenerButton::OnLayoutResize()
 
 //----------------------------------------//
 
-DropDownList::DropDownList(Column* layout_, Texture* texture_):
-Widget(layout_, texture_), visible(false)
+DropDownList::DropDownList(Texture* texture_):
+Widget(new Column{0, 0}, texture_), activeChild(nullptr), visible(false)
 {}
+
+DropDownList*
+DropDownList::GetDefault()
+{
+    return new DropDownList{Config::defDownReleaseTexture};
+}
+
+bool
+DropDownList::GetVisibility() const
+{
+    return visible;
+}
 
 void
 DropDownList::UpdateDropPoint()
@@ -68,26 +111,29 @@ DropDownList::UpdateDropPoint()
         return;
 
     Widget* widget = parent;
-    RectInt container = widget->GetLayout()->GetRectangle();
-    while(widget->GetParent() && dynamic_cast<Container*>(widget->GetParent()->GetLayout()))
+    RectInt cont = widget->GetLayout()->GetRectangle();
+    while(widget->GetParent())
     {
+        if(!dynamic_cast<Container*>(widget->GetParent()->GetLayout()))
+            break;
+
         widget = widget->GetParent();
-        container = widget->GetLayout()->GetRectangle();
+        cont  = widget->GetLayout()->GetRectangle();
     }
 
-    int contAdd = widget->GetLayout()->GetAddition() / 2;
-    RectInt contRect = {container.left - contAdd, container.top - contAdd,
-                        container.width + 2 * contAdd, container.height + 2 * contAdd};
+    int contAdd = widget->GetLayout()->indent;
+    RectInt contRect = {cont.left  - contAdd,     cont.top    -     contAdd,
+                        cont.width + 2 * contAdd, cont.height + 2 * contAdd};
 
     const RectInt& rect = layout->GetRectangle();
-    int add = layout->GetAddition() / 2;
+    int add = layout->indent;
     RectInt marginRect = {rect.left  -     add, rect.top    -     add,
                           rect.width + 2 * add, rect.height + 2 * add};
 
     RectInt newRect = rect;
 
-    int width  = static_cast<int>(Config::windowWidth);
-    int height = static_cast<int>(Config::windowHeight);
+    int width  = Config::defWindowWidth;
+    int height = Config::defWindowHeight;
 
     if(contRect.left + marginRect.width < width &&
         contRect.top + contRect.height + marginRect.height < height)
@@ -119,7 +165,32 @@ bool
 DropDownList::ProcessEvent(const Event& event_)
 {
     if(visible)
-        return Widget::ProcessEvent(event_);
+    {
+        for(auto it = children.begin(); it != children.end(); ++it)
+        {
+            if((*it)->ProcessEvent(event_))
+            {
+                OptionButton* processedChild = dynamic_cast<OptionButton*>(*it);
+                if(processedChild && processedChild->GetActive())
+                {
+                    if(processedChild != activeChild)
+                    {
+                        activeChild->Diactivate();
+                        activeChild = processedChild;
+                    }
+                }
+
+                if(event_.type == mousePressed)
+                {
+                    Widget* active = *it;
+                    children.erase(it);
+                    children.push_front(active);
+                }
+                return true;
+            }
+        }
+        return OnEvent(event_);
+    }
     return false;
 }
 
@@ -137,6 +208,19 @@ DropDownList::OnEvent(const Event& event_)
     if(visible)
         return Widget::OnEvent(event_);
     return false;
+}
+
+void
+DropDownList::Clear()
+{
+    for(auto it = children.begin(); it != children.end(); ++it)
+    {
+        if(dynamic_cast<OptionButton*>(*it))
+        {
+            Detach(*it);
+            delete *it;
+        }
+    }
 }
 
 void

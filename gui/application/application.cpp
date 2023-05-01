@@ -34,8 +34,11 @@ class ButtonTest2: public ButtonResponse
 void
 App::Run()
 {
-    Window window{{Config::windowWidth, Config::windowHeight}, "hi"};
+    Window window{{static_cast<unsigned int>(Config::defWindowWidth),
+                   static_cast<unsigned int>(Config::defWindowHeight)}, "hi"};
     Renderer::Initialize(&window);
+    Renderer* rend = Renderer::Get();
+    /*
     Renderer* rend = Renderer::Get();
     bool active = true;
 
@@ -47,7 +50,7 @@ App::Run()
 
     Widget* widget1 = new Widget{new Layout{{50, 50, 100, 100}}, text1};
 
-    DropDownList* list1 = new DropDownList{new Column{}, text1};
+    DropDownList* list1 = new DropDownList{text1};
     ListOpenerButton* listbtn = new ListOpenerButton{new Layout{{50, 50, 100, 100}}, list1, btn1t, btn2t, btn3t};
     //const Font& font1 = FontManager::Get()->GetFont("res/TimesNewRoman.ttf");
 
@@ -80,7 +83,7 @@ App::Run()
     list1->Attach(btn2);
 
     Button* btn1 = new Button{new Row{}, new ListOpenerCommand{list1}, new Texture{Black}};
-    btn1->Attach(new TextIcon{new Layout{{{50, 50}}, 0, 0}, text2, new Text{"lallalkkkslsafskfsfslncs"}});
+    //btn1->Attach(new TextIcon{new Layout{{{50, 50}}, 0, 0}, text2, new Text{"lallalkkkslsafskfsfslncs"}});
 
     //TextIcon* texticon1 = new TextIcon{new Layout{{{50, 50}}, 2, 4, {30, 30}, {300, 150}}, text2, new Text{"hello"}};
 
@@ -98,7 +101,7 @@ App::Run()
     //widget1->Attach(bar2);
     //widget1->Attach(btn1);
     //widget1->Attach(listbtn);
-    CanvasWidget* canv1 = new CanvasWidget{{Config::defHorScrollBarWidth, Config::defVerScrollBarHeight}, {151, 400}};
+    CanvasWidget* canv1 = new  CanvasWidget{"hello", {200, 400}}; // new CanvasWidget{{Config::defHorScrollBarWidth, Config::defVerScrollBarHeight}, {200, 400}};
     widget1->Attach(canv1);
     //widget1->Attach(list1);
     //widget1->Attach(txticon1);
@@ -108,9 +111,11 @@ App::Run()
     //fprintf(stderr, "test %p\n", listbtn->GetParent());
     //fprintf(stderr, "addres %p %p %p\n", widget1, listbtn, list1);
     WidgetSystem* syst1 = new WidgetSystem{widget1};
-    widget1->GetLayout()->OnMove({});
+    widget1->GetLayout()->OnMove({});*/
+    Root* root = new Root{Config::defTexture};
+    WidgetSystem* syst1 = new WidgetSystem{root};
 
-    while(active)
+    while(1)
     {
         Event event;
         if(EventManager::Get()->PollEvent(event))

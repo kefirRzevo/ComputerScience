@@ -36,15 +36,15 @@ class Manager
         }
 
         void
-        Add(T* object)
-        {
-            objects.push_back(object);
-        }
-
-        void
         SetActive(T* object)
         {
             active = object;
+        }
+
+        void
+        Add(T* object)
+        {
+            objects.push_back(object);
         }
 };
 

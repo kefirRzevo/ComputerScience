@@ -131,12 +131,22 @@ Layout::GetBorderPart(Vec2i pos_)
 
 Layout::Layout(const RectInt& rect_, int margin_, int border_,
 Vec2i minSize_, Vec2i maxSize_):
-parent(nullptr), rect(rect_), margin(margin_), border(border_),
-minSize(minSize_), maxSize(maxSize_),
-part(BorderPart::NoBorder), onResize(false), onMove(false)
-{
-    addition = 2 * margin + 2 * border;
-}
+parent(nullptr), widget(nullptr), rect(rect_), margin(margin_),
+border(border_), minSize(minSize_), maxSize(maxSize_),
+part(BorderPart::NoBorder), onResize(false), onMove(false),
+addition(2 * margin_ + 2 * border_), indent(margin_ + border_)
+{}
+
+Layout::Layout(const RectInt& rect_, int margin_, int border_):
+Layout(rect_, margin_, border_,
+{rect_.width, rect_.height}, {rect_.width, rect_.height})
+{}
+
+
+
+Layout::Layout(Vec2i size, int margin_, int border_):
+Layout({size}, margin_, border_, size, size)
+{}
 
 Layout*
 Layout::GetParent()
@@ -178,12 +188,6 @@ Vec2i
 Layout::GetMaxSize() const
 {
     return maxSize;
-}
-
-int
-Layout::GetAddition() const
-{
-    return addition;
 }
 
 void
@@ -293,11 +297,8 @@ Layout::OnResize(const RectInt& rect_)
 //----------------------------------------//
 
 Container::Container(int margin_, int border_):
-Layout({}, margin_, border_)
-{
-    minSize = {};
-    maxSize = {};
-}
+Layout({{}}, margin_, border_)
+{}
 
 void
 Container::OnResize(const RectInt& rect_)
@@ -319,26 +320,26 @@ Row::Attach(Layout* child_)
     child_->parent = this;
     children.push_back(child_);
 
-    rect.width  += child_->GetRectangle().width  + child_->GetAddition();
-    if(child_->GetRectangle().height + child_->GetAddition() > rect.height)
-        rect.height = child_->GetRectangle().height + child_->GetAddition();
+    rect.width  += child_->GetRectangle().width  + child_->addition;
+    if(child_->GetRectangle().height + child_->addition > rect.height)
+        rect.height = child_->GetRectangle().height + child_->addition;
 
-    minSize.x += child_->GetMinSize().x + child_->GetAddition();
-    maxSize.x += child_->GetMaxSize().x + child_->GetAddition();
+    minSize.x += child_->GetMinSize().x + child_->addition;
+    maxSize.x += child_->GetMaxSize().x + child_->addition;
 
     if(children.size() == 1)
     {
-        minSize.y = child_->GetMinSize().y + child_->GetAddition();
-        maxSize.y = child_->GetMaxSize().y + child_->GetAddition();
+        minSize.y = child_->GetMinSize().y + child_->addition;
+        maxSize.y = child_->GetMaxSize().y + child_->addition;
 
-        rect.width  = child_->GetRectangle().width  + child_->GetAddition();
-        rect.height = child_->GetRectangle().height + child_->GetAddition();
+        rect.width  = child_->GetRectangle().width  + child_->addition;
+        rect.height = child_->GetRectangle().height + child_->addition;
     }
 
-    if(child_->GetMinSize().y + child_->GetAddition() > minSize.y)
-        minSize.y = child_->GetMinSize().y + child_->GetAddition();
-    if(child_->GetMaxSize().y + child_->GetAddition() < maxSize.y)
-        maxSize.y = child_->GetMaxSize().y + child_->GetAddition();
+    if(child_->GetMinSize().y + child_->addition > minSize.y)
+        minSize.y = child_->GetMinSize().y + child_->addition;
+    if(child_->GetMaxSize().y + child_->addition < maxSize.y)
+        maxSize.y = child_->GetMaxSize().y + child_->addition;
 
     if(minSize.y > rect.height)
         rect.height = minSize.y;
@@ -360,9 +361,9 @@ Row::Detach(Layout* child_)
         children.erase(found);
         child_->parent = nullptr;
 
-        minSize.x  -= child_->GetMinSize().x + child_->GetAddition();
-        maxSize.x  -= child_->GetMaxSize().x + child_->GetAddition();
-        rect.width -= child_->GetRectangle().width + child_->GetAddition();
+        minSize.x  -= child_->GetMinSize().x + child_->addition;
+        maxSize.x  -= child_->GetMaxSize().x + child_->addition;
+        rect.width -= child_->GetRectangle().width + child_->addition;
 
         if(children.size() == 1)
         {
@@ -370,15 +371,15 @@ Row::Detach(Layout* child_)
             maxSize.y = 0;
         }
 
-        minSize.y = children[0]->GetMinSize().y + children[0]->GetAddition();
-        maxSize.y = children[0]->GetMaxSize().y + children[0]->GetAddition();
+        minSize.y = children[0]->GetMinSize().y + children[0]->addition;
+        maxSize.y = children[0]->GetMaxSize().y + children[0]->addition;
 
         for(const auto& child: children)
         {
-            if(child->GetMinSize().y + child->GetAddition() < minSize.y)
-                minSize.y = child->GetMinSize().y + child->GetAddition();
-            if(child->GetMaxSize().y + child->GetAddition() > maxSize.y)
-                maxSize.y = child->GetMaxSize().y + child->GetAddition();
+            if(child->GetMinSize().y + child->addition < minSize.y)
+                minSize.y = child->GetMinSize().y + child->addition;
+            if(child->GetMaxSize().y + child->addition > maxSize.y)
+                maxSize.y = child->GetMaxSize().y + child->addition;
         }
 
         if(minSize.y < rect.height)
@@ -457,26 +458,26 @@ Column::Attach(Layout* child_)
     child_->parent = this;
     children.push_back(child_);
 
-    if(child_->GetRectangle().width + child_->GetAddition() > rect.width)
-        rect.width = child_->GetRectangle().width + child_->GetAddition();
-    rect.height += child_->GetRectangle().height + child_->GetAddition();
+    if(child_->GetRectangle().width + child_->addition > rect.width)
+        rect.width = child_->GetRectangle().width + child_->addition;
+    rect.height += child_->GetRectangle().height + child_->addition;
     
-    minSize.y += child_->GetMinSize().y + child_->GetAddition();
-    maxSize.y += child_->GetMaxSize().y + child_->GetAddition();
+    minSize.y += child_->GetMinSize().y + child_->addition;
+    maxSize.y += child_->GetMaxSize().y + child_->addition;
 
     if(children.size() == 1)
     {
-        minSize.x = child_->GetMinSize().x + child_->GetAddition();
-        maxSize.x = child_->GetMaxSize().x + child_->GetAddition();
+        minSize.x = child_->GetMinSize().x + child_->addition;
+        maxSize.x = child_->GetMaxSize().x + child_->addition;
 
-        rect.width  = child_->GetRectangle().width  + child_->GetAddition();
-        rect.height = child_->GetRectangle().height + child_->GetAddition();
+        rect.width  = child_->GetRectangle().width  + child_->addition;
+        rect.height = child_->GetRectangle().height + child_->addition;
     }
 
-    if(child_->GetMinSize().x + child_->GetAddition() > minSize.x)
-        minSize.x = child_->GetMinSize().x + child_->GetAddition();
-    if(child_->GetMaxSize().x + child_->GetAddition() < maxSize.x)
-        maxSize.x = child_->GetMaxSize().x + child_->GetAddition();
+    if(child_->GetMinSize().x + child_->addition > minSize.x)
+        minSize.x = child_->GetMinSize().x + child_->addition;
+    if(child_->GetMaxSize().x + child_->addition < maxSize.x)
+        maxSize.x = child_->GetMaxSize().x + child_->addition;
 
     if(minSize.x > rect.width)
         rect.width = minSize.x;
@@ -498,9 +499,9 @@ Column::Detach(Layout* child_)
         children.erase(found);
         child_->parent = nullptr;
 
-        minSize.y  -= child_->GetMinSize().y + child_->GetAddition();
-        maxSize.y  -= child_->GetMaxSize().y + child_->GetAddition();
-        rect.height -= child_->GetRectangle().height + child_->GetAddition();
+        minSize.y  -= child_->GetMinSize().y + child_->addition;
+        maxSize.y  -= child_->GetMaxSize().y + child_->addition;
+        rect.height -= child_->GetRectangle().height + child_->addition;
 
         if(children.size() == 1)
         {
@@ -508,15 +509,15 @@ Column::Detach(Layout* child_)
             maxSize.y = 0;
         }
 
-        minSize.x = children[0]->GetMinSize().x + children[0]->GetAddition();
-        maxSize.x = children[0]->GetMaxSize().x + children[0]->GetAddition();
+        minSize.x = children[0]->GetMinSize().x + children[0]->addition;
+        maxSize.x = children[0]->GetMaxSize().x + children[0]->addition;
 
         for(const auto& child: children)
         {
-            if(child->GetMinSize().x + child->GetAddition() < minSize.x)
-                minSize.x = child->GetMinSize().x + child->GetAddition();
-            if(child->GetMaxSize().x + child->GetAddition() > maxSize.x)
-                maxSize.x = child->GetMaxSize().x + child->GetAddition();
+            if(child->GetMinSize().x + child->addition < minSize.x)
+                minSize.x = child->GetMinSize().x + child->addition;
+            if(child->GetMaxSize().x + child->addition > maxSize.x)
+                maxSize.x = child->GetMaxSize().x + child->addition;
         }
 
         if(minSize.x < rect.width)

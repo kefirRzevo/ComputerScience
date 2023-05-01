@@ -6,6 +6,8 @@
 #include <queue>
 
 
+class Widget;
+
 //----------------------------------------//
 
 enum EventType
@@ -18,6 +20,7 @@ enum EventType
     mouseReleased,
     mouseHovered,
     mouseMoved,
+    widgetClosed,
 
     count
 };
@@ -50,9 +53,21 @@ class Event
                 pos(pos_), offset(offset_) {}
         };
 
-        EventType type;
-        MouseValue mouse;
-        KeyValue key;
+        struct WidgetValue
+        {
+            Widget* widget;
+
+            WidgetValue() = default;
+
+            WidgetValue(Widget* widget_):
+                widget(widget_) {}
+        };
+        
+
+        EventType   type;
+        MouseValue  mouse;
+        KeyValue    key;
+        WidgetValue widget;
 
         Event() = default;
 
@@ -64,6 +79,9 @@ class Event
 
         Event(EventType type_, MouseValue mouse_):
             type(type_), mouse(mouse_) {}
+
+        Event(EventType type_, WidgetValue widget_):
+            type(type_), widget(widget_) {}
 
         bool IsMouseType() const;
 };

@@ -11,6 +11,9 @@ class Icon: public Widget
 
         Icon(Layout* layout_, Texture* texture_);
 
+        static Icon*
+        GetDefault(Texture* texture_);
+
         bool
         OnEvent(const Event& event_) override;
 };
@@ -22,15 +25,18 @@ class TextIcon: public Widget
         std::unique_ptr<Text> text;
         std::string fullString;
         std::string curString;
-        unsigned int maxSize;
+        unsigned int textMaxSize;
 
         bool
         CheckSize(Vec2i size_);
 
     public:
 
-        TextIcon(Layout* layout_, Texture* texture_, Text* text_,
-        int maxSize_ = Config::defTextMaxCapacity);
+        TextIcon(Layout* layout_, Text* text_, Texture* texture_,
+        int textMaxSize_ = Config::defTextMaxCapacity);
+
+        static TextIcon*
+        GetDefault(const std::string& string);
 
         void
         SetString(const char* string);
@@ -79,7 +85,7 @@ class TextLabel: public TextIcon
 
         TextLabel(Layout* layout_, Texture* texture_,
         TextLabelResponse* response_, Text* textStyle_,
-        int maxSize_ = Config::defTextMaxCapacity);
+        int textMaxSize_ = Config::defTextMaxCapacity);
 
         bool
         ProcessListenerEvent(const Event& event_) override;

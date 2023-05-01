@@ -65,12 +65,12 @@ EventManager::Poll_SF_Event()
         }
         case sf::Event::KeyPressed:
         {
-            events.push({keyPressed, {sfEvent.key.code}});
+            events.push({keyPressed, Event::KeyValue{sfEvent.key.code}});
             return true;
         }
         case sf::Event::TextEntered:
         {
-            events.push({textEntered, {static_cast<int>(sfEvent.text.unicode)}});
+            events.push({textEntered, Event::KeyValue{static_cast<int>(sfEvent.text.unicode)}});
             return true;
         }
         case sf::Event::MouseButtonPressed:
@@ -80,9 +80,9 @@ EventManager::Poll_SF_Event()
             prevPos = lastPos;
 
             if(sfEvent.mouseButton.button == sf::Mouse::Left)
-                events.push({mousePressed, {lastPos}});
+                events.push({mousePressed, Event::MouseValue{lastPos}});
             else if(sfEvent.mouseButton.button == sf::Mouse::Right)
-                events.push({rightButtonPress, {lastPos}});
+                events.push({rightButtonPress, Event::MouseValue{lastPos}});
             else
                 break;
             return true;
@@ -92,8 +92,8 @@ EventManager::Poll_SF_Event()
             pressed = false;
             Vec2i lastPos = {sfEvent.mouseButton.x, sfEvent.mouseButton.y};
 
-            events.push({mouseReleased, {lastPos}});
-            events.push({mouseHovered,  {lastPos}});
+            events.push({mouseReleased, Event::MouseValue{lastPos}});
+            events.push({mouseHovered,  Event::MouseValue{lastPos}});
             return true;
         }
         case sf::Event::MouseMoved:
@@ -101,10 +101,10 @@ EventManager::Poll_SF_Event()
             Vec2i lastPos = {sfEvent.mouseMove.x, sfEvent.mouseMove.y};
             if(pressed)
             {
-                events.push({mouseMoved, {prevPos, lastPos - prevPos}});
+                events.push({mouseMoved, Event::MouseValue{prevPos, lastPos - prevPos}});
                 prevPos = lastPos;
             }
-            events.push({mouseHovered, {lastPos}});
+            events.push({mouseHovered, Event::MouseValue{lastPos}});
             return true;
         }
         default:

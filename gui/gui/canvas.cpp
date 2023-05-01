@@ -18,22 +18,28 @@ class CanvasTitle: public Widget
 
     public:
 
-        CanvasTitle(const std::string& name_, int canvasWidth_, CanvasWidget* canvasWidget_):
-        Widget(new Row{0, 0}, Config::defIconTexture), canvasWidget(canvasWidget_)
+        CanvasTitle(TextIcon* titleIcon_, CloseButton* closeButton_,
+        CanvasWidget* canvasWidget_):
+        Widget(new Row{0, 0}, Config::defUpReleaseTexture), canvasWidget(canvasWidget_)
         {
-            int height = Config::defCloseBtnHeight;
+            Attach(titleIcon_);
+            Attach(closeButton_);
+        }
 
-            Layout* titleLayout = new Layout{{{canvasWidth_, height}}, 0, 0,
-                                            {Config::minHorScrollBarWidth, height},
-                                            {Config::maxHorScrollBarWidth, height}};
-            TextIcon* titleIcon = new TextIcon{titleLayout, Config::defIconTexture, new Text{name_}};
+        static CanvasTitle*
+        GetDefault(const std::string& name_, CanvasWidget* canvasWidget_)
+        {
+            Vec2i def = {Config::defCanvasWidth, Config::defIconHeight};
+            Vec2i min = {Config::defMinCanvasWidth, Config::defIconHeight};
+            Vec2i max = {Config::defMaxCanvasWidth, Config::defIconHeight};
+            Layout* iconLayout = new Layout{{def}, 0, 0, min, max};
 
-            Vec2i btnSize = {Config::defCloseBtnWidth, Config::defCloseBtnHeight};
-            CloseButton* closeBtn = new CloseButton{new Layout{{btnSize}, 0, 0, btnSize, btnSize},
-            canvasWidget, Config::defCloseBtnRelease, Config::defCloseBtnHover, Config::defCloseBtnPress};
+            Texture* tex = Config::defUpReleaseTexture;
+            TextIcon* icon = new TextIcon{iconLayout, new Text{name_}, tex};
 
-            Attach(titleIcon);
-            Attach(closeBtn);
+            CloseButton* closeButton = CloseButton::GetDefault(canvasWidget_);
+
+            return new CanvasTitle{icon, closeButton, canvasWidget_};
         }
 
         bool
@@ -80,22 +86,28 @@ class Canvas: public Widget
 
     public:
 
-        Canvas(Vec2i canvasSize_, Vec2i fullTextureSize_):
-        Widget(new Layout{{{canvasSize_.x, canvasSize_.y}}, 0, 0,
-        {Config::minHorScrollBarWidth, Config::minVerScrollBarHeight},
-        {Config::maxHorScrollBarWidth, Config::maxVerScrollBarHeight}},
-        TextureManager::Get()->GetTexture(Config::defCanvasColor)),
-        fullTexture(new Texture{fullTextureSize_}), apiFullTexture(fullTexture),
-        visiblePart({0, 0, canvasSize_.x, canvasSize_.y}),
+        Canvas(Layout* layout, Vec2i fullTextureSize_):
+        Widget(layout, Config::defCanvasTexture),
+        fullTexture(new Texture{fullTextureSize_}),
+        apiFullTexture(fullTexture),
         fullTextureSize(fullTextureSize_)
         {
-            assert(fullTextureSize_.x > canvasSize_.x &&
-                   fullTextureSize_.y > canvasSize_.y);
+            const RectInt& rect = layout->GetRectangle();
+            visiblePart = {0, 0, rect.width, rect.height};
+
+            assert(fullTextureSize.x > rect.width &&
+                   fullTextureSize.y > rect.height);
         }
 
-        ~Canvas()
+        static Canvas*
+        GetDefault(Vec2i fullTextureSize_)
         {
-            delete fullTexture;
+            Vec2i def = {Config::defCanvasWidth, Config::defCanvasHeight};
+            Vec2i min = {Config::defMinCanvasWidth, Config::defMinCanvasHeight};
+            Vec2i max = {Config::defMaxCanvasWidth, Config::defMaxCanvasHeight};
+            Layout* layout = new Layout{{def}, 0, 0, min, max};
+
+            return new Canvas{layout, fullTextureSize_};
         }
 
         const RectInt&
@@ -216,7 +228,7 @@ class HorScrollBarCanvasCallback: public ScrollBarResponseTest
         void
         OnResponse(float value) override
         {
-            int fullWidth    = canvas->GetFullTextureSize().x;
+            int fullWidth = canvas->GetFullTextureSize().x;
             int visibleWidth = canvas->GetVisiblePart().width;
             int newX = static_cast<int>(value * (fullWidth - visibleWidth));
             canvas->SetVisibilityBeginX(newX);
@@ -249,47 +261,29 @@ class VerScrollBarCanvasCallback: public ScrollBarResponseTest
         Canvas* canvas;
 };
 
-CanvasWidget::CanvasWidget(Vec2i canvasSize_, Vec2i fullTextureSize_):
-Widget(new Column{0, 4}, TextureManager::Get()->GetTexture(Config::defColor)),
-canvasSize(canvasSize_), fullTextureSize(fullTextureSize_)
+CanvasWidget::CanvasWidget(const std::string& name_, Vec2i fullTextureSize_):
+Widget(new Column{0, 4}, Config::defUpReleaseTexture),
+fullTextureSize(fullTextureSize_)
 {
-    Texture* defTexture = TextureManager::Get()->GetTexture(Config::defColor);
+    canvasSize = {Config::defCanvasWidth, Config::defCanvasHeight};
+    canvas = Canvas::GetDefault(fullTextureSize_);
 
-    Attach(new CanvasTitle{"Canvas", canvasSize.x, this});
+    VerScrollBarCanvasCallback* ver = new VerScrollBarCanvasCallback{canvas};
+    verScrollBar = VerScrollBar::GetDefault(ver);
+    HorScrollBarCanvasCallback* hor = new HorScrollBarCanvasCallback{canvas};
+    horScrollBar = HorScrollBar::GetDefault(hor);
 
-    canvas = new Canvas{canvasSize, fullTextureSize};
+    Texture* defTexture = Config::defDownReleaseTexture;
 
-    Layout* verLayout = new Layout{{{Config::defVerScrollBarWidth, canvasSize.y}}, 0, 0,
-                                    {Config::defVerScrollBarWidth, Config::minVerScrollBarHeight},
-                                    {Config::defVerScrollBarWidth, Config::maxVerScrollBarHeight}};
-    Layout* verBoxLayout = new Layout{{{Config::defVerScrollBoxWidth, Config::defVerScrollBoxWidth}}, 0, 0,
-                                    {Config::defVerScrollBoxWidth, 0},
-                                    {Config::defVerScrollBoxWidth, Config::defVerScrollBarHeight}};
-    ScrollBox* verBox = new ScrollBox{verBoxLayout, Config::defScrollBoxRelease,
-                                    Config::defScrollBoxHover, Config::defScrollBoxPress};
-    verScrollBar = new VerScrollBar{verLayout, Config::defVerScrollBarTexture, verBox,
-                                                    new VerScrollBarCanvasCallback{canvas}};
+    Attach(CanvasTitle::GetDefault(name_, this));
+
     Widget* linker1 = new Widget{new Row{0, 0}, defTexture};
     linker1->Attach(canvas);
     linker1->Attach(verScrollBar);
 
-    Layout* horLayout = new Layout{{{canvasSize.x, Config::defHorScrollBarHeight}}, 0, 0,
-                                    {Config::minHorScrollBarWidth, Config::defHorScrollBarHeight},
-                                    {Config::maxHorScrollBarWidth, Config::defHorScrollBarHeight}};
-    Layout* horBoxLayout = new Layout{{{Config::defHorScrollBoxWidth, Config::defHorScrollBoxHeight}}, 0, 0,
-                                    {0, Config::defHorScrollBoxHeight},
-                                    {Config::defHorScrollBoxWidth, Config::defHorScrollBarHeight}};
-    ScrollBox* horBox = new ScrollBox{horBoxLayout, Config::defScrollBoxRelease,
-                                    Config::defScrollBoxHover, Config::defScrollBoxPress};
-    horScrollBar = new HorScrollBar{horLayout, Config::defHorScrollBarTexture, horBox,
-                                        new HorScrollBarCanvasCallback{canvas}};
-    Layout* iconLayout = new Layout{{{Config::defVerScrollBarWidth, Config::defHorScrollBarHeight}}, 0, 0,
-                                    {Config::defVerScrollBarWidth, Config::defHorScrollBarHeight},
-                                    {Config::defVerScrollBarWidth, Config::defHorScrollBarHeight}};
-    Icon* icon = new Icon{iconLayout, defTexture};
     Widget* linker2 = new Widget{new Row{0, 0}, defTexture};
     linker2->Attach(horScrollBar);
-    linker2->Attach(icon);
+    linker2->Attach(Icon::GetDefault(defTexture));
 
     Attach(linker1);
     Attach(linker2);

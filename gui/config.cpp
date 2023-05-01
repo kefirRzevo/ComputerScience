@@ -2,9 +2,9 @@
 #include "graphlib/graphlib.hpp"
 
 Texture*
-Config::pluginScrollBox{TextureManager::Get()->GetTexture("res/scrollbox.bmp")};
+Config::defPluginScrollBox{TextureManager::Get()->GetTexture("res/scrollbox.bmp")};
 Texture*
-Config::pluginScrollBar{TextureManager::Get()->GetTexture("res/scrollbar.bmp")};
+Config::defPluginScrollBar{TextureManager::Get()->GetTexture("res/scrollbar.bmp")};
 
 Texture*
 Config::defCloseBtnRelease{TextureManager::Get()->GetTexture("res/btns.jpg", {40, 0, 120, 120})};
@@ -14,15 +14,41 @@ Texture*
 Config::defCloseBtnPress{TextureManager::Get()->GetTexture("res/btns.jpg", {40, 240, 120, 120})};
 
 Texture*
-Config::defScrollBoxRelease{TextureManager::Get()->GetTexture(0x84'84'82'FF)}; //Battleship grey
+Config::defScrollBoxRelease{TextureManager::Get()->GetTexture(Battleship_grey)};
 Texture*
-Config::defScrollBoxHover{TextureManager::Get()->GetTexture(0x54'62'6F'FF)}; //Black coral
+Config::defScrollBoxHover{TextureManager::Get()->GetTexture(Black_coral)};
 Texture*
-Config::defScrollBoxPress{TextureManager::Get()->GetTexture(0x3B'3C'36'FF)}; //Black olive
+Config::defScrollBoxPress{TextureManager::Get()->GetTexture(Black_olive)};
 
 Texture*
-Config::defHorScrollBarTexture{TextureManager::Get()->GetTexture(0xFF'E4'C4'FF)}; //Bisque
+Config::defHorScrollBarTexture{TextureManager::Get()->GetTexture(Bisque)};
 Texture*
-Config::defVerScrollBarTexture{TextureManager::Get()->GetTexture(0xFF'E4'C4'FF)}; //Bisque
+Config::defVerScrollBarTexture{TextureManager::Get()->GetTexture(Bisque)};
+
 Texture*
-Config::defIconTexture{TextureManager::Get()->GetTexture(0xFF'EB'CD'FF)}; //Blanched almond
+Config::defUpReleaseTexture{TextureManager::Get()->GetTexture(Chocolat_traditional)};
+Texture*
+Config::defUpHoverTexture{TextureManager::Get()->GetTexture(Brown_sugar)};
+Texture*
+Config::defUpPressTexture{TextureManager::Get()->GetTexture(Coffee)};
+Texture*
+Config::defDownReleaseTexture{TextureManager::Get()->GetTexture(Champagne_pink)};
+Texture*
+Config::defDownHoverTexture{TextureManager::Get()->GetTexture(Antique_white)};
+Texture*
+Config::defDownPressTexture{TextureManager::Get()->GetTexture(Apricot)};
+
+Texture*
+Config::defCanvasTexture{TextureManager::Get()->GetTexture(Blanched_almond)};
+Texture*
+Config::defTexture{TextureManager::Get()->GetTexture("res/background.png")};
+
+Texture*
+Config::defAPIReleaseTexture{TextureManager::Get()->GetTexture(Air_superiority_blue)};
+Texture*
+Config::defAPIHoverTexture{TextureManager::Get()->GetTexture(Ash_gray)};
+Texture*
+Config::defAPIPressTexture{TextureManager::Get()->GetTexture(Blue_yonder)};
+
+Texture*
+Config::defAPILabelTexture{TextureManager::Get()->GetTexture(Blue_bell)};

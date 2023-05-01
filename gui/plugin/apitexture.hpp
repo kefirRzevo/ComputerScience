@@ -51,5 +51,5 @@ class APITexture: public ITexture
 
     private:
 
-        std::unique_ptr<Texture> texture;
+        Texture* texture;
 };

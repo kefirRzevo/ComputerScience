@@ -71,7 +71,7 @@ class ScrollBar: public Widget
     protected:
 
         std::shared_ptr<ScrollBarResponse> response;
-        std::unique_ptr<ScrollBox>         box;
+        ScrollBox* box;
 
         float value;
         float scaleStep;
@@ -124,6 +124,9 @@ class HorScrollBar: public ScrollBar
         HorScrollBar(Layout* layout_, Texture* texture_,
         ScrollBox* box_, ScrollBarResponse* responce_);
 
+        static HorScrollBar*
+        GetDefault(ScrollBarResponse* response_);
+
         void
         SetBoxLength(int length_) override;
         void
@@ -147,6 +150,9 @@ class VerScrollBar: public ScrollBar
 
         VerScrollBar(Layout* layout_, Texture* texture_,
         ScrollBox* box_, ScrollBarResponse* responce_);
+
+        static VerScrollBar*
+        GetDefault(ScrollBarResponse* response_);
 
         void
         SetBoxLength(int length_) override;

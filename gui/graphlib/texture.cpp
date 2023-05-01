@@ -77,8 +77,7 @@ FontManager::GetDefaultFont()
 
 //----------------------------------------//
 
-Text::Text(const std::string& string_,
-Font* font_, Color color_, int size_)
+Text::Text(const std::string& string_, int size_, Font* font_, Color color_)
 {
     sfText.setString(string_);
     sfText.setFont(font_->sfFont);
@@ -164,8 +163,8 @@ managerOwners(false), sfSrcRect(0, 0, size_.x, size_.y), color(0)
 }
 
 Texture::Texture(Color color_):
-managerOwners(false), sfSrcRect(0, 0, Config::defWidth, Config::defHeight),
-color(color_)
+managerOwners(false),
+sfSrcRect(0, 0, Config::defWindowWidth, Config::defWindowHeight), color(color_)
 {
     sfSrcTexture.create(static_cast<unsigned int>(sfSrcRect.width),
                         static_cast<unsigned int>(sfSrcRect.height));

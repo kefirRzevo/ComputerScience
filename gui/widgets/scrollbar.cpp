@@ -160,6 +160,27 @@ ScrollBar(layout_, texture_, box_, responce_)
     box->SetRectangle(GetBoxRectangle());
 }
 
+HorScrollBar*
+HorScrollBar::GetDefault(ScrollBarResponse* response_)
+{
+    Vec2i boxDef = {Config::defIconWidth,      Config::defIconHeight};
+    Vec2i boxMin = {1,                         Config::defIconHeight};
+    Vec2i boxMax = {Config::defMaxCanvasWidth, Config::defIconHeight};
+    Layout* boxLayout = new Layout{{boxDef}, 0, 0, boxMin, boxMax};
+
+    ScrollBox* box = new ScrollBox{boxLayout, Config::defScrollBoxRelease,
+                   Config::defScrollBoxHover, Config::defScrollBoxPress};
+
+    Vec2i def = {Config::defCanvasWidth,    Config::defIconHeight};
+    Vec2i min = {Config::defMinCanvasWidth, Config::defIconHeight};
+    Vec2i max = {Config::defMaxCanvasWidth, Config::defIconHeight};
+    Layout* layout = new Layout{{def}, 0, 0, min, max};
+
+    Texture* texture = Config::defDownReleaseTexture;
+
+    return new HorScrollBar{layout, texture, box, response_};
+}
+
 void
 HorScrollBar::CalculateValue(float initValue_, Vec2i delta_)
 {
@@ -170,7 +191,7 @@ HorScrollBar::CalculateValue(float initValue_, Vec2i delta_)
     response->OnResponse(value);
     
     const RectInt& rect = layout->GetRectangle();
-    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int boxIndent = box->GetLayout()->indent;
     int left = rect.left + boxIndent + static_cast<int>(value / scaleStep);
     box->Move({left, box->GetLayout()->GetRectangle().top});
 }
@@ -179,7 +200,7 @@ RectInt
 HorScrollBar::GetBoxRectangle()
 {
     const RectInt& rect = layout->GetRectangle();
-    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int boxIndent = box->GetLayout()->indent;
 
     int left = rect.left + boxIndent + static_cast<int>(value / scaleStep);
     int top  = rect.top  + boxIndent;
@@ -193,10 +214,9 @@ void
 HorScrollBar::SetScaleParams()
 {
     const RectInt& rect = layout->GetRectangle();
-    int boxIndent = box->GetLayout()->GetAddition() / 2;
     int boxWidth  = box->GetLayout()->GetRectangle().width;
 
-    scaleLen   = rect.width - 2 * boxIndent - boxWidth;
+    scaleLen   = rect.width - box->GetLayout()->addition - boxWidth;
     if(scaleLen <= 0)
         scaleStep = static_cast<float>(rect.width);
     else
@@ -221,7 +241,7 @@ HorScrollBar::SetValue(float value_)
     response->OnResponse(value);
     
     const RectInt& rect = layout->GetRectangle();
-    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int boxIndent = box->GetLayout()->indent;
     int left = rect.left + boxIndent + static_cast<int>(value / scaleStep);
     box->Move({left, box->GetLayout()->GetRectangle().top});
 }
@@ -236,6 +256,27 @@ ScrollBar(layout_, texture_, box_, responce_)
     box->SetRectangle(GetBoxRectangle());
 }
 
+VerScrollBar*
+VerScrollBar::GetDefault(ScrollBarResponse* response_)
+{
+    Vec2i boxDef = {Config::defIconWidth, Config::defIconHeight};
+    Vec2i boxMin = {Config::defIconWidth, 1};
+    Vec2i boxMax = {Config::defIconWidth, Config::defMaxCanvasHeight};
+    Layout* boxLayout = new Layout{{boxDef}, 0, 0, boxMin, boxMax};
+
+    ScrollBox* box = new ScrollBox{boxLayout, Config::defScrollBoxRelease,
+                   Config::defScrollBoxHover, Config::defScrollBoxPress};
+
+    Vec2i def = {Config::defIconWidth, Config::defCanvasHeight};
+    Vec2i min = {Config::defIconWidth, Config::defMinCanvasHeight};
+    Vec2i max = {Config::defIconWidth, Config::defMaxCanvasHeight};
+    Layout* layout = new Layout{{def}, 0, 0, min, max};
+
+    Texture* texture = Config::defDownReleaseTexture;
+
+    return new VerScrollBar{layout, texture, box, response_};
+}
+
 void
 VerScrollBar::CalculateValue(float initValue_, Vec2i delta_)
 {
@@ -246,7 +287,7 @@ VerScrollBar::CalculateValue(float initValue_, Vec2i delta_)
     response->OnResponse(value);
     
     const RectInt& rect = layout->GetRectangle();
-    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int boxIndent = box->GetLayout()->indent;
     int top = rect.top + boxIndent + static_cast<int>(value / scaleStep);
     box->Move({box->GetLayout()->GetRectangle().left, top});
 }
@@ -255,7 +296,7 @@ RectInt
 VerScrollBar::GetBoxRectangle()
 {
     const RectInt& rect = layout->GetRectangle();
-    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int boxIndent = box->GetLayout()->indent;
 
     int left = rect.left + boxIndent;
     int top  = rect.top  + boxIndent + static_cast<int>(value / scaleStep);
@@ -269,10 +310,9 @@ void
 VerScrollBar::SetScaleParams()
 {
     const RectInt& rect = layout->GetRectangle();
-    int boxIndent = box->GetLayout()->GetAddition() / 2;
     int boxHeight  = box->GetLayout()->GetRectangle().height;
 
-    scaleLen   = rect.height - 2 * boxIndent - boxHeight;
+    scaleLen   = rect.height - box->GetLayout()->addition - boxHeight;
     if(scaleLen <= 0)
         scaleStep = static_cast<float>(rect.height);
     else
@@ -297,7 +337,7 @@ VerScrollBar::SetValue(float value_)
     response->OnResponse(value);
     
     const RectInt& rect = layout->GetRectangle();
-    int boxIndent = box->GetLayout()->GetAddition() / 2;
+    int boxIndent = box->GetLayout()->indent;
     int top = rect.top + boxIndent + static_cast<int>(value / scaleStep);
     box->Move({box->GetLayout()->GetRectangle().left, top});
 }

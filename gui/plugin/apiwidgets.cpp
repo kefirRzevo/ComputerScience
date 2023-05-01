@@ -4,35 +4,39 @@
 //----------------------------------------//
 
 IButton*
-APIWidgetFactory::CreateDefaultButtonWithIcon(const char* iconPath)
+APIWidgetFactory::CreateDefaultButtonWithIcon(const char* iconPath_)
 {
-    return CreateButtonWithIcon(Config::defWidth, Config::defHeight, iconPath);
+    return CreateButtonWithIcon(Config::defAPI_IconButtonWidth,
+                                Config::defAPI_IconButtonHeight, iconPath_);
 }
 
 IButton*
-APIWidgetFactory::CreateDefaultButtonWithText(const char* text)
+APIWidgetFactory::CreateDefaultButtonWithText(const char* text_)
 {
-    return CreateButtonWithText(Config::defWidth, Config::defHeight,
-                                            text, Config::defTextMaxCapacity);
+    return CreateButtonWithText(Config::defAPI_TextButtonWidth,
+                                Config::defAPI_TextButtonHeight, text_,
+                                Config::defTextMaxCapacity);
 }
 
 IButton*
 APIWidgetFactory::CreateButtonWithIcon
-(int width, int height, const char* iconPath)
+(int width_, int height_, const char* iconPath_)
 {
     APIClickCallback* callback = new APIClickCallback{};
-    
-    Texture* buttonTexture = new Texture{Config::defColor};
-    Texture* iconTexture   = TextureManager::Get()->GetTexture(iconPath);
 
-    Vec2i defIconSize = {width, height};
-    Vec2i minIconSize = {Config::minIconWidth, Config::minIconHeight};
-    Vec2i maxIconSize = {Config::maxIconWidth, Config::maxIconHeight};
+    Texture* release = Config::defAPIReleaseTexture;
+    Texture* hover   = Config::defAPIHoverTexture;
+    Texture* press   = Config::defAPIPressTexture;
+
+    Button* button = new Button{new Row{}, callback, release, hover, press};
+
+    Vec2i defIconSize = {width_,         height_        };
+    Vec2i minIconSize = {width_ * 3 / 4, height_ * 3 / 4};
+    Vec2i maxIconSize = {width_ * 5 / 4, height_ * 5 / 4};
     
     Layout* iconLayout = new Layout{{defIconSize}, Config::defMargin,
-            Config::defBorder, {minIconSize}, {maxIconSize}};
-    
-    Button* button = new Button{new Row{}, callback, buttonTexture};
+                        Config::defBorder, {minIconSize}, {maxIconSize}};
+    Texture* iconTexture = TextureManager::Get()->GetTexture(iconPath_);
     button->Attach(new Icon{iconLayout, iconTexture});
 
     return new APIButton{button, callback};
@@ -40,66 +44,63 @@ APIWidgetFactory::CreateButtonWithIcon
 
 IButton*
 APIWidgetFactory::CreateButtonWithText
-(int width, int height, const char* text, int char_size)
+(int width_, int height_, const char* text_, int char_size_)
 {
     APIClickCallback* callback = new APIClickCallback{};
     
-    Texture* buttonTexture = new Texture{Config::defColor};
-    Texture* texture       = new Texture{Config::defIconColor};
+    Texture* release = Config::defAPIReleaseTexture;
+    Texture* hover   = Config::defAPIHoverTexture;
+    Texture* press   = Config::defAPIPressTexture;
 
-    Vec2i defIconSize = {width, height};
-    Vec2i minIconSize = {Config::minIconWidth, Config::minIconHeight};
-    Vec2i maxIconSize = {Config::maxIconWidth, Config::maxIconHeight};
+    Button* button = new Button{new Row{}, callback, release, hover, press};
+
+    Vec2i defIconSize = {width_,         height_        };
+    Vec2i minIconSize = {width_ * 3 / 4, height_ * 3 / 4};
+    Vec2i maxIconSize = {width_ * 5 / 4, height_ * 5 / 4};
     
     Layout* layout = new Layout{{defIconSize}, Config::defMargin,
-            Config::defBorder, {minIconSize}, {maxIconSize}};
-    
-    Button* button = new Button{new Row{}, callback, buttonTexture};
-    Text* iconText = new Text{text};
-    button->Attach(new TextIcon{layout, texture, iconText, char_size});
+                        Config::defBorder, {minIconSize}, {maxIconSize}};
+    Text* iconText = new Text{text_};
+    button->Attach(new TextIcon{layout, iconText, nullptr, char_size_});
 
     return new APIButton{button, callback};
 }
 
 ISlider*
-APIWidgetFactory::CreateDefaultSlider(float min, float max)
+APIWidgetFactory::CreateDefaultSlider(float min_, float max_)
 {
-    return CreateSlider(Config::defHorScrollBarWidth,
-                        Config::defHorScrollBarHeight,
-                        static_cast<float>(Config::defHorScrollBoxWidth),
-                        static_cast<float>(Config::defHorScrollBoxHeight),
-                        min, max);
+    return CreateSlider(Config::defAPI_SliderWidth,
+                        Config::defAPI_SliderHeight,
+                        static_cast<float>(Config::defAPI_SliderBoxWidth),
+                        static_cast<float>(Config::defAPI_SliderBoxHeight),
+                        min_, max_);
 }
 
 ISlider*
-APIWidgetFactory::CreateSlider(int width, int height, float min, float max)
+APIWidgetFactory::CreateSlider(int width_, int height_, float min_, float max_)
 {
-    return CreateSlider(width, height,
-                        static_cast<float>(Config::defHorScrollBoxWidth),
-                        static_cast<float>(Config::defHorScrollBoxHeight),
-                        min, max);
+    return CreateSlider(width_, height_,
+                        static_cast<float>(Config::defAPI_SliderBoxWidth),
+                        static_cast<float>(Config::defAPI_SliderBoxHeight),
+                        min_, max_);
 }
 
 ISlider*
 APIWidgetFactory::CreateSlider
-(int width, int height, float boxWidth, float boxHeight, float min, float max)
+(int width_, int height_, float boxWidth_, float boxHeight_, float min_, float max_)
 {
-    assert(min > 0 && max > 0);
+    assert(min_ == 0 && max_ == 1);
 
-    Texture* boxTexture = Config::pluginScrollBox;
-    Texture* barTexture = Config::pluginScrollBar;
+    Texture* boxTexture = Config::defPluginScrollBox;
+    Texture* barTexture = Config::defPluginScrollBar;
 
-    Vec2i boxSize = {static_cast<int>(boxWidth), static_cast<int>(boxHeight)};
-    Vec2i defBarSize = {width, height};
-    Vec2i minBarSize = {Config::minHorScrollBarWidth,
-                        Config::defHorScrollBarHeight};
-    Vec2i maxBarSize = {Config::maxHorScrollBarWidth,
-                        Config::defHorScrollBarHeight};
+    Vec2i boxSize = {static_cast<int>(boxWidth_), static_cast<int>(boxHeight_)};
+    Vec2i def = {width_,         height_};
+    Vec2i min = {width_ * 3 / 4, height_};
+    Vec2i max = {width_ * 5 / 4, height_};
 
-    Layout* barLayout = new Layout{{defBarSize}, Config::defMargin,
-            Config::defBorder, minBarSize, maxBarSize};
-    Layout* boxLayout = new Layout{{boxSize}, Config::defMargin,
-            Config::defBorder, boxSize, boxSize};
+    Layout* barLayout = new Layout{{def}, Config::defMargin, Config::defBorder, min, max};
+    Layout* boxLayout = new Layout{boxSize, Config::defMargin, Config::defBorder};
 
     APISliderCallback* callback = new APISliderCallback{};
 
@@ -110,29 +111,27 @@ APIWidgetFactory::CreateSlider
 }
 
 ILabel*
-APIWidgetFactory::CreateDefaultLabel(const char* text)
+APIWidgetFactory::CreateDefaultLabel(const char* text_)
 {
-    return CreateLabel(Config::defIconWidth,
-                       Config::defIconHeight, text,
-                       Config::defTextMaxCapacity);
+    return CreateLabel(Config::defAPI_LabelWidth, Config::defAPI_LabelHeight,
+                                           text_, Config::defTextMaxCapacity);
 }
 
 ILabel*
 APIWidgetFactory::CreateLabel
-(int width, int height, const char* text, int char_size)
+(int width_, int height_, const char* text_, int char_size_)
 {
-    Texture* texture = new Texture{Config::defIconColor};
+    Texture* texture = Config::defAPILabelTexture;
 
-    Vec2i defIconSize = {width, height};
-    Vec2i minIconSize = {Config::minIconWidth, Config::minIconHeight};
-    Vec2i maxIconSize = {Config::maxIconWidth, Config::maxIconHeight};
+    Vec2i def = {width_,         height_};
+    Vec2i min = {width_ * 3 / 4, height_};
+    Vec2i max = {width_ * 5 / 4, height_};
     
-    Layout* layout = new Layout{{defIconSize}, Config::defMargin,
-            Config::defBorder, {minIconSize}, {maxIconSize}};
+    Layout* layout = new Layout{{def}, Config::defMargin, Config::defBorder, min, max};
 
-    Text* iconText = new Text{text};
+    Text* iconText = new Text{text_, char_size_};
 
-    TextIcon* textIcon = new TextIcon{layout, texture, iconText, char_size};
+    TextIcon* textIcon = new TextIcon{layout, iconText, texture};
     APILabel* label = new APILabel{textIcon};
     return label;
 }
@@ -140,9 +139,8 @@ APIWidgetFactory::CreateLabel
 IPreferencesPanel*
 APIWidgetFactory::CreateDefaultPreferencesPanel()
 {
-    Column*  column  = new Column{};
-    Texture* texture = new Texture{Config::defPanelColor};
-    return new APIPreferencesPanel{new PropertiesPanel{column, texture}};
+    Texture* texture = Config::defDownReleaseTexture;
+    return new APIPreferencesPanel{new PropertiesPanel{new Column{}, texture}};
 }
 
 //----------------------------------------//
@@ -309,7 +307,7 @@ void
 APIPreferencesPanel::Attach(IWidget* widget, int x, int y)
 {
     assert(x >=0 && y >= 0);
-    panel->Attach(static_cast<APIWidget*>(widget)->GetBasicWidget());
+    panel->Attach(dynamic_cast<APIWidget*>(widget)->GetBasicWidget());
 }
 
 //----------------------------------------//

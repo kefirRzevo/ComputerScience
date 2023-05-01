@@ -63,8 +63,9 @@ class Text
     public:
 
         Text(const std::string& string_ = "",
+        int size = Config::defTextSize,
         Font* font  = FontManager::Get()->GetDefaultFont(),
-        Color color = Config::defTextColor, int size = Config::defTextSize);
+        Color color = Config::defTextColor);
 
         Vec2i
         GetSize() const;

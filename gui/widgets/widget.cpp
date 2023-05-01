@@ -13,7 +13,6 @@ parent(nullptr), system(nullptr)
 Widget::~Widget()
 {
     delete layout;
-    parent->Detach(this);
 
     for(auto child: children)
         delete child;
@@ -221,6 +220,16 @@ WidgetSystem::Reset()
 void
 WidgetSystem::ProcessEvent(const Event& event_)
 {
+    if(event_.type == widgetClosed)
+    {
+        Widget* widget = event_.widget.widget;
+        Widget* parent = widget->GetParent();
+        parent->Detach(widget);
+        delete widget;
+        Reset();
+        return;
+    }
+
     if(event_.type != mousePressed)
         if(listeners[event_.type])
             if(listeners[event_.type]->ProcessListenerEvent(event_))

@@ -10,8 +10,8 @@ std::unique_ptr<PluginManager> PluginManager::pluginManager;
 
 //----------------------------------------//
 
-Plugin::Plugin(const char* pluginPath, IAPI* iApi):
-create(nullptr), destroy(nullptr), name(pluginPath),
+Plugin::Plugin(const char* pluginPath, IAPI* iAPI):
+create(nullptr), destroy(nullptr), name(pluginPath), loaded(false),
 iPlugin(nullptr), handle(nullptr)
 {
     handle = dlopen(pluginPath, RTLD_NOW);
@@ -24,7 +24,7 @@ iPlugin(nullptr), handle(nullptr)
     Initialize();
 
     if(create)
-        iPlugin = create(iApi);
+        iPlugin = create(iAPI);
 }
 
 void
@@ -42,6 +42,18 @@ Plugin::Initialize()
         fprintf(stderr, "Error happened with Destroy Function\n");
         return;
     }
+}
+
+void
+Plugin::Load()
+{
+    loaded = true;
+}
+
+bool
+Plugin::GetLoadStatus() const
+{
+    return loaded;
 }
 
 Plugin::~Plugin()
@@ -68,7 +80,7 @@ Plugin::GetIPlugin()
 //----------------------------------------//
 
 PluginManager::PluginManager():
-iApi(new API{})
+iAPI(new API{})
 {
     std::filesystem::path pluginPath;
     std::string pluginPathString;
@@ -78,14 +90,14 @@ iApi(new API{})
     {
         pluginPath       = plugin;
         pluginPathString = pluginPath.std::filesystem::path::generic_string();
-        loadedPlugins.push_back(new Plugin{pluginPathString.c_str(), iApi});
+        loadedPlugins.push_back(new Plugin{pluginPathString.c_str(), iAPI});
     }
 }
 
 PluginManager::~PluginManager()
 {
-    if(iApi)
-        delete iApi;
+    if(iAPI)
+        delete iAPI;
 
     for(auto plugin: loadedPlugins)
         delete plugin;

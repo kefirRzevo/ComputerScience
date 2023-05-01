@@ -83,6 +83,12 @@ class Widget
         Render() const;
         virtual void
         RenderBorder() const;
+
+        void
+        SayHello() const
+        {
+            fprintf(stderr, "hello\n");
+        }
 };
 
 //----------------------------------------//
