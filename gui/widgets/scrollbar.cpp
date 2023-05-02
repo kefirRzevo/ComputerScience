@@ -114,7 +114,8 @@ ScrollBox::OnEvent(const Event& event_)
 
 ScrollBar::ScrollBar(Layout* layout_, Texture* texture_,
 ScrollBox* box_, ScrollBarResponse* responce_):
-Widget(layout_, texture_), response(responce_), box(box_), value(0.f)
+Widget(layout_, texture_), response(responce_), box(box_),
+value(0.f), minValue(0.f), maxValue(1.f)
 {
     box->SetScrollBar(this);
     Attach(box_);
@@ -124,6 +125,22 @@ float
 ScrollBar::GetValue() const
 {
     return value;
+}
+
+void
+ScrollBar::SetMinValue(float minValue_)
+{
+    minValue = minValue_;
+    value = value < minValue ? minValue : value;
+    SetScaleParams();
+}
+
+void
+ScrollBar::SetMaxValue(float maxValue_)
+{
+    maxValue = maxValue_;
+    value = value > maxValue ? maxValue : value;
+    SetScaleParams();
 }
 
 float
@@ -185,8 +202,8 @@ void
 HorScrollBar::CalculateValue(float initValue_, Vec2i delta_)
 {
     value = initValue_ + static_cast<float>(delta_.x) * scaleStep;
-    value = value > 1.f ? 1.f : value;
-    value = value < 0.f ? 0.f : value;
+    value = value > maxValue ? maxValue : value;
+    value = value < minValue ? minValue : value;
 
     response->OnResponse(value);
     
@@ -220,7 +237,7 @@ HorScrollBar::SetScaleParams()
     if(scaleLen <= 0)
         scaleStep = static_cast<float>(rect.width);
     else
-        scaleStep  = 1.f / static_cast<float>(scaleLen);
+        scaleStep  = (maxValue - minValue) / static_cast<float>(scaleLen);
 }
 
 void
@@ -235,8 +252,8 @@ void
 HorScrollBar::SetValue(float value_)
 {
     value = value_;
-    value = value > 1.f ? 1.f : value;
-    value = value < 0.f ? 0.f : value;
+    value = value > maxValue ? maxValue : value;
+    value = value < minValue ? minValue : value;
 
     response->OnResponse(value);
     
@@ -281,8 +298,8 @@ void
 VerScrollBar::CalculateValue(float initValue_, Vec2i delta_)
 {
     value = initValue_ + static_cast<float>(delta_.y) * scaleStep;
-    value = value > 1.f ? 1.f : value;
-    value = value < 0.f ? 0.f : value;
+    value = value > maxValue ? maxValue : value;
+    value = value < minValue ? minValue : value;
 
     response->OnResponse(value);
     
@@ -312,11 +329,11 @@ VerScrollBar::SetScaleParams()
     const RectInt& rect = layout->GetRectangle();
     int boxHeight  = box->GetLayout()->GetRectangle().height;
 
-    scaleLen   = rect.height - box->GetLayout()->addition - boxHeight;
+    scaleLen = rect.height - box->GetLayout()->addition - boxHeight;
     if(scaleLen <= 0)
         scaleStep = static_cast<float>(rect.height);
     else
-        scaleStep  = 1.f / static_cast<float>(scaleLen);
+        scaleStep  = (maxValue - minValue) / static_cast<float>(scaleLen);
 }
 
 void
@@ -331,8 +348,8 @@ void
 VerScrollBar::SetValue(float value_)
 {
     value = value_;
-    value = value > 1.f ? 1.f : value;
-    value = value < 0.f ? 0.f : value;
+    value = value > maxValue ? maxValue : value;
+    value = value < minValue ? minValue : value;
 
     response->OnResponse(value);
     

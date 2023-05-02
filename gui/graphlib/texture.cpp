@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include "texture.hpp"
+#include "renderer.hpp"
 #include "../config.hpp"
 
 std::unique_ptr<FontManager>    FontManager::fontManager;
@@ -166,8 +167,21 @@ Texture::Texture(Color color_):
 managerOwners(false),
 sfSrcRect(0, 0, Config::defWindowWidth, Config::defWindowHeight), color(color_)
 {
-    sfSrcTexture.create(static_cast<unsigned int>(sfSrcRect.width),
-                        static_cast<unsigned int>(sfSrcRect.height));
+    sf::Vector2u size{static_cast<unsigned int>(sfSrcRect.width),
+                      static_cast<unsigned int>(sfSrcRect.height)};
+
+    sfSrcTexture.create(size.x, size.y);
+
+    sf::RenderTexture sfRenderTexture{};
+    sfRenderTexture.create(size.x, size.y);
+    sf::Sprite srcSfSprite{sfSrcTexture};
+    sfRenderTexture.draw(srcSfSprite);
+
+    sf::RectangleShape rect{{static_cast<float>(size.x),
+                             static_cast<float>(size.y)}};
+    rect.setFillColor(To_SF_Color(color));
+    sfRenderTexture.draw(rect);
+    sfSrcTexture = sfRenderTexture.getTexture();
 }
 
 int

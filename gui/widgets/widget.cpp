@@ -100,7 +100,7 @@ Widget::Detach(Widget* child_)
     auto found = std::find(children.begin(), children.end(), child_);
     if(found != children.end())
     {
-        (*found)->GetLayout()->Detach(layout);
+        layout->Detach((*found)->GetLayout());
         child_->SetParent(nullptr);
         children.erase(found);
     }
@@ -138,7 +138,7 @@ Widget::OnEvent(const Event& event_)
     if(event_.IsMouseType() && !layout->IsInside(event_.mouse.pos))
         return false;
 
-    return true;
+    return false;
 }
 
 void
@@ -147,7 +147,9 @@ Widget::Render() const
     if(layout->GetBorder())
         RenderBorder();
 
-    Renderer::Get()->DrawTexture(texture, layout->GetRectangle());
+    if(layout->GetRectangle().width && layout->GetRectangle().height)
+        Renderer::Get()->DrawTexture(layout->GetRectangle(), texture);
+
     for(auto it = children.end(); it != children.begin();)
     {
         --it;

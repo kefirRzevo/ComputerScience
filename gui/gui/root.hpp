@@ -3,6 +3,7 @@
 #include "../widgets/widget.hpp"
 #include "../widgets/button.hpp"
 #include "../widgets/dropdownlist.hpp"
+#include "properties_panel.hpp"
 
 class Root;
 
@@ -18,13 +19,16 @@ class MainTitleBar: public Widget
 
         Button*
         GetMenuToolButton();
-
         Button*
         GetMenuFilterButton();
 
         void
-        AddTools(DropDownList* list);
+        AttachPanel(PropertiesPanel* child_);
+        void
+        DetachPanel(PropertiesPanel* child_);
 
+        void
+        AddTools(DropDownList* list);
         void
         AddFilters(DropDownList* list);
 

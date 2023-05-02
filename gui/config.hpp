@@ -35,6 +35,7 @@ class Config
     static Texture* defDownHoverTexture;
     static Texture* defDownPressTexture;
 
+    static Texture* defNotFound;
     static Texture* defCanvasTexture;
     static Texture* defTexture;
 

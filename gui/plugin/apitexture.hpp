@@ -29,6 +29,9 @@ class APITexture: public ITexture
         int
         GetHeight() override;
 
+        void
+        SetTexture(Texture* texture_);
+
         Buffer
         ReadBuffer() override;
         void

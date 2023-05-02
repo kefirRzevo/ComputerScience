@@ -5,6 +5,8 @@
 
 
 class ListOpenerCommand;
+class ListOpenerButton;
+
 class DropDownList;
 
 //----------------------------------------//
@@ -22,8 +24,6 @@ class ListOpenerCommand: public ButtonResponse
         void
         OnResponse() override;
 };
-
-//----------------------------------------//
 
 class ListOpenerButton: public Button
 {   

@@ -16,16 +16,11 @@ class Plugin final
 
         ~Plugin();
 
-        void
-        Load();
-
         const std::string&
         GetName() const;
 
-        bool
-        GetLoadStatus() const;
-
-        IPlugin* GetIPlugin();
+        IPlugin*
+        GetIPlugin();
 
     private:
 
@@ -36,8 +31,6 @@ class Plugin final
         DestroyFunction destroy;
 
         std::string name;
-        bool loaded;
-
         IPlugin* iPlugin;
         void* handle;
 };

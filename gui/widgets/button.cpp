@@ -4,20 +4,6 @@
 
 //----------------------------------------//
 
-CloseCommand::CloseCommand(Widget* widget_):
-widget(widget_)
-{}
-
-void
-CloseCommand::OnResponse()
-{
-    assert(widget);
-    EventManager::Get()->PushEvent({widgetClosed, {widget}});
-    fprintf(stderr, "press\n");
-}
-
-//----------------------------------------//
-
 Button::Button(Layout* layout_, ButtonResponse* response_,
 Texture* onRelease_, Texture* onHover_, Texture* onPress_):
 Widget(layout_, onRelease_), response(response_), pressed(false),
@@ -112,6 +98,7 @@ Button::OnEvent(const Event& event_)
     return true;
 }
 
+//----------------------------------------//
 
 OptionButton::OptionButton(Layout* layout_, ButtonResponse* response_,
 Texture* onRelease_, Texture* onHover_, Texture* onPress_):
@@ -201,6 +188,19 @@ OptionButton::OnEvent(const Event& event_)
         }
     }
     return true;
+}
+
+//----------------------------------------//
+
+CloseCommand::CloseCommand(Widget* widget_):
+widget(widget_)
+{}
+
+void
+CloseCommand::OnResponse()
+{
+    assert(widget);
+    EventManager::Get()->PushEvent({widgetClosed, {widget}});
 }
 
 //----------------------------------------//

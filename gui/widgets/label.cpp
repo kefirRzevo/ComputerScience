@@ -56,6 +56,9 @@ TextIcon::SetString(const char* string)
     fullString = string;
     if(fullString.size() > textMaxSize)
         fullString.erase(textMaxSize, fullString.size());
+
+    curString = fullString;
+    text->SetString(curString);
 }
 
 void

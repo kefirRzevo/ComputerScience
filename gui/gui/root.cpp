@@ -32,8 +32,13 @@ class Setter: public ButtonResponse
             APIPreferencesPanel* panel = static_cast<APIPreferencesPanel*>(object->GetPreferencesPanel());
             if(panel)
             {
-                bar->Detach( panel->GetBasicWidget());
-                bar->Attach(panel->GetBasicWidget());
+                PropertiesPanel* props = dynamic_cast<PropertiesPanel*>(panel->GetBasicWidget());
+                if(props)
+                {
+                    props->Show();
+                    bar->DetachPanel(props);
+                    bar->AttachPanel(props);
+                }
             }
         }
 };
@@ -67,14 +72,33 @@ MainTitleBar::GetMenuFilterButton()
 }
 
 void
+MainTitleBar::AttachPanel(PropertiesPanel* child_)
+{
+    auto found = std::find(children.begin(), children.end(), child_);
+    if(found == children.end())
+    {
+        child_->SetParent(this);
+        child_->SetWidgetSystem(system);
+        children.push_front(child_);
+    }
+}
+
+void
+MainTitleBar::DetachPanel(PropertiesPanel* child_)
+{
+    auto found = std::find(children.begin(), children.end(), child_);
+    if(found != children.end())
+    {
+        child_->SetParent(nullptr);
+        children.erase(found);
+    }
+}
+
+void
 MainTitleBar::AddTools(DropDownList* list)
 {
     for(Plugin* plugin: PluginManager::Get()->GetPlugins())
     {
-        if(plugin->GetLoadStatus())
-            continue;
-        plugin->Load();
-
         IPlugin* iPlugin = plugin->GetIPlugin();
         if(!iPlugin)
             continue;
@@ -82,7 +106,8 @@ MainTitleBar::AddTools(DropDownList* list)
         for(ITool* tool: iPlugin->GetTools())
         {
             Texture* iconTexture = TextureManager::Get()->GetTexture(tool->GetIconFileName());
-            assert(iconTexture);
+            if(!iconTexture)
+                iconTexture = Config::defNotFound;
 
             Button* toolBtn = Button::GetDefault(tool->GetName(), new Setter<ITool>(tool, this));
             toolBtn->Attach(Icon::GetDefault(iconTexture));
@@ -96,10 +121,6 @@ MainTitleBar::AddFilters(DropDownList* list)
 {
     for(Plugin* plugin: PluginManager::Get()->GetPlugins())
     {
-        if(plugin->GetLoadStatus())
-            continue;
-        plugin->Load();
-
         IPlugin* iPlugin = plugin->GetIPlugin();
         if(!iPlugin)
             continue;

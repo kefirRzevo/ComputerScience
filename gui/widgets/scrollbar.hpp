@@ -77,6 +77,9 @@ class ScrollBar: public Widget
         float scaleStep;
         int   scaleLen;
 
+        float minValue;
+        float maxValue;
+
         virtual void
         CalculateValue(float initValue_, Vec2i delta_) = 0;
         virtual RectInt
@@ -100,6 +103,11 @@ class ScrollBar: public Widget
         SetBoxLength(int length_) = 0;
         virtual void
         SetValue(float value_) = 0;
+        void
+        SetMinValue(float minValue_);
+        void
+        SetMaxValue(float maxValue_);
+
         void
         OnLayoutMove() override;
         void

@@ -1,16 +1,16 @@
 #pragma once
 
 
-#include "../graphlib/graphlib.hpp"
 #include "../config.hpp"
+#include "../graphlib/graphlib.hpp"
 #include "widgetlayout.hpp"
 
 #include <list>
 
+
 class Layout;
 
 class Widget;
-class WidgetView;
 class WidgetSystem;
 
 #define $$ fprintf(stderr, "%-4d %s\n", __LINE__, __FILE__);
@@ -74,6 +74,7 @@ class Widget
         ProcessListenerEvent(const Event& event_);
         virtual bool
         OnEvent(const Event& event_);
+
         virtual void
         OnLayoutMove();
         virtual void
@@ -83,15 +84,7 @@ class Widget
         Render() const;
         virtual void
         RenderBorder() const;
-
-        void
-        SayHello() const
-        {
-            fprintf(stderr, "hello\n");
-        }
 };
-
-//----------------------------------------//
 
 class WidgetSystem
 {

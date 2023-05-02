@@ -71,17 +71,33 @@ class Renderer
         DrawLine(Texture* src, Vec2i p1, Vec2i p2);
 
         void
-        DrawRect(const RectInt& RectInt);
+        DrawRect(const RectInt& rect);
         void
         DrawRect(Texture* src, const RectInt& rect);
+
         void
-        DrawTexture(const Texture* dst, const RectInt& dstRectInt);
+        DrawTexture(const Texture* dst);
+        void
+        DrawTexture(Texture* src, const Texture* dst);
+        void
+        DrawTexture(const RectInt& srcRect, const Texture* dst);
+        void
+        DrawTexture(Texture* src, const RectInt& srcRect, const Texture* dst);
+        void
+        DrawTexture(const Texture* dst, const RectInt& dstRect);
         void
         DrawTexture(Texture* src, const Texture* dst, const RectInt& dstRect);
+        void
+        DrawTexture(const RectInt& srcRect, const Texture* dst, const RectInt& dstRect);
+        void
+        DrawTexture(Texture* src, const RectInt& srcRect, const Texture* dst, const RectInt& dstRect);
+
+
         void
         DrawText(const Text* text);
         void
         DrawText(Texture* src, const Text* text);
+
         void
         Clear();
         void

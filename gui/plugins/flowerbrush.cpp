@@ -108,7 +108,7 @@ FlowerTool::FlowerTool()
       width_slider_callback_(nullptr),
       height_slider_callback_(nullptr)
 {
-    flower_ = api->GetTextureFactory()->CreateTexture("res/background.png");
+    flower_ = api->GetTextureFactory()->CreateTexture("res/flower.bmp");
 
     IWidgetFactory* factory = api->GetWidgetFactory();
 
@@ -176,7 +176,7 @@ void FlowerTool::ActionEnd(ITexture* canvas, int x, int y)
 
 const char* FlowerTool::GetIconFileName() const
 {
-    return "res/button.png";
+    return "res/flower.bmp";
 }
 
 IPreferencesPanel* FlowerTool::GetPreferencesPanel() const

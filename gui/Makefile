@@ -1,7 +1,7 @@
 CC  = gcc
 CXX = g++ -std=c++17
 
-CXXFLAGS = -I inc -Wall -Wextra -g -std=c++17 -Wall -Wextra \
+CXXFLAGS = -I inc -Wall -Wextra -g -std=c++17 #-Wall -Wextra \
 -Weffc++ -Wc++0x-compat \
 -Wc++11-compat -Wc++14-compat -Wcast-qual \
 -Wchar-subscripts   \

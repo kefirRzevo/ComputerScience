@@ -39,6 +39,8 @@ Texture*
 Config::defDownPressTexture{TextureManager::Get()->GetTexture(Apricot)};
 
 Texture*
+Config::defNotFound{TextureManager::Get()->GetTexture("res/not_found.bmp")};
+Texture*
 Config::defCanvasTexture{TextureManager::Get()->GetTexture(Blanched_almond)};
 Texture*
 Config::defTexture{TextureManager::Get()->GetTexture("res/background.png")};

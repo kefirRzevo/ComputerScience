@@ -11,7 +11,7 @@ std::unique_ptr<PluginManager> PluginManager::pluginManager;
 //----------------------------------------//
 
 Plugin::Plugin(const char* pluginPath, IAPI* iAPI):
-create(nullptr), destroy(nullptr), name(pluginPath), loaded(false),
+create(nullptr), destroy(nullptr), name(pluginPath),
 iPlugin(nullptr), handle(nullptr)
 {
     handle = dlopen(pluginPath, RTLD_NOW);
@@ -42,18 +42,6 @@ Plugin::Initialize()
         fprintf(stderr, "Error happened with Destroy Function\n");
         return;
     }
-}
-
-void
-Plugin::Load()
-{
-    loaded = true;
-}
-
-bool
-Plugin::GetLoadStatus() const
-{
-    return loaded;
 }
 
 Plugin::~Plugin()

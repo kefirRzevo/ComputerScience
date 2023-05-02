@@ -28,6 +28,12 @@ APITexture::GetHeight()
     return texture->GetHeight();
 }
 
+void
+APITexture::SetTexture(Texture* texture_)
+{
+    texture = texture_;
+}
+
 Buffer
 APITexture::ReadBuffer()
 {
@@ -78,5 +84,5 @@ void
 APITexture::CopyTexture(ITexture* iTexture, int x, int y, int width, int height)
 {
     APITexture* dst = static_cast<APITexture*>(iTexture);
-    Renderer::Get()->DrawTexture(texture, dst->texture, {x, y, width, height});
+    Renderer::Get()->DrawTexture(texture, {x, y, width, height}, dst->texture);
 }

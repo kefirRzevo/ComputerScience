@@ -110,18 +110,9 @@ DropDownList::UpdateDropPoint()
     if(!parent)
         return;
 
-    Widget* widget = parent;
-    RectInt cont = widget->GetLayout()->GetRectangle();
-    while(widget->GetParent())
-    {
-        if(!dynamic_cast<Container*>(widget->GetParent()->GetLayout()))
-            break;
+    RectInt cont = parent->GetLayout()->GetRectangle();
 
-        widget = widget->GetParent();
-        cont  = widget->GetLayout()->GetRectangle();
-    }
-
-    int contAdd = widget->GetLayout()->indent;
+    int contAdd = parent->GetLayout()->indent;
     RectInt contRect = {cont.left  - contAdd,     cont.top    -     contAdd,
                         cont.width + 2 * contAdd, cont.height + 2 * contAdd};
 

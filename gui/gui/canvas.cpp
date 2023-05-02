@@ -10,6 +10,8 @@ class Canvas;
 class HorScrollBarCanvasCallback;
 class VerScrollBarCanvasCallback;
 
+//----------------------------------------//
+
 class CanvasTitle: public Widget
 {
     protected:
@@ -78,36 +80,52 @@ class Canvas: public Widget
 {
     protected:
 
-        Texture*    fullTexture;
-        APITexture  apiFullTexture;
+        CanvasWidget* canvasWidget;
+        Texture*      fullTexture;
+        APITexture    apiFullTexture;
 
         RectInt visiblePart;
         Vec2i   fullTextureSize;
 
     public:
 
-        Canvas(Layout* layout, Vec2i fullTextureSize_):
-        Widget(layout, Config::defCanvasTexture),
-        fullTexture(new Texture{fullTextureSize_}),
-        apiFullTexture(fullTexture),
+        Canvas(Layout* layout, Vec2i fullTextureSize_, CanvasWidget* canvasWidget_):
+        Widget(layout, nullptr),
+        canvasWidget(canvasWidget_),
+        fullTexture(nullptr),
+        apiFullTexture(nullptr),
         fullTextureSize(fullTextureSize_)
         {
             const RectInt& rect = layout->GetRectangle();
             visiblePart = {0, 0, rect.width, rect.height};
+
+            Renderer* rend = Renderer::Get();
+            
+            Texture* defTexture = Config::defCanvasTexture;
+            Vec2i defTextureSize = {defTexture->GetWidth(), defTexture->GetHeight()};
+
+            Vec2i textureSize = {Config::defWindowWidth, Config::defWindowHeight};
+
+            texture = new Texture{textureSize};
+            fullTexture = new Texture{fullTextureSize};
+
+            rend->DrawTexture(texture, Config::defCanvasTexture);
+            rend->DrawTexture(fullTexture, Config::defCanvasTexture);
+            apiFullTexture.SetTexture(fullTexture);
 
             assert(fullTextureSize.x > rect.width &&
                    fullTextureSize.y > rect.height);
         }
 
         static Canvas*
-        GetDefault(Vec2i fullTextureSize_)
+        GetDefault(Vec2i fullTextureSize_, CanvasWidget* canvasWidget_)
         {
             Vec2i def = {Config::defCanvasWidth, Config::defCanvasHeight};
             Vec2i min = {Config::defMinCanvasWidth, Config::defMinCanvasHeight};
             Vec2i max = {Config::defMaxCanvasWidth, Config::defMaxCanvasHeight};
             Layout* layout = new Layout{{def}, 0, 0, min, max};
 
-            return new Canvas{layout, fullTextureSize_};
+            return new Canvas{layout, fullTextureSize_, canvasWidget_};
         }
 
         const RectInt&
@@ -125,7 +143,7 @@ class Canvas: public Widget
         void
         SetVisibilityBeginX(int value)
         {
-            int range = fullTextureSize.x - layout->GetRectangle().width;
+            int range = fullTextureSize.x - visiblePart.width;
             if(value >= 0 && value <= range)
                 visiblePart.left = value;
         }
@@ -133,7 +151,7 @@ class Canvas: public Widget
         void
         SetVisibilityBeginY(int value)
         {
-            int range = fullTextureSize.y - layout->GetRectangle().height;
+            int range = fullTextureSize.y - visiblePart.height;
             if(value >= 0 && value <= range)
                 visiblePart.top = value;
         }
@@ -163,7 +181,7 @@ class Canvas: public Widget
                 ITool* active = Manager<ITool>::Get()->GetActive();
                 if(active)
                     active->ActionEnd(&apiFullTexture, pos.x, pos.y);
-                
+
                 system->Unsubscribe(mouseMoved);
                 system->Unsubscribe(mouseReleased);
             }
@@ -215,6 +233,23 @@ class Canvas: public Widget
             Renderer::Get()->DrawTexture(texture, fullTexture, visiblePart);
             Widget::Render();
         }
+
+        void
+        OnLayoutResize() override
+        {
+            const RectInt& rect = layout->GetRectangle();
+
+            visiblePart.width  = rect.width;
+            visiblePart.height = rect.height;
+
+            if(visiblePart.left + rect.width > fullTextureSize.x)
+                visiblePart.left = fullTextureSize.x - rect.width;
+
+            if(visiblePart.top + rect.height > fullTextureSize.y)
+                visiblePart.top = fullTextureSize.y - rect.height;
+
+            canvasWidget->OnLayoutResize();
+        }
 };
 
 class HorScrollBarCanvasCallback: public ScrollBarResponseTest
@@ -253,7 +288,7 @@ class VerScrollBarCanvasCallback: public ScrollBarResponseTest
             int fullHeight    = canvas->GetFullTextureSize().y;
             int visibleHeight = canvas->GetVisiblePart().height;
             int newY = static_cast<int>(value * (fullHeight - visibleHeight));
-            canvas->SetVisibilityBeginX(newY);
+            canvas->SetVisibilityBeginY(newY);
         }
 
     private:
@@ -261,12 +296,14 @@ class VerScrollBarCanvasCallback: public ScrollBarResponseTest
         Canvas* canvas;
 };
 
+//----------------------------------------//
+
 CanvasWidget::CanvasWidget(const std::string& name_, Vec2i fullTextureSize_):
 Widget(new Column{0, 4}, Config::defUpReleaseTexture),
 fullTextureSize(fullTextureSize_)
 {
     canvasSize = {Config::defCanvasWidth, Config::defCanvasHeight};
-    canvas = Canvas::GetDefault(fullTextureSize_);
+    canvas = Canvas::GetDefault(fullTextureSize_, this);
 
     VerScrollBarCanvasCallback* ver = new VerScrollBarCanvasCallback{canvas};
     verScrollBar = VerScrollBar::GetDefault(ver);
@@ -347,3 +384,5 @@ CanvasWidget::OnLayoutResize()
     else
         verScrollBar->SetBoxLength(verBarLen);
 }
+
+//----------------------------------------//

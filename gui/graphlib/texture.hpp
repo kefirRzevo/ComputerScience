@@ -92,12 +92,6 @@ class Text
 
 class Texture
 {
-    private:
-
-        Texture(const char* path);
-        Texture(const char* path, int i, int j, int w, int h);
-        Texture(const char* path, const RectInt& textureRect);
-
     public:
 
         Texture           (              ) = delete;
@@ -107,6 +101,9 @@ class Texture
         Texture& operator=(Texture&&) = default;
         ~Texture() = default;
 
+        Texture(const char* path);
+        Texture(const char* path, int i, int j, int w, int h);
+        Texture(const char* path, const RectInt& textureRect);
         Texture(Vec2i size_);
         Texture(Color color_);
 

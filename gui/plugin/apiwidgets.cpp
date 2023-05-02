@@ -89,8 +89,6 @@ ISlider*
 APIWidgetFactory::CreateSlider
 (int width_, int height_, float boxWidth_, float boxHeight_, float min_, float max_)
 {
-    assert(min_ == 0 && max_ == 1);
-
     Texture* boxTexture = Config::defPluginScrollBox;
     Texture* barTexture = Config::defPluginScrollBar;
 
@@ -99,13 +97,16 @@ APIWidgetFactory::CreateSlider
     Vec2i min = {width_ * 3 / 4, height_};
     Vec2i max = {width_ * 5 / 4, height_};
 
-    Layout* barLayout = new Layout{{def}, Config::defMargin, Config::defBorder, min, max};
-    Layout* boxLayout = new Layout{boxSize, Config::defMargin, Config::defBorder};
+    Layout* barLayout = new Layout{{def}, Config::defMargin, 0, min, max};
+    Layout* boxLayout = new Layout{boxSize, Config::defMargin, 0};
 
     APISliderCallback* callback = new APISliderCallback{};
 
     ScrollBox*    box = new ScrollBox{boxLayout, boxTexture};
     HorScrollBar* bar = new HorScrollBar{barLayout, barTexture, box, callback};
+    bar->SetMinValue(min_);
+    bar->SetMaxValue(max_);
+
     APISlider* slider = new APISlider{bar, callback};
     return slider;
 }
@@ -140,7 +141,7 @@ IPreferencesPanel*
 APIWidgetFactory::CreateDefaultPreferencesPanel()
 {
     Texture* texture = Config::defDownReleaseTexture;
-    return new APIPreferencesPanel{new PropertiesPanel{new Column{}, texture}};
+    return new APIPreferencesPanel{PropertiesPanel::GetDefault(texture)};
 }
 
 //----------------------------------------//
@@ -306,7 +307,7 @@ APIPreferencesPanel::GetHeight()
 void
 APIPreferencesPanel::Attach(IWidget* widget, int x, int y)
 {
-    assert(x >=0 && y >= 0);
+    //assert(x >=-1 && y >= 0);
     panel->Attach(dynamic_cast<APIWidget*>(widget)->GetBasicWidget());
 }
 

@@ -1,11 +1,15 @@
 #pragma once
 
-
 #include "widget.hpp"
 
 
 class ButtonResponse;
 class Button;
+
+class OptionButton;
+
+class CloseCommand;
+class CloseButton;
 
 //----------------------------------------//
 
