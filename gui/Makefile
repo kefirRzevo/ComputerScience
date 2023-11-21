@@ -44,9 +44,9 @@ LDFLAGS  = -ldl
 TARGET = app
 
 
-SRCDIR = graphlib/ ./ application/ widgets/ plugin/ gui/
+SRCDIR = graphlib/ ./ application/ widgets/ plugin/ gui/ config/
 OBJDIR = build/
-INCDIR = application/ graphlib/ widgets/ plugin/ gui/
+INCDIR = application/ graphlib/ widgets/ plugin/ gui/ config/
 LIBDIR = plugins/
 
 SOURCES = $(foreach SRC, $(SRCDIR), $(wildcard $(SRC)*.cpp))

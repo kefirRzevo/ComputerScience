@@ -18,7 +18,7 @@ using Coordinates = std::list<Coordinate>;
 using Rabbits = std::list<Rabbit* >;
 using Snakes  = std::list<Snake* >;
 
-static FILE* fp = fopen("dump.txt", "w+");
+static FILE* fp = fopen("build/dump.txt", "w+");
 
 #ifdef DEBUG
 #define $$ do{fprintf(fp, "%s %d\n", __FILE__, __LINE__); fflush(fp);}while(0); 

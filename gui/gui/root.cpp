@@ -8,8 +8,8 @@
 #include "../plugin/apiwidgets.hpp"
 #include "../plugin/manager.hpp"
 
-int
-CanvasResponse::nCanvases = 0;
+
+//----------------------------------------//
 
 template<class T>
 class Setter: public ButtonResponse
@@ -183,9 +183,8 @@ root(root_)
 void
 CanvasResponse::OnResponse()
 {
-    std::string title = "Canvas" +  std::to_string(nCanvases);
+    std::string title = "Canvas";
     root->Attach(new CanvasWidget{title, {Config::defFullTextureWidth, Config::defFullTextureHeight}});
-    nCanvases++;
 }
 
 //----------------------------------------//

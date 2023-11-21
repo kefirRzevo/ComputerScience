@@ -1,6 +1,6 @@
 #include "graphlib/graphlib.hpp"
 #include "application/application.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 
 
 int main()

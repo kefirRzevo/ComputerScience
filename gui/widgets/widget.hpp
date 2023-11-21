@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "../config.hpp"
+#include "../config/config.hpp"
 #include "../graphlib/graphlib.hpp"
 #include "widgetlayout.hpp"
 

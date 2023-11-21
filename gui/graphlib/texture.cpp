@@ -2,7 +2,7 @@
 
 #include "texture.hpp"
 #include "renderer.hpp"
-#include "../config.hpp"
+#include "../config/config.hpp"
 
 std::unique_ptr<FontManager>    FontManager::fontManager;
 std::unique_ptr<TextureManager> TextureManager::textureManager;

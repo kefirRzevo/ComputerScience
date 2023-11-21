@@ -41,7 +41,7 @@ DBGFLAGS = -fsanitize=address -ggdb3
 
 TARGET = snake
 SRCDIR = src/
-OBJDIR = obj/
+OBJDIR = build/
 INCDIR = include/
 
 SOURCES = main.cpp $(wildcard $(SRCDIR)*.cpp)

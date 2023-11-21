@@ -15,10 +15,10 @@ int main(int argc, char* argv[])
     Model model({POLYGON_WIDTH, POLYGON_HEIGHT}, N_SNAKES);
     view->SetModel(&model);
     BotController(model.GetSnake(0));
-    BotController(model.GetSnake(1));
-    BotController(model.GetSnake(2));
+    //BotController(model.GetSnake(1));
+    //BotController(model.GetSnake(2));
     //HumanController(model.GetSnake(1), keyArrowL, keyArrowR, keyArrowU, keyArrowD);
-    //HumanController(model.GetSnake(2), keyA, keyD, keyW, keyS);
+    HumanController(model.GetSnake(2), keyA, keyD, keyW, keyS);
 
     view->RunLoop();
 

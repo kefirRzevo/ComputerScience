@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../graphlib/graphlib.hpp"
-#include "../config.hpp"
+#include "../config/config.hpp"
 #include "widget.hpp"
 
 #include <list>
@@ -15,6 +15,7 @@ class Column;
 
 class ScrollBox;
 class DropDownList;
+class WidgetSystem;
 
 enum class BorderPart: char
 {
@@ -108,6 +109,7 @@ class Layout
 
     friend class ScrollBox;
     friend class DropDownList;
+    friend class WidgetSystem;
 
     public:
 

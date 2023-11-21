@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "../config.hpp"
+#include "../config/config.hpp"
 #include "math.hpp"
 
 #include <SFML/Graphics.hpp>

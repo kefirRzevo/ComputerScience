@@ -48,7 +48,6 @@ class CanvasResponse: public ButtonResponse
     private:
 
         Root* root;
-        static int nCanvases;
 
     public:
 

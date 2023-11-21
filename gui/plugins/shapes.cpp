@@ -30,11 +30,11 @@ IAPI* api = nullptr;
 
 void MakeSliderWithTitle(int size_x, int size_y, int coord_x, int coord_y, int max_val, int min_val, char* title, 
                          IPreferencesPanel* panel, ISliderCallback* callback,
-                         int title_size_x = 80, int title_size_y = 30, int ch_size = 10);
+                         int title_size_x = 80, int title_size_y = 30, int ch_size = 25);
 
 void MakeSliderWithTitleMeasure(int size_x, int size_y, int coord_x, int coord_y, int max_val, int min_val, char* title, 
                          IPreferencesPanel* panel, ILabel* num_label, ISliderCallback* callback,
-                         int title_size_x = 80, int title_size_y = 30, int ch_size = 10);
+                         int title_size_x = 80, int title_size_y = 30, int ch_size = 25);
 
 
 class ChangeShapeeCallback : public IClickCallback {
@@ -270,7 +270,7 @@ IPreferencesPanel* Filler::GetPreferencesPanel() const {
 void Filler::ConstructPreferencePanel() {
     panel = api->GetWidgetFactory()->CreateDefaultPreferencesPanel();
 
-    IButton* text_button = api->GetWidgetFactory()->CreateButtonWithText(120, 30, "Press me", 10);
+    IButton* text_button = api->GetWidgetFactory()->CreateButtonWithText(120, 30, "Press me", 25);
     text_button->SetClickCallback(new TestCallback());
 
     panel->Attach(text_button, panel->GetWidth() / 2, panel->GetHeight() / 2);
@@ -306,7 +306,7 @@ const char* ShapesDrawer::GetName() const
 }
 
 const char* ShapesDrawer::GetIconFileName() const {
-    static const char* name = "img/vitya.bmp";
+    static const char* name = "res/myicon.bmp";
     return name;
 };
 
@@ -318,7 +318,7 @@ void ShapesDrawer::ConstructPreferencePanel() {
     
     panel = api->GetWidgetFactory()->CreateDefaultPreferencesPanel();
 
-    ILabel* tool_name = api->GetWidgetFactory()->CreateLabel(170, 30 , "Shapes drawer", 12);
+    ILabel* tool_name = api->GetWidgetFactory()->CreateLabel(170, 30 , "Shapes drawer", 25);
     panel->Attach(tool_name, panel->GetWidth() / 2 - 170 / 2, 5);
 
     Point coord();
@@ -328,20 +328,20 @@ void ShapesDrawer::ConstructPreferencePanel() {
     int button_size_x = 80;
     int button_size_y = 30;
     
-    IButton* circle_button = api->GetWidgetFactory()->CreateButtonWithText(button_size_x, button_size_y, "Circle", 10);
+    IButton* circle_button = api->GetWidgetFactory()->CreateButtonWithText(button_size_x, button_size_y, "Circle", 25);
     circle_button->SetClickCallback(new ChangeShapeeCallback(this, TYPE_CIRCLE));
     panel->Attach(circle_button, button_x, button_y);
 
-    IButton* square_button = api->GetWidgetFactory()->CreateButtonWithText(button_size_x, button_size_y, "Square", 10);
+    IButton* square_button = api->GetWidgetFactory()->CreateButtonWithText(button_size_x, button_size_y, "Square", 25);
     square_button->SetClickCallback(new ChangeShapeeCallback(this, TYPE_SQUARE));
     panel->Attach(square_button, button_x, button_y + button_size_y + dy);
     
     //ILabel* asdfa = factory->CreateLabel(50, 30, "0", 10);
 
-    ILabel* red_count   = factory->CreateLabel(50, 30, "0", 10);
-    ILabel* green_count = factory->CreateLabel(50, 30, "0", 10);
-    ILabel* blue_count  = factory->CreateLabel(50, 30, "0", 10);
-    ILabel* size_count  = factory->CreateLabel(50, 30, "1", 10);
+    ILabel* red_count   = factory->CreateLabel(50, 30, "0", 25);
+    ILabel* green_count = factory->CreateLabel(50, 30, "0", 25);
+    ILabel* blue_count  = factory->CreateLabel(50, 30, "0", 25);
+    ILabel* size_count  = factory->CreateLabel(50, 30, "1", 25);
 
     MakeSliderWithTitleMeasure(150, 15, panel->GetWidth() / 8, panel->GetHeight() / 5 + 0  , 1, 100, "size:",  panel, size_count,  new ChangeSizeSlideCallback(this, size_count));
     MakeSliderWithTitleMeasure(150, 15, panel->GetWidth() / 8, panel->GetHeight() / 5 + 60 , 0, 255, "red:",   panel, red_count,   new ChangeColorSlideCallback(this, red_count,   COMPONENT_RED));
