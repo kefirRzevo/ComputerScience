@@ -1,12 +1,10 @@
 #pragma once
 
-
-#include "../config.hpp"
+#include "../config/config.hpp"
 #include "../graphlib/graphlib.hpp"
 #include "widgetlayout.hpp"
 
 #include <list>
-
 
 class Layout;
 
@@ -17,101 +15,71 @@ class WidgetSystem;
 
 //----------------------------------------//
 
-class Widget
-{
-    protected:
+class Widget {
+protected:
+  Layout *layout;
+  Texture *texture;
+  Color borderColor;
 
-        Layout*  layout;
-        Texture* texture;
-        Color    borderColor;
+  std::list<Widget *> children;
+  Widget *parent;
+  WidgetSystem *system;
 
-        std::list<Widget*> children;
-        Widget*            parent;
-        WidgetSystem*      system;
+public:
+  Widget() = delete;
+  Widget(const Widget &) = delete;
+  Widget &operator=(const Widget &) = delete;
+  Widget(Widget &&) = default;
+  Widget &operator=(Widget &&) = default;
 
-    public:
+  Widget(Layout *layout_, Texture *texture_);
 
-        Widget           (              ) = delete;
-        Widget           (const Widget& ) = delete;
-        Widget& operator=(const Widget& ) = delete;
-        Widget           (      Widget&&) = default;
-        Widget& operator=(      Widget&&) = default;
+  virtual ~Widget();
 
-        Widget(Layout* layout_, Texture* texture_);
+  Layout *GetLayout();
+  Texture *GetTexture();
+  Widget *GetParent();
+  WidgetSystem *GetWidgetSystem();
+  Color GetBorderColor() const;
 
-        virtual ~Widget();
+  void SetLayout(Layout *layout_);
+  void SetTexture(Texture *texture_);
+  void SetParent(Widget *parent_);
+  void SetWidgetSystem(WidgetSystem *system_);
+  void SetBorderColor(Color borderColor_);
 
-        Layout*
-        GetLayout();
-        Texture*
-        GetTexture();
-        Widget*
-        GetParent();
-        WidgetSystem*
-        GetWidgetSystem();
-        Color
-        GetBorderColor() const;
+  virtual void Attach(Widget *child_);
+  virtual void Detach(Widget *child_);
 
-        void
-        SetLayout(Layout* layout_);
-        void
-        SetTexture(Texture* texture_);
-        void
-        SetParent(Widget* parent_);
-        void
-        SetWidgetSystem(WidgetSystem* system_);
-        void
-        SetBorderColor(Color borderColor_);
+  virtual bool ProcessEvent(const Event &event_);
+  virtual bool ProcessListenerEvent(const Event &event_);
+  virtual bool OnEvent(const Event &event_);
 
-        virtual void
-        Attach(Widget* child_);
-        virtual void
-        Detach(Widget* child_);
+  virtual void OnLayoutMove();
+  virtual void OnLayoutResize();
 
-        virtual bool
-        ProcessEvent(const Event& event_);
-        virtual bool
-        ProcessListenerEvent(const Event& event_);
-        virtual bool
-        OnEvent(const Event& event_);
-
-        virtual void
-        OnLayoutMove();
-        virtual void
-        OnLayoutResize();
-
-        virtual void
-        Render() const;
-        virtual void
-        RenderBorder() const;
+  virtual void Render() const;
+  virtual void RenderBorder() const;
 };
 
-class WidgetSystem
-{
-    protected:
+class WidgetSystem {
+protected:
+  Widget *root;
+  std::vector<Widget *> listeners;
 
-        Widget* root;
-        std::vector<Widget*> listeners;
+public:
+  WidgetSystem() = default;
+  WidgetSystem(const WidgetSystem &) = delete;
+  WidgetSystem &operator=(const WidgetSystem &) = delete;
 
-    public:
+  WidgetSystem(Widget *root_);
 
-        WidgetSystem           (                   ) = default;
-        WidgetSystem           (const WidgetSystem&) = delete;
-        WidgetSystem& operator=(const WidgetSystem&) = delete;
+  void Subscribe(Widget *listener_, EventType type_);
+  void Unsubscribe(EventType type_);
+  void Reset();
 
-        WidgetSystem(Widget* root_);
-
-        void
-        Subscribe(Widget* listener_, EventType type_);
-        void
-        Unsubscribe(EventType type_);
-        void
-        Reset();
-
-        void
-        ProcessEvent(const Event& event_);
-        void
-        Render() const;
+  void ProcessEvent(const Event &event_);
+  void Render() const;
 };
 
 //----------------------------------------//

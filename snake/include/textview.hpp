@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <termios.h>
 
 #include "view.hpp"
@@ -9,71 +8,64 @@ using Color = int;
 
 //----------------------------------------//
 
-class TextView: public View
-{
-    private:
+class TextView : public View {
+private:
+  Size windowSize;
+  Size frameSize;
+  Coordinate upLeftCorner;
+  bool timeToDraw;
 
-        Size windowSize;
-        Size frameSize;
-        Coordinate upLeftCorner;
-        bool timeToDraw;
+  struct termios termis_attr;
 
-        struct termios termis_attr;
+public:
+  TextView();
 
-    public:
+  ~TextView();
 
-        TextView();
+  void RunLoop() override;
 
-        ~TextView();
+  void DrawRabbits() const;
 
-        void RunLoop() override;
+  void DrawSnakes() const;
 
-        void DrawRabbits() const;
+  void DrawResults() const;
 
-        void DrawSnakes() const;
+  void DrawFrame();
 
-        void DrawResults() const;
+private:
+  void SetSnakeStyleColors(int snakeStyle) const;
 
-        void DrawFrame();
+  void SetRabbitStyleColors(int rabbitStyle) const;
 
-    private:
+  void SetColor(Color fg, Color bg) const;
 
-        void SetSnakeStyleColors(int snakeStyle) const;
+  void HLine(int x0, int y0, int len, int sym) const;
 
-        void SetRabbitStyleColors(int rabbitStyle) const;
+  void VLine(int x0, int y0, int len, int sym) const;
 
-        void SetColor(Color fg, Color bg) const;
+  void Symbol(Coordinate coord, int sym) const;
 
-        void HLine(int x0, int y0, int len, int sym) const;
+  void String(int x, int y, const char *string) const;
 
-        void VLine(int x0, int y0, int len, int sym) const;
+  void Clear(Color bg = -1) const;
 
-        void Symbol(Coordinate coord, int sym) const;
+  void CarretOff() const;
 
-        void String(int x, int y, const char* string) const;
+  void CarretOn() const;
 
-        void Clear(Color bg = -1) const;
+  void TermiosPropsOn();
 
+  void TermiosPropsOff();
 
-        void CarretOff() const;
+  bool IsInFrame(const Coordinate &point) const;
 
-        void CarretOn() const;
+  KeyCode GetPolledKey() const;
 
+  void OnTimer();
 
-        void TermiosPropsOn();
+  void UpdateWindowSize();
 
-        void TermiosPropsOff();
-
-        
-        bool IsInFrame(const Coordinate& point) const;
-
-        KeyCode GetPolledKey() const;
-
-        void OnTimer();
-
-        void UpdateWindowSize();
-
-        friend void SigHandler(int signum);
+  friend void SigHandler(int signum);
 };
 
 //----------------------------------------//

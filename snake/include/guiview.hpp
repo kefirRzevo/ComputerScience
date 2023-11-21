@@ -1,41 +1,35 @@
 #pragma once
 
-
 #include <SFML/Graphics.hpp>
 
 #include "view.hpp"
 
-
 //----------------------------------------//
 
-class GuiView: public View
-{
-    private:
+class GuiView : public View {
+private:
+  sf::RenderWindow sfWindow;
+  sf::Font sfFont;
+  sf::Texture sfSnakeTexture;
+  sf::Texture sfRabbitTexture;
 
-        sf::RenderWindow sfWindow;
-        sf::Font sfFont;
-        sf::Texture sfSnakeTexture;
-        sf::Texture sfRabbitTexture;
+public:
+  GuiView();
 
-    public:
+  ~GuiView();
 
-        GuiView();
+  void RunLoop() override;
 
-        ~GuiView();
+  void DrawRabbits();
 
-        void RunLoop() override;
+  void DrawSnakes();
 
-        void DrawRabbits();
+  void DrawFrame();
 
-        void DrawSnakes();
+  void DrawResults();
 
-        void DrawFrame();
-
-        void DrawResults();
-
-    private:
-
-        sf::Color GetStyleColor(int snakeStyle) const;
+private:
+  sf::Color GetStyleColor(int snakeStyle) const;
 };
 
 //----------------------------------------//

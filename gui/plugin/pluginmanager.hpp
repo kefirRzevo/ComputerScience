@@ -1,60 +1,46 @@
 #pragma once
 
-
 #include <vector>
 
 #include "plugin.hpp"
 
 using namespace plugin;
 
+class Plugin final {
+public:
+  Plugin(const char *pluginPath_, IAPI *iAPI_);
 
-class Plugin final
-{
-    public:
+  ~Plugin();
 
-        Plugin(const char* pluginPath_, IAPI* iAPI_);
+  const std::string &GetName() const;
 
-        ~Plugin();
+  IPlugin *GetIPlugin();
 
-        const std::string&
-        GetName() const;
+private:
+  void Initialize();
 
-        IPlugin*
-        GetIPlugin();
+  CreateFunction create;
+  DestroyFunction destroy;
 
-    private:
-
-        void
-        Initialize();
-
-        CreateFunction  create;
-        DestroyFunction destroy;
-
-        std::string name;
-        IPlugin* iPlugin;
-        void* handle;
+  std::string name;
+  IPlugin *iPlugin;
+  void *handle;
 };
 
-class PluginManager
-{
-    private:
+class PluginManager {
+private:
+  PluginManager();
 
-        PluginManager();
+public:
+  ~PluginManager();
 
-    public:
+  static PluginManager *Get();
 
-        ~PluginManager();
+  const std::vector<Plugin *> &GetPlugins() const;
 
-        static PluginManager*
-        Get();
+private:
+  std::vector<Plugin *> loadedPlugins;
+  IAPI *iAPI;
 
-        const std::vector<Plugin*>&
-        GetPlugins() const;
-
-    private:
-
-        std::vector<Plugin*> loadedPlugins;
-        IAPI* iAPI;
-
-        static std::unique_ptr<PluginManager> pluginManager;
+  static std::unique_ptr<PluginManager> pluginManager;
 };

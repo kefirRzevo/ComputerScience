@@ -10,164 +10,117 @@ class VerScrollBar;
 
 //----------------------------------------//
 
-class ScrollBarResponse
-{
-    public:
+class ScrollBarResponse {
+public:
+  virtual ~ScrollBarResponse();
 
-        virtual ~ScrollBarResponse();
-
-        virtual void
-        OnResponse(float value_) = 0;
+  virtual void OnResponse(float value_) = 0;
 };
 
-class ScrollBarResponseTest: public ScrollBarResponse
-{
-    public:
+class ScrollBarResponseTest : public ScrollBarResponse {
+public:
+  ScrollBarResponseTest();
 
-        ScrollBarResponseTest();
-
-        void
-        OnResponse(float value_) override;
+  void OnResponse(float value_) override;
 };
 
-class ScrollBox: public Widget
-{
-    protected:
+class ScrollBox : public Widget {
+protected:
+  Texture *release;
+  Texture *hover;
+  Texture *move;
 
-        Texture* release;
-        Texture* hover;
-        Texture* move;
+  ScrollBar *scrollBar;
+  bool pressed;
+  Vec2i clickPos;
+  float initValue;
 
-        ScrollBar* scrollBar;
-        bool  pressed;
-        Vec2i clickPos;
-        float initValue;
+  void Move(Vec2i pos_);
+  void SetRectangle(RectInt rect_);
 
-        void
-        Move(Vec2i pos_);
-        void
-        SetRectangle(RectInt rect_);
+public:
+  ScrollBox(Layout *layout_, Texture *release_, Texture *hover_ = nullptr,
+            Texture *move_ = nullptr);
 
-    public:
+  void SetScrollBar(ScrollBar *scrollBar_);
 
-        ScrollBox(Layout* layout_, Texture* release_,
-        Texture* hover_ = nullptr, Texture* move_ = nullptr);
+  bool ProcessListenerEvent(const Event &event_) override;
+  bool OnEvent(const Event &event_) override;
 
-        void
-        SetScrollBar(ScrollBar* scrollBar_);
-
-        bool
-        ProcessListenerEvent(const Event& event_) override;
-        bool
-        OnEvent(const Event& event_) override;
-
-    friend class ScrollBar;
-    friend class HorScrollBar;
-    friend class VerScrollBar;
+  friend class ScrollBar;
+  friend class HorScrollBar;
+  friend class VerScrollBar;
 };
 
-class ScrollBar: public Widget
-{
-    protected:
+class ScrollBar : public Widget {
+protected:
+  std::shared_ptr<ScrollBarResponse> response;
+  ScrollBox *box;
 
-        std::shared_ptr<ScrollBarResponse> response;
-        ScrollBox* box;
+  float value;
+  float scaleStep;
+  int scaleLen;
 
-        float value;
-        float scaleStep;
-        int   scaleLen;
+  float minValue;
+  float maxValue;
 
-        float minValue;
-        float maxValue;
+  virtual void CalculateValue(float initValue_, Vec2i delta_) = 0;
+  virtual RectInt GetBoxRectangle() = 0;
+  virtual void SetScaleParams() = 0;
 
-        virtual void
-        CalculateValue(float initValue_, Vec2i delta_) = 0;
-        virtual RectInt
-        GetBoxRectangle() = 0;
-        virtual void
-        SetScaleParams() = 0;
+public:
+  ScrollBar(Layout *layout_, Texture *texture_, ScrollBox *box_,
+            ScrollBarResponse *responce_);
 
-    public:
+  float GetValue() const;
+  float GetScaleStep() const;
+  int GetScaleLength() const;
 
-        ScrollBar(Layout* layout_, Texture* texture_,
-        ScrollBox* box_, ScrollBarResponse* responce_);
+  virtual void SetBoxLength(int length_) = 0;
+  virtual void SetValue(float value_) = 0;
+  void SetMinValue(float minValue_);
+  void SetMaxValue(float maxValue_);
 
-        float
-        GetValue() const;
-        float
-        GetScaleStep() const;
-        int
-        GetScaleLength() const;
+  void OnLayoutMove() override;
+  void OnLayoutResize() override;
 
-        virtual void
-        SetBoxLength(int length_) = 0;
-        virtual void
-        SetValue(float value_) = 0;
-        void
-        SetMinValue(float minValue_);
-        void
-        SetMaxValue(float maxValue_);
-
-        void
-        OnLayoutMove() override;
-        void
-        OnLayoutResize() override;
-
-    friend class ScrollBox;
+  friend class ScrollBox;
 };
 
-class HorScrollBar: public ScrollBar
-{
-    protected:
+class HorScrollBar : public ScrollBar {
+protected:
+  void CalculateValue(float initValue_, Vec2i delta_) override;
+  RectInt GetBoxRectangle() override;
+  void SetScaleParams() override;
 
-        void
-        CalculateValue(float initValue_, Vec2i delta_) override;
-        RectInt
-        GetBoxRectangle() override;
-        void
-        SetScaleParams() override;
+public:
+  HorScrollBar(Layout *layout_, Texture *texture_, ScrollBox *box_,
+               ScrollBarResponse *responce_);
 
-    public:
+  static HorScrollBar *GetDefault(ScrollBarResponse *response_);
 
-        HorScrollBar(Layout* layout_, Texture* texture_,
-        ScrollBox* box_, ScrollBarResponse* responce_);
+  void SetBoxLength(int length_) override;
+  void SetValue(float value_) override;
 
-        static HorScrollBar*
-        GetDefault(ScrollBarResponse* response_);
-
-        void
-        SetBoxLength(int length_) override;
-        void
-        SetValue(float value_) override;
-
-    friend class ScrollBox;
+  friend class ScrollBox;
 };
 
-class VerScrollBar: public ScrollBar
-{
-    protected:
+class VerScrollBar : public ScrollBar {
+protected:
+  void CalculateValue(float initValue_, Vec2i delta_) override;
+  RectInt GetBoxRectangle() override;
+  void SetScaleParams() override;
 
-        void
-        CalculateValue(float initValue_, Vec2i delta_) override;
-        RectInt
-        GetBoxRectangle() override;
-        void
-        SetScaleParams() override;
+public:
+  VerScrollBar(Layout *layout_, Texture *texture_, ScrollBox *box_,
+               ScrollBarResponse *responce_);
 
-    public:
+  static VerScrollBar *GetDefault(ScrollBarResponse *response_);
 
-        VerScrollBar(Layout* layout_, Texture* texture_,
-        ScrollBox* box_, ScrollBarResponse* responce_);
+  void SetBoxLength(int length_) override;
+  void SetValue(float value_) override;
 
-        static VerScrollBar*
-        GetDefault(ScrollBarResponse* response_);
-
-        void
-        SetBoxLength(int length_) override;
-        void
-        SetValue(float value_) override;
-
-    friend class ScrollBox;
+  friend class ScrollBox;
 };
 
 //----------------------------------------//

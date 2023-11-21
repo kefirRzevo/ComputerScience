@@ -1,13 +1,9 @@
 #pragma once
 
+class App {
+public:
+  App() = default;
+  ~App() = default;
 
-class App
-{
-    public:
-
-        App() = default;
-        ~App() = default;
-
-        void
-        Run();
+  void Run();
 };

@@ -1,57 +1,47 @@
 #include "../include/view.hpp"
-#include "../include/textview.hpp"
 #include "../include/guiview.hpp"
-
+#include "../include/textview.hpp"
 
 //----------------------------------------//
 
-View*
-View::Get(const std::string& mode)
-{
-    static std::unique_ptr<View> view;
+View *View::Get(const std::string &mode) {
+  static std::unique_ptr<View> view;
 
-    if(view)
-        return view.get();
+  if (view)
+    return view.get();
 
-    if(!mode.compare("gui"))
-        view.reset(new GuiView());
-    else if(!mode.compare("text"))
-        view.reset(new TextView());
+  if (!mode.compare("gui"))
+    view.reset(new GuiView());
+  else if (!mode.compare("text"))
+    view.reset(new TextView());
 
-    return view.get();   
+  return view.get();
 }
 
 //----------------------------------------//
 
-void
-View::PollOnKey(KeyCode key)
-{
-    if(key == keyQuit)
-        finished = true;
+void View::PollOnKey(KeyCode key) {
+  if (key == keyQuit)
+    finished = true;
 
-    if(key == keyUnknown)
-        return;
+  if (key == keyUnknown)
+    return;
 
-    for (const auto& action: listenersOnKey)
-    {
-        action(key);
-    }
+  for (const auto &action : listenersOnKey) {
+    action(key);
+  }
 }
 
 //----------------------------------------//
 
-void
-View::PollOnTimer(int microsecPassed)
-{
-    for(size_t i = 0; i < passedTimes.size(); i++)
-    {
-        passedTimes[i] += microsecPassed;
-        if(passedTimes[i] > listenersOnTimer[i].first)
-        {
-            passedTimes[i] %= listenersOnTimer[i].first;
-            listenersOnTimer[i].second();
-        }
+void View::PollOnTimer(int microsecPassed) {
+  for (size_t i = 0; i < passedTimes.size(); i++) {
+    passedTimes[i] += microsecPassed;
+    if (passedTimes[i] > listenersOnTimer[i].first) {
+      passedTimes[i] %= listenersOnTimer[i].first;
+      listenersOnTimer[i].second();
     }
+  }
 }
 
 //----------------------------------------//

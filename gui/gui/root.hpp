@@ -1,59 +1,42 @@
 #pragma once
 
-#include "../widgets/widget.hpp"
 #include "../widgets/button.hpp"
 #include "../widgets/dropdownlist.hpp"
+#include "../widgets/widget.hpp"
 #include "properties_panel.hpp"
 
 class Root;
 
-class MainTitleBar: public Widget
-{
-    protected:
+class MainTitleBar : public Widget {
+protected:
+  ListOpenerButton *openedListButton;
 
-        ListOpenerButton* openedListButton;
+public:
+  MainTitleBar(Root *root_);
 
-    public:
+  Button *GetMenuToolButton();
+  Button *GetMenuFilterButton();
 
-        MainTitleBar(Root* root_);
+  void AttachPanel(PropertiesPanel *child_);
+  void DetachPanel(PropertiesPanel *child_);
 
-        Button*
-        GetMenuToolButton();
-        Button*
-        GetMenuFilterButton();
+  void AddTools(DropDownList *list);
+  void AddFilters(DropDownList *list);
 
-        void
-        AttachPanel(PropertiesPanel* child_);
-        void
-        DetachPanel(PropertiesPanel* child_);
-
-        void
-        AddTools(DropDownList* list);
-        void
-        AddFilters(DropDownList* list);
-
-        bool
-        ProcessEvent(const Event& event_) override;
+  bool ProcessEvent(const Event &event_) override;
 };
 
-class Root: public Widget
-{
-    public:
-
-        Root(Texture* texture_);
+class Root : public Widget {
+public:
+  Root(Texture *texture_);
 };
 
-class CanvasResponse: public ButtonResponse
-{
-    private:
+class CanvasResponse : public ButtonResponse {
+private:
+  Root *root;
 
-        Root* root;
-        static int nCanvases;
+public:
+  CanvasResponse(Root *root_);
 
-    public:
-
-        CanvasResponse(Root* root_);
-
-        void
-        OnResponse() override;
+  void OnResponse() override;
 };

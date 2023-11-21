@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../config/config.hpp"
 #include "../graphlib/graphlib.hpp"
-#include "../config.hpp"
 #include "widget.hpp"
 
 #include <list>
@@ -15,156 +15,117 @@ class Column;
 
 class ScrollBox;
 class DropDownList;
+class WidgetSystem;
 
-enum class BorderPart: char
-{
-    NoBorder,
-    LeftSide,
-    RightSide,
-    TopSide,
-    BottomSide,
-    TopLeftCorner,
-    TopRightCorner,
-    BottomLeftCorner,
-    BottomRightCorner,
-    count
+enum class BorderPart : char {
+  NoBorder,
+  LeftSide,
+  RightSide,
+  TopSide,
+  BottomSide,
+  TopLeftCorner,
+  TopRightCorner,
+  BottomLeftCorner,
+  BottomRightCorner,
+  count
 };
 
-class Layout
-{
-    public:
+class Layout {
+public:
+  Layout() = delete;
+  Layout(const Layout &) = delete;
+  Layout &operator=(const Layout &) = delete;
+  Layout(Layout &&) = default;
+  Layout &operator=(Layout &&) = default;
 
-        Layout           (              ) = delete;
-        Layout           (const Layout& ) = delete;
-        Layout& operator=(const Layout& ) = delete;
-        Layout           (      Layout&&) = default;
-        Layout& operator=(      Layout&&) = default;
+  Layout(const RectInt &rect_, int margin_, int border_, Vec2i minSize_,
+         Vec2i maxSize_);
+  Layout(const RectInt &rect_, int margin_ = 0, int border_ = 0);
+  Layout(Vec2i size, int margin_ = 0, int border_ = 0);
 
-        Layout(const RectInt& rect_, int margin_, int border_,
-        Vec2i minSize_, Vec2i maxSize_);
-        Layout(const RectInt& rect_, int margin_ = 0, int border_ = 0);
-        Layout(Vec2i size, int margin_ = 0, int border_ = 0);
+  virtual ~Layout() = default;
 
-        virtual ~Layout() = default;
+  Layout *GetParent();
+  Widget *GetWidget();
+  const RectInt &GetRectangle() const;
+  int GetMargin() const;
+  int GetBorder() const;
+  Vec2i GetMinSize() const;
+  Vec2i GetMaxSize() const;
 
-        Layout*
-        GetParent();
-        Widget*
-        GetWidget();
-        const RectInt&
-        GetRectangle() const;
-        int
-        GetMargin() const;
-        int
-        GetBorder() const;
-        Vec2i
-        GetMinSize() const;
-        Vec2i
-        GetMaxSize() const;
+  void SetWidget(Widget *widget_);
+  bool IsInside(Vec2i pos_) const;
+  bool IsInsideBorder(Vec2i pos_) const;
+  void OnEvent(const Event &event_);
 
-        void
-        SetWidget(Widget* widget_);
-        bool
-        IsInside(Vec2i pos_) const;
-        bool
-        IsInsideBorder(Vec2i pos_) const;
-        void
-        OnEvent(const Event& event_);
+  virtual void Attach(Layout *child_);
+  virtual void Detach(Layout *child_);
+  void OnMove(Vec2i delta_);
 
-        virtual void
-        Attach(Layout* child_);
-        virtual void
-        Detach(Layout* child_);
-        void
-        OnMove(Vec2i delta_);
+protected:
+  std::vector<Layout *> children;
+  Layout *parent;
+  Widget *widget;
 
-    protected:
+  RectInt rect;
+  int margin;
+  int border;
 
-        std::vector<Layout*> children;
-        Layout* parent;
-        Widget* widget;
+  Vec2i minSize;
+  Vec2i maxSize;
 
-        RectInt rect;
-        int     margin;
-        int     border;
+  BorderPart part;
+  bool onResize;
+  bool onMove;
 
-        Vec2i   minSize;
-        Vec2i   maxSize;
+  virtual void OnResize(const RectInt &rect_);
+  RectInt GetNewRectangle(Vec2i pos_);
+  BorderPart GetBorderPart(Vec2i pos_);
 
-        BorderPart part;
-        bool       onResize;
-        bool       onMove;
+  friend class Container;
+  friend class Row;
+  friend class Column;
 
-        virtual void
-        OnResize(const RectInt& rect_);
-        RectInt
-        GetNewRectangle(Vec2i pos_);
-        BorderPart
-        GetBorderPart(Vec2i pos_);
+  friend class ScrollBox;
+  friend class DropDownList;
+  friend class WidgetSystem;
 
-    friend class Container;
-    friend class Row;
-    friend class Column;
-
-    friend class ScrollBox;
-    friend class DropDownList;
-
-    public:
-
-        mutable int addition;
-        mutable int indent;
+public:
+  mutable int addition;
+  mutable int indent;
 };
 
-class Container: public Layout
-{
-    public:
+class Container : public Layout {
+public:
+  Container(int margin_ = 0, int border_ = 0);
 
-        Container(int margin_ = 0, int border_ = 0);
+  void Attach(Layout *child_) override = 0;
+  void Detach(Layout *child_) override = 0;
 
-        void
-        Attach(Layout* child_) override = 0;
-        void
-        Detach(Layout* child_) override = 0;
+protected:
+  void OnResize(const RectInt &rect_) override;
 
-    protected:
-        
-        void
-        OnResize(const RectInt& rect_) override;
-
-        virtual void
-        PlaceChildren() = 0;
+  virtual void PlaceChildren() = 0;
 };
 
-class Row: public Container
-{
-    public:
+class Row : public Container {
+public:
+  Row(int margin_ = 0, int border_ = 0);
 
-        Row(int margin_ = 0, int border_ = 0);
+  void Attach(Layout *child_) override;
+  void Detach(Layout *child_) override;
 
-        void
-        Attach(Layout* child_) override;
-        void
-        Detach(Layout* child_) override;
-
-    protected:
-
-        void
-        PlaceChildren() override;
+protected:
+  void PlaceChildren() override;
 };
 
-class Column: public Container
-{
-    public:
+class Column : public Container {
+public:
+  Column(int margin_ = 0, int border_ = 0);
 
-        Column(int margin_ = 0, int border_ = 0);
+  void Attach(Layout *child_) override;
+  void Detach(Layout *child_) override;
 
-        void
-        Attach(Layout* child_) override;
-        void
-        Detach(Layout* child_) override;
-
-    protected:
-
-        void
-        PlaceChildren() override;
+protected:
+  void PlaceChildren() override;
 };

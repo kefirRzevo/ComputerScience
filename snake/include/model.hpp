@@ -1,281 +1,194 @@
 #pragma once
 
-
+#include <cassert>
 #include <iostream>
-#include <vector>
 #include <list>
+#include <vector>
 
 #include "config.hpp"
-
 
 class Rabbit;
 class Snake;
 class Model;
 
-using Size        = std::pair<int, int>;
-using Coordinate  = std::pair<int, int>;
+using Size = std::pair<int, int>;
+using Coordinate = std::pair<int, int>;
 using Coordinates = std::list<Coordinate>;
-using Rabbits = std::list<Rabbit* >;
-using Snakes  = std::list<Snake* >;
+using Rabbits = std::list<Rabbit *>;
+using Snakes = std::list<Snake *>;
 
-static FILE* fp = fopen("dump.txt", "w+");
+static FILE *fp = fopen("build/dump.txt", "w+");
 
 #ifdef DEBUG
-#define $$ do{fprintf(fp, "%s %d\n", __FILE__, __LINE__); fflush(fp);}while(0); 
+#define $$                                                                     \
+  do {                                                                         \
+    fprintf(fp, "%s %d\n", __FILE__, __LINE__);                                \
+    fflush(fp);                                                                \
+  } while (0);
 #else
 #define $$
 #endif
 
-
 //----------------------------------------//
 
-class Rabbit: public Coordinate
-{
-    private:
+class Rabbit : public Coordinate {
+private:
+  int score;
+  bool alive;
+  int styleType;
 
-        int score;
-        bool alive;
-        int styleType;
+public:
+  Rabbit(int styleType_) : score(1), alive(true), styleType(styleType_) {
+    first = 0;
+    second = 0;
+  }
 
-    public:
+  void RandomGenerate(Model *model, int score_ = RABBIT_SCORE);
 
-        Rabbit(int styleType_):
-            score(1), alive(true), styleType(styleType_)
-            {
-                first = 0;
-                second = 0;
-            }
+  bool operator==(const Rabbit &rhs) {
+    return *static_cast<Coordinate *>(this) == rhs.GetCoordinate();
+  }
 
-        void RandomGenerate(Model* model, int score_ = RABBIT_SCORE);
+  void SetCoordinate(const Coordinate &coord_) {
+    this->first = coord_.first;
+    this->second = coord_.second;
+  }
 
-        bool operator==(const Rabbit& rhs)
-            {
-                return *static_cast<Coordinate* >(this) == rhs.GetCoordinate();
-            }
+  void SetStyleType(int styleType_) { styleType = styleType_; }
 
-        void SetCoordinate(const Coordinate& coord_)
-            {
-                this->first  = coord_.first;
-                this->second = coord_.second;
-            }
+  Coordinate GetCoordinate() const { return static_cast<Coordinate>(*this); }
 
-        void SetStyleType(int styleType_)
-            {
-                styleType = styleType_;
-            }
+  int GetScore() const { return score; }
 
-        Coordinate GetCoordinate() const
-            {
-                return static_cast<Coordinate>(*this);
-            }
+  int GetStyleType() const { return styleType; }
 
-        int GetScore() const
-            {
-                return score;
-            }
+  void Kill() { alive = false; }
 
-        int GetStyleType() const
-            {
-                return styleType;
-            }
+  void Hill(int score_ = 1) {
+    score = score_;
+    alive = true;
+  }
 
-        void Kill()
-            {
-                alive = false;
-            }
-
-        void Hill(int score_ = 1)
-            {
-                score = score_;
-                alive = true;
-            }
-
-        bool IsAlive() const
-            {
-                return alive;
-            }
+  bool IsAlive() const { return alive; }
 };
 
 //----------------------------------------//
 
-class Snake
-{
-    public:
+class Snake {
+public:
+  enum Direction {
+    LEFT = 0,
+    RIGHT = 1,
+    UP = 2,
+    DOWN = 3,
+  };
 
-        enum Direction
-        {
-            LEFT  = 0,
-            RIGHT = 1,
-            UP    = 2,
-            DOWN  = 3,
-        };
+private:
+  Coordinates coords;
+  Coordinate newFront;
 
-    private:
+  Direction dirInFuture;
+  Direction dirAfterUpdate;
 
-        Coordinates coords;
-        Coordinate newFront;
+  int styleType;
+  int scoreReserved;
+  int score;
 
-        Direction dirInFuture;
-        Direction dirAfterUpdate;
+  bool alive;
+  bool inGame;
 
-        int styleType;
-        int scoreReserved;
-        int score;
+public:
+  Snake(int styleType_);
 
-        bool alive;
-        bool inGame;
+  void RandomGenerate(Model *model, int snakeSize = SNAKE_SIZE);
 
-    public:
+  void SetNewFront();
 
-        Snake(int styleType_);
+  void Update(Model *model);
 
-        void RandomGenerate(Model* model, int snakeSize = SNAKE_SIZE);
+  void Feed(int score_) {
+    scoreReserved += score_;
+    score += score_;
+  }
 
-        void SetNewFront();
+  void Kill() { alive = false; }
 
-        void Update(Model* model);
+  void SetCoordinates(const Coordinates &coords_) { coords = coords_; }
 
-        void Feed(int score_)
-            {
-                scoreReserved += score_;
-                score += score_;
-            }
+  const Coordinates &GetCoordinates() const { return coords; }
 
-        void Kill()
-            {
-                alive = false;
-            }
+  void SetDirection(Direction dir) { dirInFuture = dir; }
 
-        void SetCoordinates(const Coordinates& coords_)
-            {
-                coords = coords_;
-            }
+  void SetStyleType(int styleType_) { styleType = styleType_; }
 
-        const Coordinates& GetCoordinates() const
-            {
-                return coords;
-            }
+  int GetScore() const { return score; }
 
-        void SetDirection(Direction dir)
-            {
-                dirInFuture = dir;
-            }
+  Direction GetDirection() const { return dirAfterUpdate; }
 
-        void SetStyleType(int styleType_)
-            {
-                styleType = styleType_;
-            }
+  const Coordinate &GetNewFront() const { return newFront; }
 
-        int GetScore() const
-            {
-                return score;
-            }
+  const Coordinate &GetFront() const { return coords.front(); }
 
-        Direction GetDirection() const
-            {
-                return dirAfterUpdate;
-            }
+  const Coordinate &GetBack() const { return coords.back(); }
 
-        const Coordinate& GetNewFront() const
-            {
-                return newFront;
-            }
+  int GetStyleType() const { return styleType; }
 
-        const Coordinate& GetFront() const
-            {
-                return coords.front();
-            }
+  bool IsAlive() const { return alive; }
 
-        const Coordinate& GetBack() const
-            {
-                return coords.back();
-            }
-    
-        int GetStyleType() const
-            {
-                return styleType;
-            }
+  bool IsInGame() const { return inGame; }
 
-        bool IsAlive() const
-            {
-                return alive;
-            }
+  void OnTimerDeath();
 
-        bool IsInGame() const
-            {
-                return inGame;
-            }
+  void Dump() const;
 
-        void OnTimerDeath();
+  static Snake::Direction GetOppositeDir(Snake::Direction dir);
 
-        void Dump() const;
+  static Coordinate GetCoordDirection(Snake::Direction dir);
 
-        static Snake::Direction GetOppositeDir(Snake::Direction dir);
-
-        static Coordinate GetCoordDirection(Snake::Direction dir);
-
-    private:
-
-        void UpdateDirection()
-            {
-                dirAfterUpdate = dirInFuture;
-            }
+private:
+  void UpdateDirection() { dirAfterUpdate = dirInFuture; }
 };
 
 //----------------------------------------//
 
-class Model
-{
-    private:
+class Model {
+private:
+  Size polygonSize;
+  bool snakesAlive;
 
-        Size polygonSize;
-        bool snakesAlive;
+public:
+  Rabbits rabbits;
+  Snakes snakes;
 
-    public:
+  Model(Size polygonSize_, size_t nSnakes = 2);
 
-        Rabbits rabbits;
-        Snakes snakes;
+  ~Model();
 
-        Model(Size polygonSize_, size_t nSnakes = 2);
+  void Update();
 
-        ~Model();
+  Snake *GetSnake(size_t index) {
+    auto snakeIterator = snakes.begin();
+    std::advance(snakeIterator, index);
+    return *snakeIterator;
+  }
 
-        void Update();
+  void DeleteSnake(Snake *snake);
 
-        Snake* GetSnake(size_t index)
-            {
-                auto snakeIterator = snakes.begin();
-                std::advance(snakeIterator, index);
-                return *snakeIterator;
-            }
+  Size GetPolygonSize() const { return polygonSize; }
 
-        void DeleteSnake(Snake* snake);
+  bool SnakesAlive() const { return snakesAlive; }
 
-        Size GetPolygonSize() const
-            {
-                return polygonSize;
-            }
+  void SetPolygonSize(const Size &size_) { polygonSize = size_; }
 
-        bool SnakesAlive() const
-            {
-                return snakesAlive;
-            }
+  Coordinate GetClosestRabbitCoord(const Coordinate &point) const;
 
-        void SetPolygonSize(const Size& size_)
-            {
-                polygonSize = size_;
-            }
+  void OnTimer();
 
-        Coordinate GetClosestRabbitCoord(const Coordinate& point) const;
+  int GetSnakeIndex(const Snake *snake) const;
 
-        void OnTimer();
+  bool IsThereRabbit(const Coordinate &point) const;
 
-        int GetSnakeIndex(const Snake* snake) const;
-
-        bool IsThereRabbit(const Coordinate& point) const;
-
-        static int GetDistance(const Coordinate& coord1,
-                               const Coordinate& coord2);
+  static int GetDistance(const Coordinate &coord1, const Coordinate &coord2);
 };
 
 //----------------------------------------//
